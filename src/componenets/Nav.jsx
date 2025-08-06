@@ -19,6 +19,7 @@ function Nav() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filterType, setFilterType] = useState("company");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [selectedStockists, setSelectedStockists] = useState([]);
 
   const sectionData = [
     {
@@ -104,8 +105,19 @@ function Nav() {
   const handleSuggestionClick = (suggestion) => {
     setSearchQuery(suggestion);
     setShowSuggestions(false);
-    // Navigation logic would go here
-    console.log(`Navigating to: ${suggestion}`);
+    let stockists = [];
+    if (filterType === "stockist") {
+      stockists = sectionData.filter((section) => section.title === suggestion);
+    } else if (filterType === "company") {
+      stockists = sectionData.filter(
+        (section) => section.items && section.items.includes(suggestion)
+      );
+    } else if (filterType === "medicine") {
+      stockists = sectionData.filter(
+        (section) => section.Medicines && section.Medicines.includes(suggestion)
+      );
+    }
+    setSelectedStockists(stockists);
   };
 
   const handleSearchChange = (e) => {
@@ -313,6 +325,41 @@ function Nav() {
               </div>
             )}
           </div>
+          {/* Stockist Cards */}
+          {selectedStockists.length > 0 && (
+            <div className="mt-6 space-y-6">
+              {selectedStockists.map((stockist, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white rounded-xl shadow-lg p-6 border border-blue-100"
+                >
+                  <h3 className="text-xl font-bold text-blue-700 mb-2">
+                    {stockist.title}
+                  </h3>
+                  <p className="text-gray-700 mb-1">
+                    <span className="font-semibold">Phone:</span>{" "}
+                    {stockist.phone}
+                  </p>
+                  <p className="text-gray-700 mb-1">
+                    <span className="font-semibold">Address:</span>{" "}
+                    {stockist.address}
+                  </p>
+                  {stockist.items && (
+                    <p className="text-gray-700 mb-1">
+                      <span className="font-semibold">Companies:</span>{" "}
+                      {stockist.items.join(", ")}
+                    </p>
+                  )}
+                  {stockist.Medicines && (
+                    <p className="text-gray-700 mb-1">
+                      <span className="font-semibold">Medicines:</span>{" "}
+                      {stockist.Medicines.join(", ")}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Quick stats or additional info */}
