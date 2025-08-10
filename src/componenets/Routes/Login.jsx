@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { login } from "../../features/authSlice";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
@@ -11,13 +13,20 @@ import {
 } from "lucide-react";
 
 const Login = () => {
+  // Redirect to / after successful login
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
+  const dispatch = useDispatch();
+  const { user, loading, error } = useSelector((state) => state.auth);
   const [message, setMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     setIsVisible(true);
@@ -29,83 +38,8 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Simulate successful login
-      setMessage("Login successful!");
-
-      // Store token in memory for demo (replace with actual token from API)
-      const mockToken = "mock-jwt-token-" + Date.now();
-      // localStorage.setItem("token", mockToken); // Uncomment for real implementation
-    } catch (err) {
-      setMessage("Login failed. Please check your credentials.");
-    } finally {
-      setIsLoading(false);
-    }
+    dispatch(login(form));
   };
-
-  const InputField = ({
-    icon: Icon,
-    label,
-    name,
-    type = "text",
-    placeholder,
-    required = false,
-    showPasswordToggle = false,
-  }) => (
-    <div className="relative group">
-      <label
-        className={`block text-sm font-medium transition-all duration-300 mb-2 ${
-          focusedField === name ? "text-blue-600" : "text-gray-700"
-        }`}
-      >
-        {label}
-      </label>
-      <div className="relative">
-        <div
-          className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all duration-300 ${
-            focusedField === name ? "text-blue-500" : "text-gray-400"
-          }`}
-        >
-          <Icon className="h-5 w-5" />
-        </div>
-        <input
-          name={name}
-          type={
-            showPasswordToggle ? (showPassword ? "text" : "password") : type
-          }
-          placeholder={placeholder}
-          value={form[name]}
-          onChange={handleChange}
-          onFocus={() => setFocusedField(name)}
-          onBlur={() => setFocusedField(null)}
-          required={required}
-          className={`block w-full pl-10 pr-12 py-3 border rounded-lg shadow-sm placeholder-gray-500 transition-all duration-300 transform hover:scale-[1.01] focus:scale-[1.01] ${
-            focusedField === name
-              ? "border-blue-500 ring-2 ring-blue-200 bg-blue-50/50"
-              : "border-gray-300 hover:border-gray-400 bg-white"
-          }`}
-        />
-        {showPasswordToggle && (
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-all duration-200 hover:scale-110"
-          >
-            {showPassword ? (
-              <EyeOff className="h-5 w-5" />
-            ) : (
-              <Eye className="h-5 w-5" />
-            )}
-          </button>
-        )}
-      </div>
-    </div>
-  );
 
   return (
     <>
@@ -283,25 +217,90 @@ const Login = () => {
             </div>
 
             <div className="space-y-6 slide-in-right">
-              <InputField
-                icon={Mail}
-                label="Email Address"
-                name="email"
-                type="email"
-                placeholder="Enter your email address"
-                required
-              />
+              {/* Email Address */}
+              <div className="relative group">
+                <label
+                  htmlFor="input-email"
+                  className={`block text-sm font-medium transition-all duration-300 mb-2 ${
+                    focusedField === "email" ? "text-blue-600" : "text-gray-700"
+                  }`}
+                >
+                  Email Address
+                </label>
+                <div className="relative">
+                  <div
+                    className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all duration-300 ${
+                      focusedField === "email" ? "text-blue-500" : "text-gray-400"
+                    }`}
+                  >
+                    <Mail className="h-5 w-5" />
+                  </div>
+                  <input
+                    id="input-email"
+                    name="email"
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={form.email}
+                    onChange={handleChange}
+                    onFocus={() => setFocusedField("email")}
+                    onBlur={() => setFocusedField(null)}
+                    required
+                    className={`block w-full pl-10 pr-12 py-3 border rounded-lg shadow-sm placeholder-gray-500 transition-all duration-300 transform hover:scale-[1.01] focus:scale-[1.01] ${
+                      focusedField === "email"
+                        ? "border-blue-500 ring-2 ring-blue-200 bg-blue-50/50"
+                        : "border-gray-300 hover:border-gray-400 bg-white"
+                    }`}
+                  />
+                </div>
+              </div>
 
-              <InputField
-                icon={Lock}
-                label="Password"
-                name="password"
-                type="password"
-                placeholder="Enter your password"
-                required
-                showPasswordToggle={true}
-              />
-
+              {/* Password */}
+              <div className="relative group">
+                <label
+                  htmlFor="input-password"
+                  className={`block text-sm font-medium transition-all duration-300 mb-2 ${
+                    focusedField === "password" ? "text-blue-600" : "text-gray-700"
+                  }`}
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <div
+                    className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all duration-300 ${
+                      focusedField === "password" ? "text-blue-500" : "text-gray-400"
+                    }`}
+                  >
+                    <Lock className="h-5 w-5" />
+                  </div>
+                  <input
+                    id="input-password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={form.password}
+                    onChange={handleChange}
+                    onFocus={() => setFocusedField("password")}
+                    onBlur={() => setFocusedField(null)}
+                    required
+                    className={`block w-full pl-10 pr-12 py-3 border rounded-lg shadow-sm placeholder-gray-500 transition-all duration-300 transform hover:scale-[1.01] focus:scale-[1.01] ${
+                      focusedField === "password"
+                        ? "border-blue-500 ring-2 ring-blue-200 bg-blue-50/50"
+                        : "border-gray-300 hover:border-gray-400 bg-white"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-all duration-200 hover:scale-110"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center">
                   <input
@@ -328,10 +327,10 @@ const Login = () => {
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={isLoading}
+                disabled={loading}
                 className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white button-gradient hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
               >
-                {isLoading ? (
+                {loading ? (
                   <div className="flex items-center">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                     <span className="font-semibold">Signing in...</span>
@@ -341,28 +340,17 @@ const Login = () => {
                 )}
               </button>
 
-              {message && (
-                <div
-                  className={`flex items-center p-4 rounded-lg transition-all duration-500 transform ${
-                    message.includes("successful")
-                      ? "bg-green-50 border border-green-200 scale-100 opacity-100"
-                      : "bg-red-50 border border-red-200 scale-100 opacity-100"
-                  }`}
-                >
-                  {message.includes("successful") ? (
-                    <CheckCircle className="h-5 w-5 text-green-600 mr-3 animate-bounce" />
-                  ) : (
-                    <AlertCircle className="h-5 w-5 text-red-600 mr-3 animate-pulse" />
-                  )}
-                  <span
-                    className={`text-sm font-medium ${
-                      message.includes("successful")
-                        ? "text-green-700"
-                        : "text-red-700"
-                    }`}
-                  >
-                    {message}
-                  </span>
+              {/* Show error or user info from Redux */}
+              {error && (
+                <div className="flex items-center p-4 rounded-lg bg-red-50 border border-red-200 scale-100 opacity-100 transition-all duration-500 transform">
+                  <AlertCircle className="h-5 w-5 text-red-600 mr-3 animate-pulse" />
+                  <span className="text-sm font-medium text-red-700">{error}</span>
+                </div>
+              )}
+              {user && (
+                <div className="flex items-center p-4 rounded-lg bg-green-50 border border-green-200 scale-100 opacity-100 transition-all duration-500 transform">
+                  <CheckCircle className="h-5 w-5 text-green-600 mr-3 animate-bounce" />
+                  <span className="text-sm font-medium text-green-700">Login successful!</span>
                 </div>
               )}
             </div>

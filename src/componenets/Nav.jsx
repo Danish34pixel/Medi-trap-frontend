@@ -11,8 +11,28 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../features/authSlice";
 function Nav() {
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
+  const searchContainerRef = React.useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -112,8 +132,20 @@ function Nav() {
     setSearchQuery(e.target.value);
   };
 
-  const handleLoginClick = () => navigate("/signup");
-  const handleSignupClick = () => navigate("/login");
+
+  const handleLoginClick = () => navigate("/login");
+  const handleSignupClick = () => navigate("/signup");
+
+  // Logout handler: logs out server and client side
+  const handleLogoutClick = async () => {
+    try {
+      await dispatch(logout()).unwrap();
+      navigate("/login");
+    } catch (err) {
+      // Optionally show error
+      console.error("Logout failed", err);
+    }
+  };
 
   // Filter type options with icons
   const filterOptions = [
@@ -190,20 +222,32 @@ function Nav() {
               ))}
             </nav>
             <div className="flex items-center gap-3">
-              <button
-                onClick={handleLoginClick}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 font-medium transform hover:scale-105 active:scale-95 hover:-translate-y-0.5"
-              >
-                <LogIn size={18} />
-                <span>Login</span>
-              </button>
-              <button
-                onClick={handleSignupClick}
-                className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 font-medium transform hover:scale-105 active:scale-95 hover:-translate-y-0.5"
-              >
-                <UserPlus size={18} />
-                <span>Sign Up</span>
-              </button>
+              {user ? (
+                <button
+                  onClick={handleLogoutClick}
+                  className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 font-medium transform hover:scale-105 active:scale-95 hover:-translate-y-0.5"
+                >
+                  <X size={18} />
+                  <span>Logout</span>
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleLoginClick}
+                    className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 font-medium transform hover:scale-105 active:scale-95 hover:-translate-y-0.5"
+                  >
+                    <LogIn size={18} />
+                    <span>Login</span>
+                  </button>
+                  <button
+                    onClick={handleSignupClick}
+                    className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 font-medium transform hover:scale-105 active:scale-95 hover:-translate-y-0.5"
+                  >
+                    <UserPlus size={18} />
+                    <span>Sign Up</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -231,20 +275,32 @@ function Nav() {
                   ))}
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
-                  <button
-                    onClick={handleLoginClick}
-                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
-                  >
-                    <LogIn size={18} />
-                    <span>Login</span>
-                  </button>
-                  <button
-                    onClick={handleSignupClick}
-                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
-                  >
-                    <UserPlus size={18} />
-                    <span>Sign Up</span>
-                  </button>
+                  {user ? (
+                    <button
+                      onClick={handleLogoutClick}
+                      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
+                    >
+                      <X size={18} />
+                      <span>Logout</span>
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleLoginClick}
+                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
+                      >
+                        <LogIn size={18} />
+                        <span>Login</span>
+                      </button>
+                      <button
+                        onClick={handleSignupClick}
+                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
+                      >
+                        <UserPlus size={18} />
+                        <span>Sign Up</span>
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -252,8 +308,8 @@ function Nav() {
         )}
 
         {/* Search section */}
-        <div className="px-4 pb-6 relative">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 border border-white/20">
+        <div className="px-4 pb-6 relative z-30" ref={searchContainerRef}>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 border border-white/20 relative">
             <div className="flex flex-col lg:flex-row lg:items-center gap-4">
               <div className="relative flex-grow">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -289,7 +345,7 @@ function Nav() {
 
             {/* Suggestions dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute top-full left-4 right-4 mt-2 bg-white/95 backdrop-blur-sm border border-blue-100 rounded-xl shadow-2xl z-50 max-h-72 overflow-auto animate-in slide-in-from-top-2 duration-200">
+              <div className="absolute top-full left-4 right-4 mt-2 bg-white/95 backdrop-blur-sm border border-blue-100 rounded-xl shadow-2xl z-[999] max-h-72 overflow-auto animate-in slide-in-from-top-2 duration-200">
                 <div className="p-2">
                   {suggestions.map((suggestion, i) => (
                     <div

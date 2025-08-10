@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+  // Redirect to login after successful signu
+import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { register } from "../../features/authSlice";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
@@ -25,8 +28,8 @@ const Signup = () => {
     password: "",
     drugLicenseImage: null,
   });
-  const [message, setMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useDispatch();
+  const { user, loading, error } = useSelector((state) => state.auth);
   const [dragActive, setDragActive] = useState(false);
 
   const handleChange = (e) => {
@@ -62,67 +65,15 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    setIsLoading(true);
     const formData = new FormData();
     Object.entries(form).forEach(([key, value]) => {
       if (value) formData.append(key, value);
     });
-
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setMessage(
-        "Registration successful! Please check your email for verification."
-      );
-    } catch (err) {
-      setMessage("Registration failed. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    dispatch(register(formData))
+    navigate('/login')
   };
 
-  const InputField = ({
-    icon: Icon,
-    label,
-    name,
-    type = "text",
-    placeholder,
-    required = false,
-    accept,
-  }) => (
-    <div className="relative">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Icon className="h-5 w-5 text-gray-400" />
-        </div>
-        {type === "file" ? (
-          <input
-            name={name}
-            type={type}
-            placeholder={placeholder}
-            onChange={handleChange}
-            required={required}
-            accept={accept}
-            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-          />
-        ) : (
-          <input
-            name={name}
-            type={type}
-            placeholder={placeholder}
-            value={form[name] || ""}
-            // onChange={(e) => handleChange(e)}
-            required={required}
-            autoComplete={name === "password" ? "new-password" : "on"}
-            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-          />
-        )}
-      </div>
-    </div>
-  );
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
@@ -167,53 +118,141 @@ const Signup = () => {
           </div>
 
           <div className="space-y-6">
-            <InputField
-              icon={Building2}
-              label="Medical Store Name"
-              name="medicalName"
-              placeholder="Enter your medical store name"
-              required
-            />
-            <InputField
-              icon={User}
-              label="Owner Name"
-              name="ownerName"
-              placeholder="Enter owner's full name"
-              required
-            />
-            <InputField
-              icon={MapPin}
-              label="Address"
-              name="address"
-              placeholder="Enter complete address"
-              required
-            />
-            <InputField
-              icon={Mail}
-              label="Email Address"
-              name="email"
-              type="email"
-              placeholder="Enter your email"
-              required
-            />
-            <InputField
-              icon={Phone}
-              label="Contact Number"
-              name="contactNo"
-              type="tel"
-              placeholder="Enter contact number"
-              required
-            />
-            <InputField
-              icon={Shield}
-              label="Drug License Number"
-              name="drugLicenseNo"
-              placeholder="Enter drug license number"
-              required
-            />
+            {/* Medical Store Name */}
+            <div className="relative">
+              <label htmlFor="input-medicalName" className="block text-sm font-medium text-gray-700 mb-2">
+                Medical Store Name
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Building2 className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="input-medicalName"
+                  name="medicalName"
+                  type="text"
+                  placeholder="Enter your medical store name"
+                  value={form.medicalName}
+                  onChange={handleChange}
+                  required
+                  autoComplete="on"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                />
+              </div>
+            </div>
+            {/* Owner Name */}
+            <div className="relative">
+              <label htmlFor="input-ownerName" className="block text-sm font-medium text-gray-700 mb-2">
+                Owner Name
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="input-ownerName"
+                  name="ownerName"
+                  type="text"
+                  placeholder="Enter owner's full name"
+                  value={form.ownerName}
+                  onChange={handleChange}
+                  required
+                  autoComplete="on"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                />
+              </div>
+            </div>
+            {/* Address */}
+            <div className="relative">
+              <label htmlFor="input-address" className="block text-sm font-medium text-gray-700 mb-2">
+                Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <MapPin className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="input-address"
+                  name="address"
+                  type="text"
+                  placeholder="Enter complete address"
+                  value={form.address}
+                  onChange={handleChange}
+                  required
+                  autoComplete="on"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                />
+              </div>
+            </div>
+            {/* Email Address */}
+            <div className="relative">
+              <label htmlFor="input-email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="input-email"
+                  name="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                  autoComplete="on"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                />
+              </div>
+            </div>
+            {/* Contact Number */}
+            <div className="relative">
+              <label htmlFor="input-contactNo" className="block text-sm font-medium text-gray-700 mb-2">
+                Contact Number
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Phone className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="input-contactNo"
+                  name="contactNo"
+                  type="tel"
+                  placeholder="Enter contact number"
+                  value={form.contactNo}
+                  onChange={handleChange}
+                  required
+                  autoComplete="on"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                />
+              </div>
+            </div>
+            {/* Drug License Number */}
+            <div className="relative">
+              <label htmlFor="input-drugLicenseNo" className="block text-sm font-medium text-gray-700 mb-2">
+                Drug License Number
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Shield className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="input-drugLicenseNo"
+                  name="drugLicenseNo"
+                  type="text"
+                  placeholder="Enter drug license number"
+                  value={form.drugLicenseNo}
+                  onChange={handleChange}
+                  required
+                  autoComplete="on"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                />
+              </div>
+            </div>
             {/* File Upload */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="drugLicenseImage" className="block text-sm font-medium text-gray-700 mb-2">
                 Drug License Image
               </label>
               <div
@@ -228,6 +267,7 @@ const Signup = () => {
                 onDrop={handleDrop}
               >
                 <input
+                  id="drugLicenseImage"
                   name="drugLicenseImage"
                   type="file"
                   accept="image/*"
@@ -257,20 +297,34 @@ const Signup = () => {
                 </div>
               </div>
             </div>
-            <InputField
-              icon={Lock}
-              label="Password"
-              name="password"
-              type="password"
-              placeholder="Create a strong password"
-              required
-            />
+            {/* Password */}
+            <div className="relative">
+              <label htmlFor="input-password" className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="input-password"
+                  name="password"
+                  type="password"
+                  placeholder="Create a strong password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  autoComplete="new-password"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                />
+              </div>
+            </div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={loading}
               className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
-              {isLoading ? (
+              {loading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                   Creating Account...
@@ -280,28 +334,17 @@ const Signup = () => {
               )}
             </button>
 
-            {message && (
-              <div
-                className={`flex items-center p-4 rounded-lg ${
-                  message.includes("successful")
-                    ? "bg-green-50 border border-green-200"
-                    : "bg-red-50 border border-red-200"
-                }`}
-              >
-                {message.includes("successful") ? (
-                  <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                ) : (
-                  <AlertCircle className="h-5 w-5 text-red-600 mr-3" />
-                )}
-                <span
-                  className={`text-sm ${
-                    message.includes("successful")
-                      ? "text-green-700"
-                      : "text-red-700"
-                  }`}
-                >
-                  {message}
-                </span>
+            {/* Show error or user info from Redux */}
+            {error && (
+              <div className="flex items-center p-4 rounded-lg bg-red-50 border border-red-200">
+                <AlertCircle className="h-5 w-5 text-red-600 mr-3" />
+                <span className="text-sm text-red-700">{error}</span>
+              </div>
+            )}
+            {user && (
+              <div className="flex items-center p-4 rounded-lg bg-green-50 border border-green-200">
+                <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
+                <span className="text-sm text-green-700">Registration successful! Please check your email for verification.</span>
               </div>
             )}
           </div>
