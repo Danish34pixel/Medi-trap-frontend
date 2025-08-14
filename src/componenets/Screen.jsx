@@ -8,8 +8,10 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function Screen() {
+  const navigate = useNavigate();
   const [selectedSection, setSelectedSection] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -453,7 +455,12 @@ function Screen() {
                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
               />
             </svg>
-            <span className="text-xs mt-1">Profile</span>
+            <span
+              onClick={() => navigate("/profile")}
+              className="text-xs mt-1 cursor-pointer"
+            >
+              Profile
+            </span>
           </button>
         </motion.div>
       )}

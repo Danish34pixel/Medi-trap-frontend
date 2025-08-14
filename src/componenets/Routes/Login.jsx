@@ -30,19 +30,30 @@ const Login = () => {
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     setIsLoading(true);
+    setMessage("");
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, password: form.password }),
+      });
 
-      // Simulate successful login
-      setMessage("Login successful!");
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
 
-      // Store token in memory for demo (replace with actual token from API)
-      const mockToken = "mock-jwt-token-" + Date.now();
-      // localStorage.setItem("token", mockToken); // Uncomment for real implementation
+      if (data.success && data.token && data.user) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        setMessage("Login successful!");
+        setTimeout(() => navigate("/"), 1000);
+      } else {
+        throw new Error("Invalid response format from server");
+      }
     } catch (err) {
-      setMessage("Login failed. Please check your credentials.");
+      setMessage(err.message || "Login failed. Please check your credentials.");
     } finally {
       setIsLoading(false);
     }

@@ -63,19 +63,31 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     setIsLoading(true);
+    setMessage("");
     const formData = new FormData();
     Object.entries(form).forEach(([key, value]) => {
-      if (value) formData.append(key, value);
+      if (value !== null && value !== undefined) formData.append(key, value);
     });
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setMessage(
-        "Registration successful! Please check your email for verification."
-      );
+      const response = await fetch("http://localhost:5000/api/auth/signup", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Registration failed");
+      }
+
+      if (data.success) {
+        setMessage("Registration successful! You can now log in.");
+        setTimeout(() => navigate("/login"), 2000);
+      } else {
+        throw new Error("Invalid response format from server");
+      }
     } catch (err) {
-      setMessage("Registration failed. Please try again.");
+      setMessage(err.message || "Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -114,7 +126,7 @@ const Signup = () => {
             type={type}
             placeholder={placeholder}
             value={form[name] || ""}
-            // onChange={(e) => handleChange(e)}
+            onChange={handleChange}
             required={required}
             autoComplete={name === "password" ? "new-password" : "on"}
             className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
