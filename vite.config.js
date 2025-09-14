@@ -14,7 +14,7 @@ export default defineConfig(({ command, mode }) => {
             // Proxy API calls during development to avoid CORS issues.
             // Requests to /api/* will be forwarded to the remote API.
             "/api": {
-              target: "http://localhost:5000",
+              target: "https://meditrap-1.onrender.com",
               changeOrigin: true,
               secure: false,
               rewrite: (path) => path.replace(/^\/api/, "/api"),
