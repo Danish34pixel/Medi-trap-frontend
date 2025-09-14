@@ -1,20 +1,27 @@
-import React, { useState, useEffect } from "react";
-import {
-  Search,
-  Menu,
-  X,
-  Home,
-  Info,
-  Phone,
-  LogIn,
-  UserPlus,
-  ChevronDown,
-  User,
-} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import API_BASE from "./config/api";
 import { useNavigate } from "react-router-dom";
 
-function Nav() {
-  const navigate = useNavigate();
+const Icon = ({ children }) => <span className="text-lg">{children}</span>;
+
+export default function Nav({ navigation: navProp }) {
+  const navigate = (() => {
+    try {
+      return useNavigate();
+    } catch {
+      return null;
+    }
+  })();
+
+  // navigation helper (accepts same signature used elsewhere)
+  const navigation = navProp || {
+    navigate: (path) => {
+      if (navigate) navigate(path);
+      else window.location.href = path;
+    },
+    goBack: () => window.history.back(),
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -23,72 +30,115 @@ function Nav() {
   const [selectedStockists, setSelectedStockists] = useState([]);
   const [showAllResults, setShowAllResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [userToken, setUserToken] = useState(null);
+  const [sectionData, setSectionData] = useState([]);
 
-  const sectionData = [
-    {
-      title: "Amit Marketing",
-      phone: "9826000000",
-      address: "NH Road, Indore",
-      items: ["Leeford", "Zevintus", "Cipla", "Sun Pharma"],
-      Medicines: ["Tramonil-plus", "Paracetamol", "Amoxicillin", "Omeprazole"],
-    },
-    {
-      title: "Jain Brothers",
-      phone: "9826111111",
-      address: "MG Road, Bhopal",
-      items: ["Abbott", "Abb", "Dr. Reddy's", "Lupin"],
-      Medicines: ["Vomiford-md", "concor 2.5", "Azithromycin", "Metformin"],
-    },
-    {
-      title: "Vishal Marketing",
-      phone: "9826222222",
-      address: "Station Road, Ujjain",
-      items: ["Another Brand 1", "Another Brand 2", "Glenmark", "Torrent"],
-      Medicines: ["Dsr", "Cetirizine", "Pantoprazole", "Amlodipine"],
-    },
-    {
-      title: "Rajesh Marketing",
-      phone: "9826333333",
-      address: "Main Market, Dewas",
-      items: ["More Products", "Leeford", "Zevintus", "Cadila"],
-      Medicines: ["Ibuprofen", "Ranitidine", "Cetirizine", "Metronidazole"],
-    },
-    {
-      title: "MediCare Solutions",
-      phone: "9826444444",
-      address: "Central Plaza, Indore",
-      items: ["Abbott", "Abb", "Biocon", "Wockhardt"],
-      Medicines: ["Insulin", "Glimepiride", "Sitagliptin", "Vildagliptin"],
-    },
-    {
-      title: "HealthCare Plus",
-      phone: "9826555555",
-      address: "Business Park, Bhopal",
-      items: ["Another Brand 1", "Another Brand 2", "Aurobindo", "Divis"],
-      Medicines: ["Losartan", "Telmisartan", "Olmesartan", "Valsartan"],
-    },
-    {
-      title: "Pharma Express",
-      phone: "9826666666",
-      address: "Industrial Area, Ujjain",
-      items: ["Leeford", "Zevintus", "Alkem", "Intas"],
-      Medicines: ["Atorvastatin", "Rosuvastatin", "Simvastatin", "Pravastatin"],
-    },
-    {
-      title: "MediLink Distributors",
-      phone: "9826777777",
-      address: "Trade Center, Dewas",
-      items: ["Cipla", "Sun Pharma", "Glenmark", "Torrent"],
-      Medicines: [
-        "Montelukast",
-        "Levocetirizine",
-        "Fexofenadine",
-        "Desloratadine",
-      ],
-    },
-  ];
+  // fetch stockists, medicines, companies and map into sectionData
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const [resStockist, resMedicine, resCompany] = await Promise.all([
+          fetch(`${API_BASE}/api/stockist`),
+          fetch(`${API_BASE}/api/medicine`),
+          fetch(`${API_BASE}/api/company`),
+        ]);
+        const [jsonStockist, jsonMedicine, jsonCompany] = await Promise.all([
+          resStockist.json(),
+          resMedicine.json(),
+          resCompany.json(),
+        ]);
 
-  // Get all unique items for each filter type
+        const medicines = (jsonMedicine && jsonMedicine.data) || [];
+        const companies = (jsonCompany && jsonCompany.data) || [];
+
+        if (mounted && jsonStockist && jsonStockist.data) {
+          const mapped = jsonStockist.data.map((s) => {
+            const medsForStockist = medicines
+              .filter((m) =>
+                Array.isArray(m.stockists)
+                  ? m.stockists.some((st) =>
+                      String(st.stockist || st).includes(String(s._id))
+                    )
+                  : false
+              )
+              .map((m) => (m.name ? m.name : m.brandName || ""))
+              .filter(Boolean);
+
+            const companyIds = new Set(
+              medicines
+                .filter((m) =>
+                  Array.isArray(m.stockists)
+                    ? m.stockists.some((st) =>
+                        String(st.stockist || st).includes(String(s._id))
+                      )
+                    : false
+                )
+                .map((m) =>
+                  m.company && (m.company._id || m.company)
+                    ? String(m.company._id || m.company)
+                    : null
+                )
+                .filter(Boolean)
+            );
+
+            const companiesForStockist = companies
+              .filter((c) => companyIds.has(String(c._id)))
+              .map((c) => (c.name ? c.name : c.shortName || ""))
+              .filter(Boolean);
+
+            const items = (s.companies || companiesForStockist)
+              .map((c) => {
+                if (typeof c === "string") {
+                  const found = companies.find(
+                    (co) => String(co._id) === c || co.id === c
+                  );
+                  return found ? found.name || found.shortName || c : c;
+                }
+                if (c && (c.name || c.shortName)) return c.name || c.shortName;
+                return "";
+              })
+              .filter(Boolean);
+
+            const meds = (s.medicines || medsForStockist)
+              .map((m) =>
+                typeof m === "string"
+                  ? m
+                  : m && (m.name || m.brandName)
+                  ? m.name || m.brandName
+                  : ""
+              )
+              .filter(Boolean);
+
+            return {
+              _id: s._id,
+              title: s.name,
+              phone: s.phone,
+              address: s.address
+                ? `${s.address.street || ""}, ${s.address.city || ""}`
+                : "",
+              items,
+              Medicines: meds,
+            };
+          });
+          setSectionData(mapped);
+          console.warn("Nav: loaded stockists ->", mapped.length);
+        }
+      } catch (err) {
+        console.warn("Nav: failed to load stockists", err);
+      }
+    })();
+    return () => (mounted = false);
+  }, []);
+
+  // read token
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setUserToken(token);
+  }, []);
+
+  // helpers to gather all unique values for a given filter type
   const getAllItems = (type) => {
     if (type === "company") {
       const allCompanies = new Set();
@@ -108,14 +158,14 @@ function Nav() {
     return [];
   };
 
-  // Handle filter type change
+  // change filter type and pre-populate selectedStockists for "show all"
   const handleFilterTypeChange = (newType) => {
     setFilterType(newType);
     setSearchQuery("");
     setSelectedStockists([]);
     setShowAllResults(true);
+    setShowFilterModal(false);
 
-    // Show all items of the selected type
     const allItems = getAllItems(newType);
     if (newType === "stockist") {
       setSelectedStockists(sectionData);
@@ -140,45 +190,46 @@ function Nav() {
     }
   };
 
+  // suggestions logic
   useEffect(() => {
-    const query = searchQuery.toLowerCase();
-    let resultSet = new Set();
+    const q = searchQuery.trim().toLowerCase();
+    const resultSet = new Set();
+
+    if (!q) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
 
     if (filterType === "company") {
       sectionData.forEach((section) =>
         section.items?.forEach((item) => {
-          if (item.toLowerCase().includes(query)) {
-            resultSet.add(item);
-          }
+          if (item.toLowerCase().includes(q)) resultSet.add(item);
         })
       );
     } else if (filterType === "stockist") {
       sectionData.forEach((section) => {
-        if (section.title.toLowerCase().includes(query)) {
+        if (section.title.toLowerCase().includes(q))
           resultSet.add(section.title);
-        }
       });
     } else if (filterType === "medicine") {
       sectionData.forEach((section) =>
         section.Medicines?.forEach((med) => {
-          if (med.toLowerCase().includes(query)) {
-            resultSet.add(med);
-          }
+          if (med.toLowerCase().includes(q)) resultSet.add(med);
         })
       );
     }
 
     const results = [...resultSet];
     setSuggestions(results);
-    setShowSuggestions(query.length > 0 && results.length > 0);
-  }, [searchQuery, filterType]);
+    setShowSuggestions(results.length > 0);
+  }, [searchQuery, filterType, sectionData]);
 
   const handleSuggestionClick = (suggestion) => {
     setIsLoading(true);
     setSearchQuery(suggestion);
     setShowSuggestions(false);
 
-    // Simulate a small delay for better UX
     setTimeout(() => {
       let stockists = [];
       if (filterType === "stockist") {
@@ -201,11 +252,10 @@ function Nav() {
     }, 300);
   };
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-    if (e.target.value === "") {
+  const handleSearchChange = (text) => {
+    setSearchQuery(text);
+    if (text === "") {
       setShowAllResults(true);
-      // Show all items of current filter type
       const allItems = getAllItems(filterType);
       if (filterType === "stockist") {
         setSelectedStockists(sectionData);
@@ -239,568 +289,553 @@ function Nav() {
     setShowAllResults(false);
   };
 
-  const handleLoginClick = () => navigate("/login");
-  const handleSignupClick = () => navigate("/signup");
-  const handleProfileClick = () => navigate("/profile");
-
-  // Filter type options with icons
+  // small UI datasets
   const filterOptions = [
     { value: "medicine", label: "Medicine", icon: "💊" },
     { value: "company", label: "Company", icon: "🏢" },
     { value: "stockist", label: "Stockist", icon: "🏪" },
   ];
 
-  // Navigation links
   const navLinks = [
-    { href: "#", label: "Home", icon: <Home size={18} /> },
-    { href: "#", label: "About", icon: <Info size={18} /> },
-    { href: "#", label: "Contact", icon: <Phone size={18} /> },
+    { label: "Home", icon: "🏠" },
+    { label: "About", icon: "ℹ️" },
+    { label: "Contact", icon: "📞" },
   ];
 
-  // Initialize with all companies on component mount
+  // initialize to company on mount
+  useEffect(() => handleFilterTypeChange("company"), []); // eslint-disable-line
+
+  // ensure selectedStockists is populated when sectionData changes
   useEffect(() => {
-    handleFilterTypeChange("company");
-  }, []);
+    if (!sectionData || sectionData.length === 0) return;
+    if (selectedStockists && selectedStockists.length > 0) return;
+
+    const allItems = getAllItems(filterType);
+    if (filterType === "stockist") {
+      setSelectedStockists(sectionData);
+    } else if (filterType === "company") {
+      const companyStockists = [];
+      allItems.forEach((company) => {
+        const stockists = sectionData.filter(
+          (section) => section.items && section.items.includes(company)
+        );
+        companyStockists.push(...stockists);
+      });
+      setSelectedStockists([...new Set(companyStockists)]);
+    } else if (filterType === "medicine") {
+      const medicineStockists = [];
+      allItems.forEach((medicine) => {
+        const stockists = sectionData.filter(
+          (section) => section.Medicines && section.Medicines.includes(medicine)
+        );
+        medicineStockists.push(...stockists);
+      });
+      setSelectedStockists([...new Set(medicineStockists)]);
+    }
+    setShowAllResults(true);
+    // eslint-disable-next-line
+  }, [sectionData]);
+
+  // render a stockist card
+  const renderStockistCard = (item, idx) => (
+    <div
+      key={item._id || idx}
+      className="bg-white rounded-xl p-5 mb-4 shadow-md border border-sky-100"
+    >
+      <h3 className="text-lg font-bold text-sky-700 mb-2">{item.title}</h3>
+
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Icon>📞</Icon>
+          <span className="font-semibold text-slate-700 mr-1">Phone:</span>
+          <span className="text-sky-600">{item.phone}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-base">📍</span>
+          <span className="font-semibold text-slate-700 mr-1">Address:</span>
+          <span className="text-slate-600">{item.address}</span>
+        </div>
+      </div>
+
+      {filterType === "company" && item.items && (
+        <div className="mb-3">
+          <div className="flex items-center mb-2">
+            <span className="mr-2">🏢</span>
+            <span className="font-semibold text-slate-700">Companies:</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {item.items.map((company, i) => {
+              const matched =
+                searchQuery &&
+                company.toLowerCase().includes(searchQuery.toLowerCase());
+              return (
+                <span
+                  key={i}
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    matched
+                      ? "bg-sky-200 border-2 border-sky-500 text-sky-800"
+                      : "bg-sky-50 text-sky-700"
+                  }`}
+                >
+                  {company}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {filterType === "medicine" && item.Medicines && (
+        <div className="mb-3">
+          <div className="flex items-center mb-2">
+            <span className="mr-2">💊</span>
+            <span className="font-semibold text-slate-700">Medicines:</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {item.Medicines.map((med, i) => {
+              const matched =
+                searchQuery &&
+                med.toLowerCase().includes(searchQuery.toLowerCase());
+              return (
+                <span
+                  key={i}
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    matched
+                      ? "bg-green-200 border-2 border-green-500 text-green-800"
+                      : "bg-green-50 text-green-700"
+                  }`}
+                >
+                  {med}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {filterType === "stockist" && (
+        <div className="mt-2">
+          {item.items && (
+            <>
+              <div className="flex items-center mb-2">
+                <span className="mr-2">🏢</span>
+                <span className="font-semibold text-slate-700">Companies:</span>
+              </div>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {item.items.map((company, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1 rounded-full text-sm font-medium bg-sky-50 text-sky-700"
+                  >
+                    {company}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+
+          {item.Medicines && (
+            <>
+              <div className="flex items-center mb-2">
+                <span className="mr-2">💊</span>
+                <span className="font-semibold text-slate-700">Medicines:</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {item.Medicines.map((med, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1 rounded-full text-sm font-medium bg-green-50 text-green-700"
+                  >
+                    {med}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-amber-50 w-full shadow-xl relative">
-      <div className="max-w-7xl mx-auto">
-        {/* Header section */}
-        <div className="flex items-center justify-between px-4 py-4 md:py-6">
-          {/* Logo */}
-          <div className="relative flex items-center justify-center">
-            <div className="relative w-20 h-20 flex items-center justify-center">
-              <span className="text-blue-600 text-4xl font-bold absolute z-10 left-3">
-                D
-              </span>
-              <span className="text-red-600 text-4xl font-bold absolute z-10 right-4">
-                K
-              </span>
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-red-100 rounded-full flex items-center justify-center shadow-lg">
-                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-inner">
-                  {"/cd774852582f4e41232a6ebd5886e0bc-removebg-preview.png" && (
-                    <img
-                      src="/cd774852582f4e41232a6ebd5886e0bc-removebg-preview.png"
-                      alt="MedTrap Logo"
-                    />
-                  )}
+    <div className="bg-sky-50 min-h-screen">
+      <div className="max-w-6xl mx-auto px-4">
+        {/* Header */}
+        <div className="flex items-center justify-between py-6">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-16 h-16 rounded-full bg-sky-100 flex items-center justify-center shadow">
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                  <span className="text-xl">🏥</span>
                 </div>
               </div>
-            </div>
-            <div className="ml-3">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent">
-                MedTrap
-              </h1>
-              <p className="text-xs text-gray-600 -mt-1">Medical Solutions</p>
+              <div>
+                <h1 className="text-2xl font-bold text-sky-700">MedTrap</h1>
+                <p className="text-sm text-slate-500 -mt-1">
+                  Medical Solutions
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="flex items-center gap-3">
             <button
-              className="p-3 rounded-full bg-white shadow-lg text-blue-600 hover:bg-blue-50 transition-all duration-200 transform hover:scale-105 active:scale-95"
-              onClick={() => setIsMenuOpen((prev) => !prev)}
+              onClick={() => setIsMenuOpen(true)}
+              className="w-12 h-12 bg-white rounded-full shadow flex items-center justify-center"
+              aria-label="open menu"
             >
-              {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              <Icon>☰</Icon>
             </button>
-          </div>
-
-          {/* Desktop navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            <nav className="flex items-center space-x-8">
-              {navLinks.map((link, index) => (
-                <a
-                  key={index}
-                  href={link.href}
-                  className="flex items-center gap-2 font-medium text-gray-700 hover:text-blue-600 transition-all duration-200 relative group transform hover:scale-105 active:scale-95"
-                >
-                  <span className="text-blue-500 group-hover:text-blue-600 transition-colors">
-                    {link.icon}
-                  </span>
-                  <span>{link.label}</span>
-                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></div>
-                </a>
-              ))}
-            </nav>
-            <div className="flex items-center gap-3">
-              {localStorage.getItem("token") ? (
-                <button
-                  onClick={handleProfileClick}
-                  className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 font-medium transform hover:scale-105 active:scale-95 hover:-translate-y-0.5"
-                >
-                  <User size={18} />
-                  <span>Profile</span>
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={handleLoginClick}
-                    className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 font-medium transform hover:scale-105 active:scale-95 hover:-translate-y-0.5"
-                  >
-                    <LogIn size={18} />
-                    <span>Login</span>
-                  </button>
-                  <button
-                    onClick={handleSignupClick}
-                    className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 font-medium transform hover:scale-105 active:scale-95 hover:-translate-y-0.5"
-                  >
-                    <UserPlus size={18} />
-                    <span>Sign Up</span>
-                  </button>
-                </>
-              )}
-            </div>
           </div>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile menu modal */}
         {isMenuOpen && (
-          <div className="md:hidden overflow-hidden animate-in slide-in-from-top-2 duration-300">
-            <div className="px-4 pb-4">
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-4 border border-white/20">
-                <div className="space-y-3">
-                  {navLinks.map((link, index) => (
-                    <a
-                      key={index}
-                      href={link.href}
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 group transform hover:scale-105 active:scale-95"
-                      style={{ animationDelay: `${index * 100}ms` }}
-                    >
-                      <span className="text-blue-600 group-hover:text-blue-700 transition-colors">
-                        {link.icon}
-                      </span>
-                      <span className="font-medium text-gray-700 group-hover:text-blue-700 transition-colors">
-                        {link.label}
-                      </span>
-                    </a>
-                  ))}
-                </div>
-                <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
-                  {localStorage.getItem("token") ? (
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 max-h-[80vh] overflow-auto">
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-2 rounded-md"
+                  aria-label="close menu"
+                >
+                  <Icon>✖</Icon>
+                </button>
+              </div>
+
+              <nav className="mt-2 space-y-2">
+                {navLinks.map((link, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-50"
+                  >
+                    <span>{link.icon}</span>
+                    <span className="font-medium text-slate-700">
+                      {link.label}
+                    </span>
+                  </button>
+                ))}
+              </nav>
+
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                {userToken ? (
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      navigation.navigate("profile");
+                    }}
+                    className="w-full flex items-center gap-3 justify-center px-4 py-2 rounded-lg bg-violet-600 text-white"
+                  >
+                    <Icon>👤</Icon>
+                    <span>Profile</span>
+                  </button>
+                ) : (
+                  <div className="space-y-2">
                     <button
-                      onClick={handleProfileClick}
-                      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        navigation.navigate("login");
+                      }}
+                      className="w-full flex items-center gap-3 justify-center px-4 py-2 rounded-lg bg-sky-500 text-white"
                     >
-                      <User size={18} />
-                      <span>Profile</span>
+                      <Icon>🔐</Icon>
+                      <span>Login</span>
                     </button>
-                  ) : (
-                    <>
-                      <button
-                        onClick={handleLoginClick}
-                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
-                      >
-                        <LogIn size={18} />
-                        <span>Login</span>
-                      </button>
-                      <button
-                        onClick={handleSignupClick}
-                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
-                      >
-                        <UserPlus size={18} />
-                        <span>Sign Up</span>
-                      </button>
-                    </>
-                  )}
-                </div>
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        navigation.navigate("signup");
+                      }}
+                      className="w-full flex items-center gap-3 justify-center px-4 py-2 rounded-lg bg-emerald-500 text-white"
+                    >
+                      <Icon>👤➕</Icon>
+                      <span>Sign Up</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
 
         {/* Search section */}
-        <div className="px-4 pb-6 relative">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 border border-white/20">
-            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-              <div className="relative flex-grow">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Search size={20} className="text-gray-400" />
-                </div>
+        <div className="mt-4 bg-white rounded-2xl p-5 shadow-sm border border-sky-100">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 bg-sky-100 rounded-lg px-4 py-3 border border-sky-200">
+                <Icon>🔍</Icon>
                 <input
-                  type="text"
-                  className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-gray-800 rounded-xl pl-12 pr-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 placeholder-gray-500"
-                  placeholder={`Search for ${filterType}...`}
                   value={searchQuery}
-                  onChange={handleSearchChange}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   onFocus={() => setShowSuggestions(true)}
+                  className="flex-1 bg-transparent outline-none text-slate-800"
+                  placeholder={`Search for ${filterType}...`}
                 />
                 {searchQuery && (
-                  <button
-                    onClick={clearResults}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <X size={18} />
+                  <button onClick={clearResults} className="p-1 rounded">
+                    <Icon>✖</Icon>
                   </button>
                 )}
               </div>
-
-              <div className="relative min-w-48">
-                <select
-                  value={filterType}
-                  onChange={(e) => handleFilterTypeChange(e.target.value)}
-                  className="bg-gradient-to-r from-blue-100 to-indigo-100 border border-blue-200 text-gray-800 rounded-xl px-4 py-3 w-full appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 font-medium"
-                >
-                  {filterOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.icon} {option.label}
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                  <ChevronDown size={20} className="text-gray-500" />
-                </div>
-              </div>
             </div>
 
-            {/* Suggestions dropdown */}
-            {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute top-full left-4 right-4 mt-2 bg-white/95 backdrop-blur-sm border border-blue-100 rounded-xl shadow-2xl z-[999] max-h-72 overflow-auto animate-in slide-in-from-top-2 duration-200">
-                <div className="p-2">
-                  <div className="px-3 py-2 border-b border-gray-100 mb-2">
-                    <p className="text-sm text-gray-600 font-medium">
-                      Click on any suggestion to see detailed results
-                    </p>
-                  </div>
-                  {suggestions.map((suggestion, i) => {
-                    let phone = null;
-                    let additionalInfo = "";
-
-                    if (filterType === "stockist") {
-                      const stockist = sectionData.find(
-                        (section) => section.title === suggestion
-                      );
-                      phone = stockist ? stockist.phone : null;
-                      additionalInfo = stockist
-                        ? `${stockist.items?.length || 0} companies, ${
-                            stockist.Medicines?.length || 0
-                          } medicines`
-                        : "";
-                    } else if (filterType === "company") {
-                      const stockists = sectionData.filter(
-                        (section) =>
-                          section.items && section.items.includes(suggestion)
-                      );
-                      additionalInfo = `Available at ${
-                        stockists.length
-                      } stockist${stockists.length > 1 ? "s" : ""}`;
-                    } else if (filterType === "medicine") {
-                      const stockists = sectionData.filter(
-                        (section) =>
-                          section.Medicines &&
-                          section.Medicines.includes(suggestion)
-                      );
-                      additionalInfo = `Available at ${
-                        stockists.length
-                      } stockist${stockists.length > 1 ? "s" : ""}`;
-                    }
-
-                    return (
-                      <div
-                        key={i}
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer rounded-lg transition-all duration-200 group transform hover:scale-105 active:scale-95 border border-transparent hover:border-blue-200"
-                        onClick={() => handleSuggestionClick(suggestion)}
-                      >
-                        <span className="text-xl group-hover:scale-110 transition-transform duration-200">
-                          {filterType === "medicine" ? (
-                            "💊"
-                          ) : filterType === "company" ? (
-                            "🏢"
-                          ) : (
-                            <Phone
-                              size={18}
-                              className="inline-block text-blue-500"
-                            />
-                          )}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <span className="font-medium text-gray-700 group-hover:text-blue-700 transition-colors block">
-                            {suggestion}
-                          </span>
-                          {additionalInfo && (
-                            <span className="text-xs text-gray-500 block mt-1">
-                              {additionalInfo}
-                            </span>
-                          )}
-                        </div>
-                        {phone && (
-                          <span className="text-sm text-gray-500 font-semibold flex items-center gap-1 flex-shrink-0">
-                            <Phone
-                              size={16}
-                              className="inline-block text-green-500"
-                            />
-                            {phone}
-                          </span>
-                        )}
-                        <span className="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          →
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            <div>
+              <button
+                onClick={() => setShowFilterModal(true)}
+                className="flex items-center gap-2 bg-sky-50 px-4 py-3 rounded-lg border border-sky-200"
+              >
+                <span>
+                  {filterOptions.find((opt) => opt.value === filterType)?.icon}
+                </span>
+                <span className="font-medium">
+                  {filterOptions.find((opt) => opt.value === filterType)?.label}
+                </span>
+                <span className="text-sm">▼</span>
+              </button>
+            </div>
           </div>
-          {/* Results Display */}
-          {selectedStockists.length > 0 && (
-            <div className="mt-6">
-              {/* Loading Indicator */}
-              {isLoading && (
-                <div className="mb-4 text-center">
-                  <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
-                    <span className="text-sm font-medium">
-                      Loading results...
-                    </span>
-                  </div>
-                </div>
-              )}
 
-              {/* Search Result Counter */}
-              {searchQuery && (
-                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">🔍</span>
-                      <div>
-                        <p className="font-semibold text-blue-800">
-                          Search Results for "{searchQuery}"
-                        </p>
-                        <p className="text-sm text-blue-600">
-                          {selectedStockists.length} result
-                          {selectedStockists.length > 1 ? "s" : ""} found
-                        </p>
-                      </div>
-                    </div>
+          {/* Filter modal */}
+          {showFilterModal && (
+            <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
+              <div
+                className="bg-white rounded-lg p-5 w-full max-w-md mx-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="text-lg font-bold text-center mb-3">
+                  Select Filter Type
+                </h3>
+                <div className="space-y-2">
+                  {filterOptions.map((opt) => (
                     <button
-                      onClick={() => {
-                        setSearchQuery("");
-                        handleFilterTypeChange(filterType);
-                      }}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 font-medium transform hover:scale-105 active:scale-95"
+                      key={opt.value}
+                      onClick={() => handleFilterTypeChange(opt.value)}
+                      className={`w-full text-left px-4 py-3 rounded-lg ${
+                        filterType === opt.value
+                          ? "bg-sky-100 border border-sky-300"
+                          : "bg-slate-50"
+                      }`}
                     >
-                      Show All{" "}
-                      {filterType === "stockist"
-                        ? "Stockists"
-                        : filterType === "company"
-                        ? "Companies"
-                        : "Medicines"}
+                      <div className="flex items-center gap-3">
+                        <span>{opt.icon}</span>
+                        <span
+                          className={`${
+                            filterType === opt.value
+                              ? "font-semibold text-sky-700"
+                              : "text-slate-700"
+                          }`}
+                        >
+                          {opt.label}
+                        </span>
+                      </div>
                     </button>
-                  </div>
+                  ))}
                 </div>
-              )}
-
-              {/* Results Header */}
-              <div className="mb-4 text-center">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  {searchQuery ? (
-                    <>
-                      Search Results for "{searchQuery}"
-                      <span className="block text-lg text-blue-600 mt-1">
-                        {filterType === "stockist" && "Stockist Details"}
-                        {filterType === "company" &&
-                          "Stockists with this Company"}
-                        {filterType === "medicine" &&
-                          "Stockists with this Medicine"}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      {filterType === "stockist" && "All Stockists"}
-                      {filterType === "company" && "All Companies"}
-                      {filterType === "medicine" && "All Medicines"}
-                    </>
-                  )}
-                </h2>
-                <p className="text-gray-600 mb-4">
-                  {searchQuery ? (
-                    `Found ${selectedStockists.length} result${
-                      selectedStockists.length > 1 ? "s" : ""
-                    }`
-                  ) : (
-                    <>
-                      {filterType === "stockist" &&
-                        `Showing ${selectedStockists.length} stockists`}
-                      {filterType === "company" &&
-                        `Showing ${selectedStockists.length} stockists with companies`}
-                      {filterType === "medicine" &&
-                        `Showing ${selectedStockists.length} stockists with medicines`}
-                    </>
-                  )}
-                </p>
-                <div className="flex gap-3 justify-center">
+                <div className="mt-4 text-center">
                   <button
-                    onClick={clearResults}
-                    className="bg-gray-500 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 font-medium transform hover:scale-105 active:scale-95"
+                    onClick={() => setShowFilterModal(false)}
+                    className="px-4 py-2 rounded-md bg-slate-200"
                   >
-                    Clear Results
+                    Close
                   </button>
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* Results Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {selectedStockists.map((stockist, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-white rounded-xl shadow-lg p-6 border border-blue-100 hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                  >
-                    <h3 className="text-xl font-bold text-blue-700 mb-3">
-                      {stockist.title}
-                    </h3>
-
-                    <div className="space-y-2 mb-4">
-                      <p className="text-gray-700 flex items-center gap-2">
-                        <Phone size={16} className="text-green-500" />
-                        <span className="font-semibold">Phone:</span>{" "}
-                        <span className="text-blue-600">{stockist.phone}</span>
-                      </p>
-                      <p className="text-gray-700 flex items-center gap-2">
-                        <span className="text-gray-500">📍</span>
-                        <span className="font-semibold">Address:</span>{" "}
-                        <span className="text-blue-600">
-                          {stockist.address}
-                        </span>
-                      </p>
-                    </div>
-
-                    {filterType === "company" && stockist.items && (
-                      <div className="mb-3">
-                        <p className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          <span className="text-xl">🏢</span>
-                          Companies:
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {stockist.items.map((company, companyIdx) => (
-                            <span
-                              key={companyIdx}
-                              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                searchQuery &&
-                                company
-                                  .toLowerCase()
-                                  .includes(searchQuery.toLowerCase())
-                                  ? "bg-blue-200 text-blue-800 border-2 border-blue-400"
-                                  : "bg-blue-100 text-blue-700"
-                              }`}
-                            >
-                              {company}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {filterType === "medicine" && stockist.Medicines && (
-                      <div className="mb-3">
-                        <p className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          <span className="text-xl">💊</span>
-                          Medicines:
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {stockist.Medicines.map((medicine, medIdx) => (
-                            <span
-                              key={medIdx}
-                              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                searchQuery &&
-                                medicine
-                                  .toLowerCase()
-                                  .includes(searchQuery.toLowerCase())
-                                  ? "bg-green-200 text-green-800 border-2 border-green-400"
-                                  : "bg-green-100 text-green-700"
-                              }`}
-                            >
-                              {medicine}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {filterType === "stockist" && (
-                      <div className="space-y-2">
-                        {stockist.items && (
-                          <div>
-                            <p className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                              <span className="text-xl">🏢</span>
-                              Companies:
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {stockist.items.map((company, companyIdx) => (
-                                <span
-                                  key={companyIdx}
-                                  className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium"
-                                >
-                                  {company}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {stockist.Medicines && (
-                          <div>
-                            <p className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                              <span className="text-xl">💊</span>
-                              Medicines:
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {stockist.Medicines.map((medicine, medIdx) => (
-                                <span
-                                  key={medIdx}
-                                  className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium"
-                                >
-                                  {medicine}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
+          {/* Suggestions */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="mt-3 bg-white border border-slate-100 rounded-lg shadow max-h-72 overflow-auto">
+              <div className="px-4 py-2 text-sm text-slate-500 border-b border-slate-100">
+                Click on any suggestion to see detailed results
               </div>
-              {searchQuery && <div className="mt-6 text-center"></div>}
+              <div className="divide-y">
+                {suggestions.map((sug, i) => {
+                  let phone = null;
+                  let additionalInfo = "";
+
+                  if (filterType === "stockist") {
+                    const stockist = sectionData.find(
+                      (sec) => sec.title === sug
+                    );
+                    phone = stockist ? stockist.phone : null;
+                    additionalInfo = stockist
+                      ? `${stockist.items?.length || 0} companies, ${
+                          stockist.Medicines?.length || 0
+                        } medicines`
+                      : "";
+                  } else if (filterType === "company") {
+                    const stockists = sectionData.filter(
+                      (sec) => sec.items && sec.items.includes(sug)
+                    );
+                    additionalInfo = `Available at ${
+                      stockists.length
+                    } stockist${stockists.length > 1 ? "s" : ""}`;
+                  } else if (filterType === "medicine") {
+                    const stockists = sectionData.filter(
+                      (sec) => sec.Medicines && sec.Medicines.includes(sug)
+                    );
+                    additionalInfo = `Available at ${
+                      stockists.length
+                    } stockist${stockists.length > 1 ? "s" : ""}`;
+                  }
+
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handleSuggestionClick(sug)}
+                      className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-slate-50"
+                    >
+                      <div className="text-xl">
+                        {filterType === "medicine"
+                          ? "💊"
+                          : filterType === "company"
+                          ? "🏢"
+                          : "🏪"}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium text-slate-700">{sug}</div>
+                        {additionalInfo && (
+                          <div className="text-sm text-slate-500">
+                            {additionalInfo}
+                          </div>
+                        )}
+                      </div>
+                      {phone && (
+                        <div className="text-sm text-slate-600 font-semibold">
+                          {phone}
+                        </div>
+                      )}
+                      <div className="text-sky-500 ml-2">→</div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
 
-        {/* Quick stats or additional info */}
-        <div className="px-4 pb-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-200 transform hover:scale-105">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">🏥</span>
+        {/* Debug / counts */}
+        <div className="px-4 pt-4 text-sm text-slate-500">
+          Debug: sectionData = {sectionData.length} stockists
+        </div>
+
+        {/* Results */}
+        {selectedStockists.length > 0 && (
+          <div className="px-4 mt-4">
+            {isLoading && (
+              <div className="flex items-center gap-3 bg-sky-100 p-3 rounded-lg mb-4">
+                <div className="animate-spin border-2 border-sky-400 rounded-full w-4 h-4" />
+                <div className="text-sky-700 font-medium">
+                  Loading results...
+                </div>
+              </div>
+            )}
+
+            {searchQuery && (
+              <div className="bg-sky-100 rounded-lg p-4 mb-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">🔍</div>
+                  <div>
+                    <div className="font-semibold text-sky-700">
+                      Search Results for "{searchQuery}"
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      {selectedStockists.length} result
+                      {selectedStockists.length > 1 ? "s" : ""} found
+                    </div>
+                  </div>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800">Stockists</h3>
-                  <p className="text-sm text-gray-600">
-                    Find verified stockists
-                  </p>
+                  <button
+                    onClick={() => {
+                      setSearchQuery("");
+                      handleFilterTypeChange(filterType);
+                    }}
+                    className="px-3 py-2 bg-sky-600 text-white rounded-md"
+                  >
+                    Show All{" "}
+                    {filterType === "stockist"
+                      ? "Stockists"
+                      : filterType === "company"
+                      ? "Companies"
+                      : "Medicines"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="mb-4">
+              <div className="text-center">
+                <h2 className="text-xl font-bold text-slate-800">
+                  {searchQuery
+                    ? `Search Results for "${searchQuery}"`
+                    : filterType === "stockist"
+                    ? "All Stockists"
+                    : filterType === "company"
+                    ? "All Companies"
+                    : "All Medicines"}
+                </h2>
+                <div className="text-sm text-slate-500 mt-1">
+                  {searchQuery
+                    ? `Found ${selectedStockists.length} result${
+                        selectedStockists.length > 1 ? "s" : ""
+                      }`
+                    : `Showing ${selectedStockists.length} stockists`}
+                </div>
+              </div>
+              <div className="flex justify-end mt-3">
+                <button
+                  onClick={clearResults}
+                  className="px-3 py-2 bg-slate-600 text-white rounded-md"
+                >
+                  Clear Results
+                </button>
+              </div>
+            </div>
+
+            <div>
+              {selectedStockists.map((s, i) => renderStockistCard(s, i))}
+            </div>
+          </div>
+        )}
+
+        {/* Quick stats */}
+        <div className="px-4 mt-6 pb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex items-center gap-4 bg-white rounded-xl p-5 shadow">
+              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
+                🏥
+              </div>
+              <div>
+                <div className="font-semibold text-slate-800">Stockists</div>
+                <div className="text-sm text-slate-500">
+                  Find verified stockists
                 </div>
               </div>
             </div>
-            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-200 transform hover:scale-105">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">💊</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800">Medicines</h3>
-                  <p className="text-sm text-gray-600">Search all medicines</p>
+
+            <div className="flex items-center gap-4 bg-white rounded-xl p-5 shadow">
+              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
+                💊
+              </div>
+              <div>
+                <div className="font-semibold text-slate-800">Medicines</div>
+                <div className="text-sm text-slate-500">
+                  Search all medicines
                 </div>
               </div>
             </div>
-            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-200 transform hover:scale-105">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">🏢</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800">Companies</h3>
-                  <p className="text-sm text-gray-600">
-                    Browse pharma companies
-                  </p>
+
+            <div className="flex items-center gap-4 bg-white rounded-xl p-5 shadow">
+              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
+                🏢
+              </div>
+              <div>
+                <div className="font-semibold text-slate-800">Companies</div>
+                <div className="text-sm text-slate-500">
+                  Browse pharma companies
                 </div>
               </div>
             </div>
@@ -810,5 +845,3 @@ function Nav() {
     </div>
   );
 }
-
-export default Nav;
