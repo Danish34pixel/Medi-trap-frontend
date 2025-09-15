@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import { apiUrl } from "./config/api";
 
 const PurchaserDetails = () => {
   const { id } = useParams();
@@ -12,7 +13,7 @@ const PurchaserDetails = () => {
     const fetchPurchaser = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`/api/purchaser/${id}`);
+        const res = await axios.get(apiUrl(`/api/purchaser/${id}`));
         setPurchaser(res.data.data);
         setError(null);
       } catch (err) {

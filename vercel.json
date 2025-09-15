@@ -1,3 +1,9 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/favicon.ico",
+      "destination": "/cd774852582f4e41232a6ebd5886e0bc-removebg-preview.png"
+    },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

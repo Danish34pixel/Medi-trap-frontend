@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { apiUrl } from "./config/api";
 import { QRCodeCanvas } from "qrcode.react";
 
 const Purchaser = () => {
@@ -25,7 +26,7 @@ const Purchaser = () => {
   const fetchPurchasers = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("/api/purchaser");
+      const res = await axios.get(apiUrl("/api/purchaser"));
       setPurchasers(Array.isArray(res.data.data) ? res.data.data : []);
       setError(null);
     } catch (err) {
@@ -63,7 +64,7 @@ const Purchaser = () => {
       formData.append("aadharImage", form.aadharImage);
       formData.append("photo", form.photo);
 
-      await axios.post("/api/purchaser", formData, {
+      await axios.post(apiUrl("/api/purchaser"), formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setForm({
