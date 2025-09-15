@@ -116,7 +116,7 @@ export default function StaffCreate() {
               disabled={loading}
               className="px-4 py-2 bg-emerald-500 text-white rounded"
             >
-              {loading ? "Saving..." : "Create Staff"}
+              {loading ? "Saving...." : "Create Staff"}
             </button>
           </div>
         </form>
