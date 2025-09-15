@@ -11,10 +11,11 @@ export default defineConfig(({ command, mode }) => {
     server: isDev
       ? {
           proxy: {
-            // Proxy API calls during development to avoid CORS issues.
-            // Requests to /api/* will be forwarded to the remote API.
+            // Proxy API calls during development to the local backend
+            // so calling `/api/*` from the Vite app forwards to
+            // http://localhost:5000 (where the Backend server runs).
             "/api": {
-              target: "https://meditrap-1.onrender.com",
+              target: "http://localhost:5000",
               changeOrigin: true,
               secure: false,
               rewrite: (path) => path.replace(/^\/api/, "/api"),
