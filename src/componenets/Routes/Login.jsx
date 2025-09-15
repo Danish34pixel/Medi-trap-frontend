@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { apiUrl } from "../config/api";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
@@ -34,7 +35,7 @@ const Login = () => {
 
     try {
       // Use configured API base so production builds point to the Render backend
-      const response = await fetch(`/api/auth/login`, {
+      const response = await fetch(apiUrl(`/api/auth/login`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email, password: form.password }),

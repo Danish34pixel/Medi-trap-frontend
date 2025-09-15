@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { apiUrl } from "../config/api";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
@@ -70,8 +71,8 @@ const Signup = () => {
     });
 
     try {
-      // Use relative path so API_BASE / REMOTE_API is used in production builds
-      const response = await fetch(`/api/auth/signup`, {
+      // Use relative path helper so API_BASE / REMOTE_API is used in production builds
+      const response = await fetch(apiUrl(`/api/auth/signup`), {
         method: "POST",
         body: formData,
       });
