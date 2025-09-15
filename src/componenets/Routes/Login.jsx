@@ -49,7 +49,7 @@ const Login = () => {
       if (data.success && data.token && data.user) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
-        setMessage("Login successful!");
+        setMessage("Login successfull!");
         // Redirect to dashboard after a short delay so the success message is visible
         setTimeout(() => navigate("/dashboard"), 700);
       } else {
