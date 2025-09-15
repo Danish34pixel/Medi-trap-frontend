@@ -1,6 +1,7 @@
 import React from "react";
 import Nav from "./componenets/Nav";
 import Dashboard from "./componenets/Dashboard";
+import RoleSelector from "./componenets/Role";
 import { Route, Routes } from "react-router-dom";
 import Login from "./componenets/Routes/Login";
 import Signup from "./componenets/Routes/Signup";
@@ -13,12 +14,16 @@ import AdminCreateCompany from "./componenets/AdminCreateCompany";
 import AdminCreateMedicine from "./componenets/AdminCreateMedicine";
 import Purchaser from "./componenets/Purchaser";
 import PurchaserDetails from "./componenets/PurchaserDetails";
+import StaffList from "./componenets/StaffList";
+import StaffCreate from "./componenets/StaffCreate";
+import StaffDetails from "./componenets/StaffDetails";
 
 const App = () => {
   return (
     <div className="">
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<RoleSelector />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/CompanyResult" element={<CompanyResult />} />
@@ -28,6 +33,9 @@ const App = () => {
         <Route path="/adminCreateStockist" element={<AdminCreateStockist />} />
         <Route path="/adminCreateCompany" element={<AdminCreateCompany />} />
         <Route path="/adminCreateMedicine" element={<AdminCreateMedicine />} />
+        <Route path="/adminCreateStaff" element={<StaffCreate />} />
+        <Route path="/staffs" element={<StaffList />} />
+        <Route path="/staff/:id" element={<StaffDetails />} />
         <Route path="/purchaser" element={<Purchaser />} />
         <Route path="/purchaser/:id" element={<PurchaserDetails />} />
       </Routes>

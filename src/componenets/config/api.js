@@ -1,16 +1,24 @@
 // Central API base URL for fetches.
-// In development, use a relative path so the Vite dev server proxy handles CORS.
-// In production (or when BUILD env var is set), use the deployed backend URL.
-// Updated to point to the new Render backend instance.
-const REMOTE_API = "https://medi-trap-backend-2.onrender.com";
+// In production use the deployed backend (REMOTE_API).
+// In development, prefer an explicit VITE_API_URL env var or default to localhost:5000.
+// This avoids the common issue where dev fetches hit the Vite dev server (localhost:5173)
+// and return 4xx/5xx because Vite isn't proxying /api to the backend.
 
-export const API_BASE =
-  process.env.NODE_ENV === "development" ? "" : REMOTE_API;
+// Remote backend used in production by default (can be overridden by VITE_REMOTE_API)
+const REMOTE_API =
+  import.meta.env.VITE_REMOTE_API || "https://medi-trap-backend-2.onrender.com";
 
-// Helper to build full API URLs. If API_BASE is empty (dev), return relative path.
+// In development, prefer VITE_API_URL; otherwise default to localhost:5000
+const DEV_FALLBACK = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const IS_DEV = import.meta.env.MODE === "development";
+
+export const API_BASE = IS_DEV ? DEV_FALLBACK : REMOTE_API;
+
+// Helper to build full API URLs.
 export const apiUrl = (path) => {
   const p = path.startsWith("/") ? path : `/${path}`;
-  return API_BASE ? `${API_BASE}${p}` : p;
+  return `${API_BASE}${p}`;
 };
 
 export default API_BASE;
