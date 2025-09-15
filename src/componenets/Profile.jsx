@@ -9,9 +9,8 @@ import {
   Image as ImageIcon,
   LogOut,
 } from "lucide-react";
+import API_BASE from "./config/api";
 import { useNavigate } from "react-router-dom";
-
-const API_BASE = "http://localhost:5000";
 
 const Profile = () => {
   const navigate = useNavigate();

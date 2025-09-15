@@ -70,7 +70,8 @@ const Signup = () => {
     });
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/signup", {
+      // Use relative path so API_BASE / REMOTE_API is used in production builds
+      const response = await fetch(`/api/auth/signup`, {
         method: "POST",
         body: formData,
       });

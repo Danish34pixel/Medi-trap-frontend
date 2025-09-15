@@ -33,7 +33,8 @@ const Login = () => {
     setMessage("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
+      // Use configured API base so production builds point to the Render backend
+      const response = await fetch(`/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email, password: form.password }),

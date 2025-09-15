@@ -1,7 +1,8 @@
 // Central API base URL for fetches.
 // In development, use a relative path so the Vite dev server proxy handles CORS.
 // In production (or when BUILD env var is set), use the deployed backend URL.
-const REMOTE_API = "https://meditrap-1.onrender.com";
+// Updated to point to the new Render backend instance.
+const REMOTE_API = "https://medi-trap-backend-2.onrender.com";
 
 export const API_BASE =
   process.env.NODE_ENV === "development" ? "" : REMOTE_API;
