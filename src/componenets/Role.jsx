@@ -50,9 +50,9 @@ export default function SelectRolePage() {
       // ignore
     }
 
-    // If Staff is clicked, go directly to the staff signup/create page
+    // If Staff is clicked, go directly to the staff listing page
     if (roleId === "Staff") {
-      navigate("/adminCreateStaff");
+      navigate("/staffs");
       return;
     }
   };
