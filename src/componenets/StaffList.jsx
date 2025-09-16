@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-
-// Mock API and components for demo
-const apiUrl = (path) => `https://api.example.com${path}`;
+import { useNavigate } from 'react-router-dom';
+import { apiUrl } from "./config/api";
 
 // Mock StaffCard component
 const StaffCard = ({ staff, onOpen }) => {
@@ -100,55 +99,31 @@ const StaffModal = ({ staff, onClose }) => {
   );
 };
 
-// Mock staff data
-const mockStaffs = [
-  {
-    _id: "staff001",
-    fullName: "Dr. Sarah Johnson",
-    contact: "+91 98765 43210",
-    email: "sarah.johnson@example.com",
-    address: "123 Medical Plaza, Mumbai"
-  },
-  {
-    _id: "staff002",
-    fullName: "Rahul Sharma",
-    contact: "+91 87654 32109",
-    email: "rahul.sharma@example.com",
-    address: "456 Health Center, Delhi"
-  },
-  {
-    _id: "staff003",
-    fullName: "Priya Patel",
-    contact: "+91 76543 21098",
-    email: "priya.patel@example.com",
-    address: "789 Wellness Clinic, Bangalore"
-  }
-];
+// Staff list is loaded from backend via apiUrl('/api/staff')
 
 export default function StaffList() {
   const [staffs, setStaffs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
       try {
-        // Mock API call with delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setStaffs(mockStaffs);
+        const res = await fetch(apiUrl('/api/staff'));
+        const data = await res.json().catch(() => []);
+        if (res.ok && Array.isArray(data)) setStaffs(data);
+        else if (res.ok && data && Array.isArray(data.data)) setStaffs(data.data);
       } catch (e) {
-        console.error(e);
+        console.error('Failed to load staff list', e);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  // Mock navigate function
-  const navigateToCreate = () => {
-    console.log("Navigating to /adminCreateStaff");
-  };
+  const navigateToCreate = () => navigate('/adminCreateStaff');
 
   const filteredStaffs = staffs.filter(staff =>
     staff.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||

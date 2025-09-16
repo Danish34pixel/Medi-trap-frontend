@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import { Pill, Building2, Package, User, Mail, Sparkles, CheckCircle2, Users, Plus } from 'lucide-react';
+import { apiUrl } from "./config/api";
 
 export default function AdminCreateMedicine() {
   const [form, setForm] = useState({ name: "", company: "", stockists: [] });
@@ -9,7 +11,7 @@ export default function AdminCreateMedicine() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [particles, setParticles] = useState([]);
 
-  const navigate = null; // Placeholder for navigation
+  const navigate = useNavigate();
 
   // Track mouse movement for interactive effects
   useEffect(() => {
@@ -56,12 +58,24 @@ export default function AdminCreateMedicine() {
     e && e.preventDefault();
     setLoading(true);
     try {
-      // Demo mode - simulate success
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      window.alert("Success — medicine created (Demo mode)");
-      console.log("Demo submission:", form);
-      if (navigate) navigate(-1);
-      else window.history.back();
+      const token = localStorage.getItem('token');
+      const res = await fetch(apiUrl('/api/medicine'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = (data && data.message) || JSON.stringify(data) || res.statusText;
+        window.alert(`Error: ${msg}`);
+      } else {
+        window.alert('Success — medicine created');
+        navigate ? navigate(-1) : window.history.back();
+      }
     } catch (err) {
       window.alert(`Error: ${String(err)}`);
     } finally {
@@ -70,21 +84,19 @@ export default function AdminCreateMedicine() {
   };
 
   useEffect(() => {
-    // Demo data for companies
-    setCompanies([
-      { _id: "1", name: "PharmaCorp Ltd", email: "info@pharmacorp.com" },
-      { _id: "2", name: "MediTech Solutions", email: "contact@meditech.com" },
-      { _id: "3", name: "Global Health Co", email: "support@globalhealth.com" },
-      { _id: "4", name: "BioMed Industries", email: "sales@biomed.com" }
-    ]);
+    (async () => {
+      try {
+        const resC = await fetch(apiUrl('/api/company'));
+        const companiesData = await resC.json().catch(() => []);
+        if (resC.ok && Array.isArray(companiesData)) setCompanies(companiesData);
 
-    // Demo data for stockists
-    setStockistsList([
-      { _id: "s1", name: "City Medical Supplies", email: "orders@citymedical.com" },
-      { _id: "s2", name: "Metro Pharmacy Hub", email: "metro@pharmacy.com" },
-      { _id: "s3", name: "Central Drug Store", email: "central@drugstore.com" },
-      { _id: "s4", name: "Regional Health Supply", email: "regional@health.com" }
-    ]);
+        const resS = await fetch(apiUrl('/api/stockist'));
+        const stockistsData = await resS.json().catch(() => []);
+        if (resS.ok && Array.isArray(stockistsData)) setStockistsList(stockistsData);
+      } catch (e) {
+        console.error('Failed to load companies/stockists', e);
+      }
+    })();
   }, []);
 
   const CompanyCard = ({ company, isSelected, onClick }) => (

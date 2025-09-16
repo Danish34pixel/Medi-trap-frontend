@@ -10,6 +10,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
+import Logo from '../Logo';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -279,11 +280,7 @@ const Login = () => {
             >
               K
             </span>
-            <img
-              src="/cd774852582f4e41232a6ebd5886e0bc-removebg-preview.png"
-              alt="MedTrap Logo"
-              className="mx-auto w-20 h-20 mb-4 relative z-10"
-            />
+              <Logo className="w-20 h-20" />
           </div>
           {/* Login Form */}
           <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-100 glass-effect hover-lift transition-all duration-500 scale-in mobile-card">

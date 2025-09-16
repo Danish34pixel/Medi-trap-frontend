@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import { Building2, Package, Users, Sparkles, CheckCircle2, Plus, Factory } from 'lucide-react';
+import { apiUrl } from "./config/api";
 
 export default function AdminCreateCompany() {
   const [form, setForm] = useState({ name: "", stockists: [] });
@@ -8,7 +10,7 @@ export default function AdminCreateCompany() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [particles, setParticles] = useState([]);
 
-  const navigate = null; // Placeholder for navigation
+  const navigate = useNavigate();
 
   // Track mouse movement for interactive effects
   useEffect(() => {
@@ -39,14 +41,15 @@ export default function AdminCreateCompany() {
   }, []);
 
   useEffect(() => {
-    // Demo data for stockists
-    setStockistsList([
-      { _id: "s1", name: "City Medical Supplies", email: "orders@citymedical.com" },
-      { _id: "s2", name: "Metro Pharmacy Hub", email: "metro@pharmacy.com" },
-      { _id: "s3", name: "Central Drug Store", email: "central@drugstore.com" },
-      { _id: "s4", name: "Regional Health Supply", email: "regional@health.com" },
-      { _id: "s5", name: "Downtown Medical Center", email: "downtown@medical.com" }
-    ]);
+    (async () => {
+      try {
+        const res = await fetch(apiUrl('/api/stockist'));
+        const data = await res.json().catch(() => []);
+        if (res.ok && Array.isArray(data)) setStockistsList(data);
+      } catch (e) {
+        console.error('Failed to load stockists', e);
+      }
+    })();
   }, []);
 
   const setField = (path, value) => {
@@ -66,12 +69,24 @@ export default function AdminCreateCompany() {
     e && e.preventDefault();
     setLoading(true);
     try {
-      // Demo mode - simulate success
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      window.alert("Success — company created (Demo mode)");
-      console.log("Demo submission:", form);
-      if (navigate) navigate(-1);
-      else window.history.back();
+      const token = localStorage.getItem('token');
+      const res = await fetch(apiUrl('/api/company'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = (data && data.message) || JSON.stringify(data) || res.statusText;
+        window.alert(`Error: ${msg}`);
+      } else {
+        window.alert('Success — company created');
+        navigate ? navigate(-1) : window.history.back();
+      }
     } catch (err) {
       window.alert(`Error: ${String(err)}`);
     } finally {

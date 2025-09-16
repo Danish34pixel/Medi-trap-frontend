@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import { Package, User, Phone, Mail, MapPin, FileText, Calendar, Sparkles, Building, Star } from 'lucide-react';
+import { apiUrl } from "./config/api";
 
 export default function AdminCreateStockist() {
   const [form, setForm] = useState({
@@ -15,7 +17,7 @@ export default function AdminCreateStockist() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [particles, setParticles] = useState([]);
 
-  const navigate = null; // Placeholder for navigation
+  const navigate = useNavigate();
 
   // Track mouse movement for interactive effects
   useEffect(() => {
@@ -58,30 +60,27 @@ export default function AdminCreateStockist() {
     e && e.preventDefault();
     setLoading(true);
     try {
-      const token = "demo-token"; // Demo token for artifact
-      const API_BASE = "https://api.example.com"; // Demo API base
-      const res = await fetch(`${API_BASE}/api/stockist`, {
-        method: "POST",
+      const token = localStorage.getItem('token');
+      const res = await fetch(apiUrl('/api/stockist'), {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(form),
       });
+
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const msg =
-          (data && data.message) || JSON.stringify(data) || res.statusText;
+        const msg = (data && data.message) || JSON.stringify(data) || res.statusText;
         window.alert(`Error: ${msg}`);
       } else {
-        window.alert("Success — stockist created.");
-        if (navigate) navigate(-1);
-        else window.history.back();
+        window.alert('Success — stockist created.');
+        navigate ? navigate(-1) : window.history.back();
       }
     } catch (err) {
-      // Demo: Show success for demonstration
-      window.alert("Success — stockist created (Demo mode)");
-      console.log("Demo submission:", form);
+      console.error('Submit stockist failed', err);
+      window.alert(`Error submitting stockist: ${String(err)}`);
     } finally {
       setLoading(false);
     }

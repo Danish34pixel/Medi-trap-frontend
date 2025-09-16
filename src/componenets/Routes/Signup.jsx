@@ -13,6 +13,7 @@ import {
   AlertCircle,
   CheckCircle,
 } from "lucide-react";
+import Logo from '../Logo';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -146,23 +147,8 @@ const Signup = () => {
           className="relative flex justify-center items-center mb-4"
           style={{ height: "80px" }}
         >
-          <span
-            className="text-blue-600 text-4xl absolute z-0"
-            style={{ left: "45%", top: "10%" }}
-          >
-            D
-          </span>
-          <span
-            className="text-red-600 text-4xl absolute z-0"
-            style={{ left: "50%", top: "10%" }}
-          >
-            K
-          </span>
-          <img
-            src="/cd774852582f4e41232a6ebd5886e0bc-removebg-preview.png"
-            alt="MedTrap Logo"
-            className="mx-auto w-20 h-20 mb-4 relative z-10"
-          />
+         
+          <Logo className="w-30 h-30" />
         </div>
 
         {/* Registration Form */}
