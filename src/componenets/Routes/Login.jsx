@@ -268,19 +268,8 @@ const Login = () => {
             className="relative flex justify-center items-center mb-4"
             style={{ height: "80px" }}
           >
-            <span
-              className="text-blue-600 text-4xl absolute z-0"
-              style={{ left: "45%", top: "10%" }}
-            >
-              D
-            </span>
-            <span
-              className="text-red-600 text-4xl absolute z-0"
-              style={{ left: "50%", top: "10%" }}
-            >
-              K
-            </span>
-              <Logo className="w-20 h-20" />
+            
+              <Logo className="w-45 h-45" />
           </div>
           {/* Login Form */}
           <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-100 glass-effect hover-lift transition-all duration-500 scale-in mobile-card">
