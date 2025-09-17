@@ -17,6 +17,7 @@ import PurchaserDetails from "./componenets/PurchaserDetails";
 import StaffList from "./componenets/StaffList";
 import StaffCreate from "./componenets/StaffCreate";
 import StaffDetails from "./componenets/StaffDetails";
+import Demand from "./componenets/Demand";
 
 const App = () => {
   return (
@@ -38,6 +39,7 @@ const App = () => {
         <Route path="/staff/:id" element={<StaffDetails />} />
         <Route path="/purchaser" element={<Purchaser />} />
         <Route path="/purchaser/:id" element={<PurchaserDetails />} />
+        <Route path="/demand" element={<Demand />} />
       </Routes>
     </div>
   );

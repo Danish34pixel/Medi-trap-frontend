@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; // optional
 import API_BASE from "./config/api";
 
@@ -11,8 +11,10 @@ export default function AdminCreateStockist() {
     address: { street: "", city: "", state: "", pincode: "" },
     licenseNumber: "",
     licenseExpiry: "",
+    companies: [],
   });
   const [loading, setLoading] = useState(false);
+  const [companiesList, setCompaniesList] = useState([]);
 
   const navigate = (() => {
     try {
@@ -29,6 +31,27 @@ export default function AdminCreateStockist() {
     } else {
       setForm((f) => ({ ...f, [path]: value }));
     }
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/company`);
+        const data = await res.json().catch(() => ({}));
+        if (data && data.data) setCompaniesList(data.data);
+      } catch (err) {
+        console.warn("Could not load companies", err);
+      }
+    })();
+  }, []);
+
+  const toggleCompany = (id) => {
+    setForm((f) => ({
+      ...f,
+      companies: f.companies.includes(id)
+        ? f.companies.filter((c) => c !== id)
+        : [...f.companies, id],
+    }));
   };
 
   const submit = async (e) => {
@@ -206,6 +229,32 @@ export default function AdminCreateStockist() {
                 value={form.licenseExpiry}
                 onChange={(e) => setField("licenseExpiry", e.target.value)}
               />
+            </div>
+          </div>
+
+          <div className="pt-4">
+            <h3 className="text-sm font-medium text-slate-700 mb-3">
+              Assign to companies (optional)
+            </h3>
+            <div className="mb-4">
+              {companiesList.length === 0 && (
+                <div className="text-sm text-slate-500">
+                  No companies found.
+                </div>
+              )}
+              {companiesList.map((c) => (
+                <label key={c._id} className="flex items-center gap-3 mb-2">
+                  <input
+                    type="checkbox"
+                    checked={form.companies.includes(c._id)}
+                    onChange={() => toggleCompany(c._id)}
+                  />
+                  <span className="text-sm">{c.name}</span>
+                  <small className="text-xs text-slate-400">
+                    {c.email || ""}
+                  </small>
+                </label>
+              ))}
             </div>
           </div>
 

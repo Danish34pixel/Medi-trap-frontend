@@ -1,6 +1,12 @@
 // Screen.jsx
 import React, { useEffect, useState } from "react";
 import API_BASE from "./config/api";
+import {
+  medicineReferencesStockist,
+  medicineDisplayName,
+  nameMatchesStockistItems,
+  tokenOverlapScore,
+} from "./utils/normalizeMatching";
 import { useNavigate } from "react-router-dom";
 
 const Screen = ({ navigation: navProp }) => {
@@ -24,6 +30,13 @@ const Screen = ({ navigation: navProp }) => {
   const [selectedSection, setSelectedSection] = useState(null); // index
   const [isAdmin, setIsAdmin] = useState(false);
   const [sectionData, setSectionData] = useState([]);
+  const [rawResponses, setRawResponses] = useState({
+    medicines: null,
+    stockists: null,
+    companies: null,
+  });
+  const [showDebug, setShowDebug] = useState(false);
+  const [unmatchedMedicines, setUnmatchedMedicines] = useState([]);
 
   useEffect(() => {
     let mounted = true;
@@ -44,18 +57,52 @@ const Screen = ({ navigation: navProp }) => {
         const medicines = (jsonMedicine && jsonMedicine.data) || [];
         const companies = (jsonCompany && jsonCompany.data) || [];
 
+        // store raw responses for debugging UI
+        setRawResponses({
+          medicines: jsonMedicine || null,
+          stockists: jsonStockist || null,
+          companies: jsonCompany || null,
+        });
+
+        // also print a small sample to the console to inspect shapes
+        console.warn(
+          "Screen DEBUG: medicines sample ->",
+          medicines.slice(0, 5)
+        );
+
         if (mounted && jsonStockist && jsonStockist.data) {
           const mapped = jsonStockist.data.map((s) => {
-            const medsForStockist = medicines
-              .filter((m) =>
-                Array.isArray(m.stockists)
-                  ? m.stockists.some((st) =>
-                      String(st.stockist || st).includes(String(s._id))
-                    )
-                  : false
-              )
-              .map((m) => (m.name ? m.name : m.brandName || ""))
+            let medsForStockist = medicines
+              .filter((m) => medicineReferencesStockist(m, s._id))
+              .map((m) => medicineDisplayName(m))
               .filter(Boolean);
+
+            // Fallback: attempt name-based matching if id-based produced no results
+            if (
+              (!medsForStockist || medsForStockist.length === 0) &&
+              medicines.length > 0
+            ) {
+              const stockistNames = new Set(
+                (s.Medicines || s.medicines || s.items || []).map((x) =>
+                  String(x).toLowerCase()
+                )
+              );
+              const fallback = medicines
+                .filter((m) => {
+                  const name = medicineDisplayName(m) || "";
+                  if (!name) return false;
+                  if (nameMatchesStockistItems(name, s)) return true;
+                  const lname = name.toLowerCase();
+                  for (const n of stockistNames) {
+                    if (!n) continue;
+                    if (n.includes(lname) || lname.includes(n)) return true;
+                  }
+                  return false;
+                })
+                .map((m) => medicineDisplayName(m))
+                .filter(Boolean);
+              if (fallback.length > 0) medsForStockist = fallback;
+            }
 
             const companyIds = new Set(
               medicines
@@ -74,12 +121,83 @@ const Screen = ({ navigation: navProp }) => {
                 .filter(Boolean)
             );
 
-            const companiesForStockist = companies
+            // Companies that are related via medicines/companyIds
+            let companiesForStockist = companies
               .filter((c) => companyIds.has(String(c._id)))
               .map((c) => (c.name ? c.name : c.shortName || ""))
               .filter(Boolean);
 
-            const items = (s.companies || companiesForStockist)
+            // deep scan a company object for any occurrence of the stockist id
+            const deepScanCompanyReferences = (obj, sid) => {
+              if (!obj) return false;
+              const target = String(sid);
+              const seen = new Set();
+
+              const walk = (value) => {
+                if (value == null) return false;
+                if (seen.has(value)) return false;
+                if (typeof value === "string" || typeof value === "number") {
+                  return String(value) === target;
+                }
+                if (Array.isArray(value)) {
+                  for (const item of value) if (walk(item)) return true;
+                  return false;
+                }
+                if (typeof value === "object") {
+                  if (seen.has(value)) return false;
+                  seen.add(value);
+                  for (const k of Object.keys(value))
+                    if (walk(value[k])) return true;
+                  return false;
+                }
+                return false;
+              };
+
+              return walk(obj);
+            };
+
+            const reverseCompanies = companies
+              .filter((c) => deepScanCompanyReferences(c, s._id))
+              .map((c) => (c.name ? c.name : c.shortName || ""))
+              .filter(Boolean);
+
+            companiesForStockist = Array.from(
+              new Set([...companiesForStockist, ...reverseCompanies])
+            );
+
+            // Also derive company ids that the stockist advertises (s.companies may contain ids or objects)
+            const companyIdsFromStockist = new Set(
+              (s.companies || s.items || [])
+                .map((c) => {
+                  if (!c) return null;
+                  if (typeof c === "string") return String(c);
+                  if (c._id) return String(c._id);
+                  if (c.id) return String(c.id);
+                  return null;
+                })
+                .filter(Boolean)
+            );
+
+            if (
+              (!medsForStockist || medsForStockist.length === 0) &&
+              companyIdsFromStockist.size > 0
+            ) {
+              const byCompany = medicines
+                .filter((m) => {
+                  const comp = m.company && (m.company._id || m.company);
+                  return comp && companyIdsFromStockist.has(String(comp));
+                })
+                .map((m) => medicineDisplayName(m))
+                .filter(Boolean);
+              if (byCompany.length > 0)
+                medsForStockist = [
+                  ...new Set([...(medsForStockist || []), ...byCompany]),
+                ];
+            }
+
+            const explicitItems = (
+              Array.isArray(s.companies) ? s.companies : []
+            )
               .map((c) => {
                 if (typeof c === "string") {
                   const found = companies.find(
@@ -92,15 +210,49 @@ const Screen = ({ navigation: navProp }) => {
               })
               .filter(Boolean);
 
-            const meds = (s.medicines || medsForStockist)
-              .map((m) =>
-                typeof m === "string"
-                  ? m
-                  : m && (m.name || m.brandName)
-                  ? m.name || m.brandName
-                  : ""
-              )
-              .filter(Boolean);
+            const items = Array.from(
+              new Set([
+                ...(explicitItems || []),
+                ...(companiesForStockist || []),
+              ])
+            );
+
+            // Build medicines list for the stockist.
+            // If the stockist provides a list of medicines by id/object, try to
+            // resolve them against the fetched `medicines` array so we show names.
+            let meds = [];
+            if (Array.isArray(s.medicines) && s.medicines.length > 0) {
+              meds = s.medicines
+                .map((m) => {
+                  // string names are fine
+                  if (typeof m === "string") return m;
+                  // object with name fields
+                  if (m && (m.name || m.brandName))
+                    return m.name || m.brandName;
+                  // could be an id or an object with _id/id — try to resolve from fetched medicines
+                  try {
+                    const candidateId = m && (m._id || m.id || m);
+                    if (candidateId && medicines && medicines.length > 0) {
+                      const found = medicines.find(
+                        (md) =>
+                          String(md._id) === String(candidateId) ||
+                          String(md._id) ===
+                            String(
+                              candidateId._id || candidateId.id || candidateId
+                            )
+                      );
+                      if (found) return medicineDisplayName(found);
+                    }
+                  } catch (e) {
+                    // ignore resolution errors and fallthrough to empty string
+                  }
+                  return "";
+                })
+                .filter(Boolean);
+            } else {
+              // fallback to previously computed medsForStockist (already names)
+              meds = (medsForStockist || []).slice();
+            }
 
             return {
               _id: s._id,
@@ -119,6 +271,83 @@ const Screen = ({ navigation: navProp }) => {
 
           console.warn("Screen: loaded stockists ->", mapped.length);
           setSectionData(mapped);
+
+          // compute unmatched medicines (those that don't match any stockist)
+          try {
+            const matchesStockist = (m, s) => {
+              const name = medicineDisplayName(m) || "";
+              // id-based
+              if (medicineReferencesStockist(m, s._id)) return true;
+              // stronger name-based
+              if (nameMatchesStockistItems(name, s)) return true;
+              // simple substring check against stockist medicines/items
+              const stockistNames = new Set(
+                (s.Medicines || s.medicines || s.items || []).map((x) =>
+                  String(x).toLowerCase()
+                )
+              );
+              const lname = name.toLowerCase();
+              for (const n of stockistNames) {
+                if (!n) continue;
+                if (n.includes(lname) || lname.includes(n)) return true;
+              }
+              return false;
+            };
+
+            const unmatched = (medicines || []).filter((m) => {
+              // if no stockist matches this medicine, include in unmatched
+              for (const s of jsonStockist.data) {
+                if (matchesStockist(m, s)) return false; // matched
+              }
+              return true; // unmatched by any stockist
+            });
+
+            // attempt auto-assignment for unmatched meds using token overlap
+            const autoAssigned = [];
+            const remaining = [];
+            const THRESHOLD = 1; // minimal overlapping tokens to consider
+            for (const m of unmatched) {
+              let bestScore = 0;
+              let bestStockistIndex = -1;
+              jsonStockist.data.forEach((s, idx) => {
+                const score = tokenOverlapScore(
+                  medicineDisplayName(m) || "",
+                  s
+                );
+                if (score > bestScore) {
+                  bestScore = score;
+                  bestStockistIndex = idx;
+                }
+              });
+              if (bestScore >= THRESHOLD && bestStockistIndex >= 0) {
+                autoAssigned.push({
+                  medicine: medicineDisplayName(m),
+                  stockistIndex: bestStockistIndex,
+                  score: bestScore,
+                });
+              } else {
+                remaining.push(m);
+              }
+            }
+
+            // inject auto-assigned medicines into mapped stockists (client-side only)
+            for (const a of autoAssigned) {
+              const sIndex = a.stockistIndex;
+              if (mapped[sIndex]) {
+                mapped[sIndex].Medicines = mapped[sIndex].Medicines || [];
+                if (!mapped[sIndex].Medicines.includes(a.medicine))
+                  mapped[sIndex].Medicines.push(a.medicine);
+              }
+            }
+
+            setUnmatchedMedicines(remaining.slice(0, 50)); // store a trimmed list
+            console.warn(
+              "Screen DEBUG: autoAssigned ->",
+              autoAssigned.slice(0, 10)
+            );
+          } catch (e) {
+            console.warn("Screen: error computing unmatched medicines", e);
+          }
         }
       } catch (err) {
         console.warn("Screen: failed to load stockists", err);
@@ -270,6 +499,67 @@ const Screen = ({ navigation: navProp }) => {
   const renderMainView = () => (
     <div className="max-w-6xl mx-auto">
       <ListHeader />
+      {/* Debug toggle */}
+      <div className="px-4 mb-4">
+        <button
+          onClick={() => setShowDebug((s) => !s)}
+          className="px-3 py-2 bg-slate-100 rounded-md text-sm"
+        >
+          {showDebug ? "Hide" : "Show"} debug responses
+        </button>
+      </div>
+      {/* Debug panel */}
+      {showDebug && (
+        <div className="px-4 mb-6">
+          <div className="bg-white rounded-lg p-4 shadow-sm text-sm text-slate-700">
+            <div className="mb-2 font-semibold">
+              Raw API Responses (trimmed)
+            </div>
+            <div className="mb-2">
+              <div className="font-medium">Stockists:</div>
+              <pre className="whitespace-pre-wrap max-h-40 overflow-auto text-xs">
+                {JSON.stringify(
+                  rawResponses.stockists && rawResponses.stockists.data
+                    ? rawResponses.stockists.data.slice(0, 5)
+                    : rawResponses.stockists,
+                  null,
+                  2
+                )}
+              </pre>
+            </div>
+            <div className="mb-2">
+              <div className="font-medium">Medicines:</div>
+              <pre className="whitespace-pre-wrap max-h-40 overflow-auto text-xs">
+                {JSON.stringify(
+                  rawResponses.medicines && rawResponses.medicines.data
+                    ? rawResponses.medicines.data.slice(0, 5)
+                    : rawResponses.medicines,
+                  null,
+                  2
+                )}
+              </pre>
+            </div>
+            <div className="mb-2">
+              <div className="font-medium">Unmatched medicines (first 50):</div>
+              <pre className="whitespace-pre-wrap max-h-40 overflow-auto text-xs">
+                {JSON.stringify(unmatchedMedicines, null, 2)}
+              </pre>
+            </div>
+            <div>
+              <div className="font-medium">Companies:</div>
+              <pre className="whitespace-pre-wrap max-h-40 overflow-auto text-xs">
+                {JSON.stringify(
+                  rawResponses.companies && rawResponses.companies.data
+                    ? rawResponses.companies.data.slice(0, 5)
+                    : rawResponses.companies,
+                  null,
+                  2
+                )}
+              </pre>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="px-4 pb-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {sectionData.map((s, i) => renderCard(s, i))}
