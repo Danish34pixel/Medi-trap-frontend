@@ -7,7 +7,7 @@ import {
   nameMatchesStockistItems,
   tokenOverlapScore,
 } from "./utils/normalizeMatching";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const Screen = ({ navigation: navProp }) => {
   const navigate = (() => {
@@ -15,6 +15,14 @@ const Screen = ({ navigation: navProp }) => {
       return useNavigate();
     } catch {
       return null;
+    }
+  })();
+
+  const location = (() => {
+    try {
+      return useLocation();
+    } catch {
+      return { key: null };
     }
   })();
 
@@ -356,7 +364,7 @@ const Screen = ({ navigation: navProp }) => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [location && location.key]);
 
   // check admin from localStorage
   useEffect(() => {

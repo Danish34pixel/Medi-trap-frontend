@@ -1,11 +1,27 @@
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { apiUrl } from "./config/api";
-import { QRCodeCanvas } from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react";
 
 const Purchaser = () => {
   const [purchasers, setPurchasers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Fetch purchasers from backend
+  useEffect(() => {
+    const fetchPurchasers = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await axios.get(apiUrl("/api/purchaser"));
+        setPurchasers(res.data.data || []);
+      } catch (err) {
+        setError("Failed to fetch purchasers");
+      }
+      setLoading(false);
+    };
+    fetchPurchasers();
+  }, []);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [form, setForm] = useState({
     fullName: "",
@@ -19,22 +35,6 @@ const Purchaser = () => {
   const [submitting, setSubmitting] = useState(false);
   const [formVisible, setFormVisible] = useState(true);
   const [successMessage, setSuccessMessage] = useState("");
-
-  useEffect(() => {
-    fetchPurchasers();
-  }, []);
-
-  const fetchPurchasers = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(apiUrl("/api/purchaser"));
-      setPurchasers(Array.isArray(res.data.data) ? res.data.data : []);
-      setError(null);
-    } catch (err) {
-      setError("Failed to fetch purchasers");
-    }
-    setLoading(false);
-  };
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -59,9 +59,6 @@ const Purchaser = () => {
     });
     setAadharPreview(null);
     setPhotoPreview(null);
-    // Reset file inputs
-    const fileInputs = document.querySelectorAll('input[type="file"]');
-    fileInputs.forEach((input) => (input.value = ""));
   };
 
   const handleSubmit = async (e) => {
@@ -83,22 +80,27 @@ const Purchaser = () => {
       formData.append("aadharImage", form.aadharImage);
       formData.append("photo", form.photo);
 
-      await axios.post(apiUrl("/api/purchaser"), formData, {
+      const res = await axios.post(apiUrl("/api/purchaser"), formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      resetForm();
-      setFormVisible(false);
-      setSuccessMessage("Purchaser added successfully!");
-      fetchPurchasers();
-      setSubmitting(false);
-
-      // Hide success message after 3 seconds
-      setTimeout(() => {
-        setSuccessMessage("");
-      }, 3000);
+      if (res.data && res.data.success) {
+        // Add new purchaser to list (prepend for latest first)
+        setPurchasers([res.data.data, ...purchasers]);
+        resetForm();
+        setFormVisible(false);
+        setSuccessMessage("Purchaser added successfully!");
+        setSubmitting(false);
+        setTimeout(() => {
+          setSuccessMessage("");
+        }, 3000);
+      } else {
+        throw new Error(res.data.message || "Failed to add purchaser");
+      }
     } catch (err) {
-      setError("Failed to add purchaser");
+      setError(
+        err.response?.data?.message || err.message || "Failed to add purchaser"
+      );
       setSubmitting(false);
     }
   };
@@ -109,16 +111,27 @@ const Purchaser = () => {
     setError(null);
   };
 
+  // Real QR Code component using qrcode.react
+  const QRCode = ({ value, size = 120 }) => (
+    <div className="flex flex-col items-center">
+      <QRCodeSVG value={value} size={size} />
+    </div>
+  );
+
   return (
-    <div className="bg-sky-50 min-h-screen py-8">
-      <div className="max-w-4xl mx-auto px-4">
+    <div className="min-h-screen py-8" style={{ backgroundColor: '#f8fafc' }}>
+      <div className="max-w-6xl mx-auto px-4">
         {/* Success Message */}
         {successMessage && (
-          <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">✅</span>
+          <div className="mb-6 bg-green-50 border border-green-200 rounded-2xl p-6 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
               <div>
-                <h4 className="text-green-800 font-semibold">
+                <h4 className="text-green-800 font-semibold text-lg">
                   {successMessage}
                 </h4>
                 <p className="text-green-600 text-sm">
@@ -128,50 +141,74 @@ const Purchaser = () => {
             </div>
             <button
               onClick={() => setSuccessMessage("")}
-              className="text-green-600 hover:text-green-800 text-xl font-bold"
+              className="text-green-600 hover:text-green-800 p-2"
             >
-              ×
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
         )}
 
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-800">Purchaser Management</h1>
+          <p className="text-gray-600 mt-2">Manage purchaser profiles and generate QR codes</p>
+        </div>
+
         {/* Purchasers List */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-sky-100 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold text-sky-700 flex items-center gap-3">
-              <span>🧑‍💼</span> Purchasers
+        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 mb-8">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+              <svg className="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Purchasers
             </h2>
-            <div className="text-sky-600 font-medium">
-              Total: {purchasers.length}
+            <div className="bg-blue-50 px-4 py-2 rounded-xl">
+              <span className="text-blue-600 font-semibold">Total: {purchasers.length}</span>
             </div>
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600"></div>
-              <span className="ml-3 text-sky-600">Loading purchasers...</span>
+            <div className="flex items-center justify-center py-16">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              <span className="ml-3 text-blue-600 font-medium">Loading purchasers...</span>
             </div>
           ) : error ? (
-            <div className="text-red-600 py-4 text-center bg-red-50 rounded-lg border border-red-200">
-              {error}
+            <div className="text-red-600 py-8 text-center bg-red-50 rounded-xl border border-red-200">
+              <svg className="w-12 h-12 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <p className="font-medium">{error}</p>
             </div>
           ) : purchasers.length === 0 ? (
-            <div className="text-sky-600 py-12 text-center">
-              <span className="text-4xl mb-4 block">📋</span>
-              <p>No purchasers found. Add your first purchaser below!</p>
+            <div className="text-center py-16">
+              <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-600 mb-2">No purchasers found</h3>
+              <p className="text-gray-500">Add your first purchaser using the form below!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {purchasers.map((p) => (
                 <div
                   key={p._id}
-                  className="flex flex-col items-center space-y-4"
+                  className="flex flex-col items-center space-y-6"
                 >
                   {/* Purchaser Card */}
-                  <div className="bg-gradient-to-br from-white to-sky-25 border border-sky-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col gap-4 items-center w-full">
+                  <div className="bg-gradient-to-br from-white to-blue-50 border border-blue-100 rounded-2xl p-6 shadow-md hover:shadow-lg transition-all duration-300 w-full">
                     {/* Profile Section */}
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-24 h-24 rounded-full overflow-hidden border-3 border-sky-300 bg-sky-50 flex items-center justify-center shadow-md">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-blue-200 bg-blue-50 flex items-center justify-center shadow-sm">
                         {p.photo ? (
                           <img
                             src={p.photo}
@@ -179,19 +216,24 @@ const Purchaser = () => {
                             className="object-cover w-full h-full"
                           />
                         ) : (
-                          <span className="text-4xl">🧑‍💼</span>
+                          <svg className="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
                         )}
                       </div>
-                      <div className="text-center">
-                        <h3 className="text-xl font-bold text-sky-700 mb-1">
+                      
+                      <div className="text-center w-full">
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">
                           {p.fullName}
                         </h3>
-                        <p className="text-slate-600 text-sm leading-relaxed mb-2">
+                        <p className="text-gray-600 text-sm leading-relaxed mb-3 px-2">
                           {p.address}
                         </p>
-                        <div className="inline-flex items-center gap-2 bg-sky-100 px-3 py-1 rounded-full">
-                          <span className="text-sm">📱</span>
-                          <span className="text-slate-700 font-medium text-sm">
+                        <div className="inline-flex items-center gap-2 bg-blue-100 px-4 py-2 rounded-full">
+                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          </svg>
+                          <span className="text-gray-700 font-medium text-sm">
                             {p.contactNo}
                           </span>
                         </div>
@@ -199,10 +241,10 @@ const Purchaser = () => {
                     </div>
 
                     {/* ID Badge */}
-                    <div className="w-full mt-4">
-                      <div className="bg-sky-50 border border-sky-200 rounded-lg px-3 py-2 text-center">
-                        <span className="text-xs text-slate-400 block">ID</span>
-                        <span className="text-xs font-mono text-slate-600">
+                    <div className="mt-4">
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-center">
+                        <span className="text-xs text-gray-400 block">ID</span>
+                        <span className="text-xs font-mono text-gray-600 break-all">
                           {p._id}
                         </span>
                       </div>
@@ -210,18 +252,12 @@ const Purchaser = () => {
                   </div>
 
                   {/* QR Code Below Card */}
-                  <div className="bg-white p-4 rounded-xl shadow-lg border border-sky-200 flex flex-col items-center space-y-2">
-                    <div className="text-sky-700 font-medium text-sm text-center">
+                  <div className="bg-white p-6 rounded-2xl shadow-lg border border-blue-100 flex flex-col items-center space-y-3">
+                    <div className="text-blue-600 font-semibold text-sm">
                       QR Code
                     </div>
-                    <QRCodeCanvas
-                      value={window.location.origin + `/purchaser/${p._id}`}
-                      size={120}
-                      bgColor="#ffffff"
-                      fgColor="#0ea5e9"
-                      level="M"
-                    />
-                    <div className="text-xs text-slate-400 text-center">
+                    <QRCode value={`/purchaser/${p._id}`} size={120} />
+                    <div className="text-xs text-gray-500 text-center">
                       Scan to view profile
                     </div>
                   </div>
@@ -232,15 +268,20 @@ const Purchaser = () => {
         </div>
 
         {/* Add Purchaser Form */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-sky-100">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold text-sky-700 flex items-center gap-3">
-              <span>➕</span> Add New Purchaser
+        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
+              Add New Purchaser
             </h3>
             {!formVisible && (
               <button
                 onClick={showForm}
-                className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors duration-200 font-medium"
+                className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors duration-200 font-semibold shadow-md"
               >
                 Add Another
               </button>
@@ -248,116 +289,108 @@ const Purchaser = () => {
           </div>
 
           {formVisible ? (
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label
-                    htmlFor="fullName"
-                    className="text-slate-700 font-medium text-sm"
-                  >
+                  <label className="text-gray-700 font-medium text-sm">
                     Full Name *
                   </label>
                   <input
                     type="text"
                     name="fullName"
-                    id="fullName"
                     placeholder="Enter full name"
                     value={form.fullName}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 rounded-lg border border-sky-200 bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label
-                    htmlFor="contactNo"
-                    className="text-slate-700 font-medium text-sm"
-                  >
+                  <label className="text-gray-700 font-medium text-sm">
                     Contact Number *
                   </label>
                   <input
                     type="tel"
                     name="contactNo"
-                    id="contactNo"
                     placeholder="Enter contact number"
                     value={form.contactNo}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 rounded-lg border border-sky-200 bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label
-                  htmlFor="address"
-                  className="text-slate-700 font-medium text-sm"
-                >
+                <label className="text-gray-700 font-medium text-sm">
                   Address *
                 </label>
                 <textarea
                   name="address"
-                  id="address"
                   placeholder="Enter complete address"
                   value={form.address}
                   onChange={handleChange}
                   required
                   rows="3"
-                  className="w-full px-4 py-3 rounded-lg border border-sky-200 bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-transparent transition-all duration-200 resize-vertical"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-vertical"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label
-                    htmlFor="photo"
-                    className="text-slate-700 font-medium text-sm"
-                  >
+                  <label className="text-gray-700 font-medium text-sm">
                     Purchaser Photo *
                   </label>
-                  <input
-                    type="file"
-                    name="photo"
-                    id="photo"
-                    accept="image/*"
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 rounded-lg border border-sky-200 bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-100 file:text-sky-700 hover:file:bg-sky-200"
-                  />
+                  <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-blue-300 transition-colors">
+                    <svg className="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <input
+                      type="file"
+                      name="photo"
+                      accept="image/*"
+                      onChange={handleChange}
+                      required
+                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Upload photo</p>
+                  </div>
                   {photoPreview && (
                     <div className="mt-3 flex justify-center">
                       <img
                         src={photoPreview}
                         alt="Photo Preview"
-                        className="w-20 h-20 object-cover rounded-full border-2 border-sky-200 shadow-sm"
+                        className="w-20 h-20 object-cover rounded-full border-4 border-blue-200 shadow-sm"
                       />
                     </div>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <label
-                    htmlFor="aadharImage"
-                    className="text-slate-700 font-medium text-sm"
-                  >
-                    Aadhar Image *
+                  <label className="text-gray-700 font-medium text-sm">
+                    Aadhar Card Image *
                   </label>
-                  <input
-                    type="file"
-                    name="aadharImage"
-                    id="aadharImage"
-                    accept="image/*"
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 rounded-lg border border-sky-200 bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-100 file:text-sky-700 hover:file:bg-sky-200"
-                  />
+                  <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-blue-300 transition-colors">
+                    <svg className="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <input
+                      type="file"
+                      name="aadharImage"
+                      accept="image/*"
+                      onChange={handleChange}
+                      required
+                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Upload Aadhar card</p>
+                  </div>
                   {aadharPreview && (
                     <div className="mt-3 flex justify-center">
                       <img
                         src={aadharPreview}
                         alt="Aadhar Preview"
-                        className="w-32 h-20 object-cover rounded border-2 border-sky-200 shadow-sm"
+                        className="w-32 h-20 object-cover rounded-lg border-2 border-blue-200 shadow-sm"
                       />
                     </div>
                   )}
@@ -365,20 +398,22 @@ const Purchaser = () => {
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
-                  <span className="text-red-500 text-xl">⚠️</span>
-                  <span className="text-red-700">{error}</span>
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+                  <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <span className="text-red-700 font-medium">{error}</span>
                 </div>
               )}
 
               <div className="flex gap-4 pt-4">
                 <button
-                  type="submit"
+                  onClick={handleSubmit}
                   disabled={submitting}
-                  className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                  className={`flex-1 px-6 py-4 rounded-xl font-semibold transition-all duration-200 shadow-md ${
                     submitting
-                      ? "bg-sky-400 text-white cursor-not-allowed"
-                      : "bg-sky-600 text-white hover:bg-sky-700 hover:shadow-lg"
+                      ? "bg-blue-400 text-white cursor-not-allowed"
+                      : "bg-blue-500 text-white hover:bg-blue-600 hover:shadow-lg"
                   }`}
                 >
                   {submitting ? (
@@ -392,23 +427,25 @@ const Purchaser = () => {
                 </button>
 
                 <button
-                  type="button"
                   onClick={resetForm}
-                  className="px-6 py-3 rounded-lg border border-sky-300 text-sky-700 font-semibold hover:bg-sky-50 transition-all duration-200"
+                  className="px-6 py-4 rounded-xl border-2 border-blue-200 text-blue-600 font-semibold hover:bg-blue-50 transition-all duration-200"
                 >
                   Reset
                 </button>
               </div>
-            </form>
+            </div>
           ) : (
-            <div className="text-center py-12">
-              <span className="text-6xl mb-4 block">🎉</span>
-              <h4 className="text-xl font-semibold text-green-700 mb-2">
+            <div className="text-center py-16">
+              <div className="w-20 h-20 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h4 className="text-2xl font-bold text-green-700 mb-3">
                 Purchaser Added Successfully!
               </h4>
-              <p className="text-green-600 mb-6">
-                QR code has been generated and the purchaser is now listed
-                above.
+              <p className="text-green-600 text-lg mb-6">
+                QR code has been generated and the purchaser is now listed above.
               </p>
             </div>
           )}

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Package, ShoppingCart, Users, Stethoscope } from "lucide-react";
+import Logo from "./Logo";
 
 export default function SelectRolePage() {
   const [selectedRole, setSelectedRole] = useState("Purchaser");
@@ -99,8 +100,8 @@ export default function SelectRolePage() {
       <div className="relative bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-8 w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-block p-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl mb-4">
-            <div className="w-6 h-6 bg-white rounded-lg"></div>
+          <div className="mt-10" >
+            <Logo className="h-25 w-32"/>
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
             Select Your Role
@@ -228,11 +229,7 @@ export default function SelectRolePage() {
         </div>
 
         {/* Pagination Dots */}
-        <div className="flex justify-center space-x-3">
-          <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full shadow-lg shadow-blue-500/50 animate-pulse"></div>
-          <div className="w-2 h-2 bg-gray-300 rounded-full hover:bg-gray-400 transition-colors cursor-pointer"></div>
-          <div className="w-2 h-2 bg-gray-300 rounded-full hover:bg-gray-400 transition-colors cursor-pointer"></div>
-        </div>
+       
       </div>
     </div>
   );
