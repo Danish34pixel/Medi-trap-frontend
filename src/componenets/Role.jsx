@@ -101,7 +101,7 @@ export default function SelectRolePage() {
         {/* Header */}
         <div className="text-center mb-12">
           <div className="mt-10" >
-            <Logo className="h-45 w-45"/>
+            <Logo className="h-25 w-32"/>
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
             Select Your Role

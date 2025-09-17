@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from 'react-router-dom';
+import { QRCodeSVG } from 'qrcode.react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { apiUrl } from "./config/api";
 
 // Mock StaffCard component
@@ -11,11 +12,15 @@ const StaffCard = ({ staff, onOpen }) => {
       onClick={handleClick}
       className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg border border-gray-100 hover:border-blue-200 cursor-pointer transition-all duration-300 group"
     >
-      <div className="flex items-center gap-4">
+  <div className="flex items-center gap-4">
         <div className="relative">
-          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">
-            {staff.fullName.charAt(0)}
-          </div>
+          {staff.image ? (
+            <img src={staff.image} alt={staff.fullName} className="w-14 h-14 rounded-xl object-cover" />
+          ) : (
+            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">
+              {staff.fullName.charAt(0)}
+            </div>
+          )}
           <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
         </div>
         <div className="flex-1">
@@ -30,9 +35,11 @@ const StaffCard = ({ staff, onOpen }) => {
             <div className="text-xs text-gray-400">ID: {staff._id.slice(-6)}</div>
             <div className="text-xs text-green-600 font-medium">Active</div>
           </div>
-          <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          <div className="hidden sm:block">
+            <div className="w-10 h-10 bg-white p-1 rounded-md shadow-sm">
+              <QRCodeSVG value={`${window.location.origin}/staff/${staff._id}`} size={36} />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -58,9 +65,13 @@ const StaffModal = ({ staff, onClose }) => {
         
         <div className="space-y-4">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
-              {staff.fullName.charAt(0)}
-            </div>
+            {staff.image ? (
+              <img src={staff.image} alt={staff.fullName} className="w-16 h-16 rounded-xl object-cover" />
+            ) : (
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
+                {staff.fullName.charAt(0)}
+              </div>
+            )}
             <div>
               <h3 className="font-semibold text-gray-800">{staff.fullName}</h3>
               <p className="text-sm text-gray-500">{staff.contact}</p>
@@ -79,6 +90,13 @@ const StaffModal = ({ staff, onClose }) => {
             <div>
               <label className="text-xs text-gray-400 uppercase tracking-wide">Status</label>
               <p className="text-sm text-green-600 font-medium">Active</p>
+            </div>
+          </div>
+
+          {/* QR Code */}
+          <div className="mt-6 flex items-center justify-center">
+            <div className="bg-gray-50 p-4 rounded-xl">
+              <QRCodeSVG value={`${window.location.origin}/staff/${staff._id}`} size={128} />
             </div>
           </div>
         </div>
@@ -107,21 +125,25 @@ export default function StaffList() {
   const [selected, setSelected] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
       try {
         const res = await fetch(apiUrl('/api/staff'));
         const data = await res.json().catch(() => []);
+        if (!mounted) return;
         if (res.ok && Array.isArray(data)) setStaffs(data);
         else if (res.ok && data && Array.isArray(data.data)) setStaffs(data.data);
       } catch (e) {
         console.error('Failed to load staff list', e);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     })();
-  }, []);
+    return () => { mounted = false; };
+  }, [location.key]);
 
   const navigateToCreate = () => navigate('/adminCreateStaff');
 

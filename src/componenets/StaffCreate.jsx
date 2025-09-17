@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from 'react-router-dom';
+import { apiUrl } from "./config/api";
 
 export default function StaffCreate() {
   const [form, setForm] = useState({
@@ -10,6 +12,7 @@ export default function StaffCreate() {
   const [image, setImage] = useState(null);
   const [aadhar, setAadhar] = useState(null);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const submit = async (e) => {
     e.preventDefault();
@@ -25,9 +28,22 @@ export default function StaffCreate() {
       fd.append("image", image);
       fd.append("aadharCard", aadhar);
 
-      // Simulated API call for demo
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      alert("Staff created successfully!");
+      // POST form to backend
+      const res = await fetch(apiUrl('/api/staff'), {
+        method: 'POST',
+        body: fd,
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = (data && data.message) || JSON.stringify(data) || res.statusText;
+        throw new Error(msg);
+      }
+      alert('Staff created successfully!');
+      navigate(-1);
       
     } catch (err) {
       alert(String(err));
@@ -39,7 +55,6 @@ export default function StaffCreate() {
   return (
     <div className="min-h-screen flex items-start justify-center p-6" style={{backgroundColor: '#f8fafc'}}>
       <div className="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-        {/* Header with icon */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

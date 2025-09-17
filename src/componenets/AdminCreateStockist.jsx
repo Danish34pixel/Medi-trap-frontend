@@ -1,7 +1,37 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback, memo } from "react";
 import { useNavigate } from 'react-router-dom';
 import { Package, User, Phone, Mail, MapPin, FileText, Calendar, Sparkles, Building, Star } from 'lucide-react';
 import { apiUrl } from "./config/api";
+import Logo from "./Logo";
+
+// The InputField component remains exactly the same as in your second code snippet.
+const InputField = memo(({ icon: Icon, label, type = "text", placeholder, value, onChange, required = false, path, ...props }) => {
+    const handleChange = (e) => {
+      onChange(path, e.target.value);
+    };
+
+    return (
+      <div className="group relative">
+        <label className="block text-sm font-semibold text-slate-600 mb-3 flex items-center gap-2">
+          <Icon size={16} className="text-blue-500" />
+          {label}
+          {required && <Star size={12} className="text-red-400" />}
+        </label>
+        <div className="relative">
+          <input
+            type={type}
+            placeholder={placeholder}
+            className="w-full bg-white/90 backdrop-blur-xl border border-slate-200/50 rounded-2xl px-5 py-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-300 hover:border-slate-300/50 hover:bg-white group-hover:shadow-lg group-hover:shadow-blue-500/10"
+            value={value}
+            onChange={handleChange}
+            required={required}
+            {...props}
+          />
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+        </div>
+      </div>
+    );
+});
 
 export default function AdminCreateStockist() {
   const [form, setForm] = useState({
@@ -19,13 +49,24 @@ export default function AdminCreateStockist() {
 
   const navigate = useNavigate();
 
-  // Track mouse movement for interactive effects
+  // Track mouse movement for interactive effects (batch updates with rAF)
+  const rafRef = useRef(null);
+  const lastMouseRef = useRef(0);
   useEffect(() => {
     const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
+      const now = Date.now();
+      if (now - lastMouseRef.current < 120) return;
+      lastMouseRef.current = now;
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        setMousePosition({ x: e.clientX, y: e.clientY });
+      });
     };
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   // Generate floating particles
@@ -47,14 +88,15 @@ export default function AdminCreateStockist() {
     generateParticles();
   }, []);
 
-  const setField = (path, value) => {
+  // Correctly memoized handler to update nested state
+  const setField = useCallback((path, value) => {
     if (path.startsWith("address.")) {
       const key = path.split(".")[1];
       setForm((f) => ({ ...f, address: { ...f.address, [key]: value } }));
     } else {
       setForm((f) => ({ ...f, [path]: value }));
     }
-  };
+  }, []);
 
   const submit = async (e) => {
     e && e.preventDefault();
@@ -79,34 +121,12 @@ export default function AdminCreateStockist() {
         navigate ? navigate(-1) : window.history.back();
       }
     } catch (err) {
-      console.error('Submit stockist failed', err);
+      // Show user-facing alert for submit failure; avoid noisy console output in production UI
       window.alert(`Error submitting stockist: ${String(err)}`);
     } finally {
       setLoading(false);
     }
   };
-
-  const InputField = ({ icon: Icon, label, type = "text", placeholder, value, onChange, required = false, ...props }) => (
-    <div className="group relative">
-      <label className="block text-sm font-semibold text-slate-600 mb-3 flex items-center gap-2">
-        <Icon size={16} className="text-blue-500" />
-        {label}
-        {required && <Star size={12} className="text-red-400" />}
-      </label>
-      <div className="relative">
-        <input
-          type={type}
-          placeholder={placeholder}
-          className="w-full bg-white/90 backdrop-blur-xl border border-slate-200/50 rounded-2xl px-5 py-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-300 hover:border-slate-300/50 hover:bg-white group-hover:shadow-lg group-hover:shadow-blue-500/10"
-          value={value}
-          onChange={onChange}
-          required={required}
-          {...props}
-        />
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -161,19 +181,8 @@ export default function AdminCreateStockist() {
             <div className="relative z-10">
               {/* Light themed header */}
               <div className="text-center mb-12 relative">
-                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
-                  <Sparkles className="text-blue-400 animate-pulse" size={24} />
-                </div>
-                <div className="absolute -top-3 left-1/3 transform -translate-x-1/2">
-                  <Package className="text-indigo-400 animate-bounce delay-300" size={16} />
-                </div>
-                <div className="absolute -top-3 right-1/3 transform translate-x-1/2">
-                  <Building className="text-purple-400 animate-bounce delay-700" size={16} />
-                </div>
-
-                <div className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-3xl backdrop-blur-xl border border-white/30 mb-6">
-                  <Package className="w-8 h-8 text-blue-500 animate-pulse" />
-                </div>
+                
+                <Logo className="h-25 w-32"/>
                 
                 <h1 className="text-4xl sm:text-5xl font-black mb-4 relative">
                   <span className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-500 bg-clip-text text-transparent">
@@ -204,7 +213,8 @@ export default function AdminCreateStockist() {
                         label="Stockist Name"
                         placeholder="Enter stockist name"
                         value={form.name}
-                        onChange={(e) => setField("name", e.target.value)}
+                        path="name"
+                        onChange={setField} // Pass `setField` directly
                         required
                       />
 
@@ -214,7 +224,8 @@ export default function AdminCreateStockist() {
                           label="Contact Person"
                           placeholder="Primary contact person"
                           value={form.contactPerson}
-                          onChange={(e) => setField("contactPerson", e.target.value)}
+                          path="contactPerson"
+                          onChange={setField} // Pass `setField` directly
                         />
 
                         <InputField
@@ -223,7 +234,8 @@ export default function AdminCreateStockist() {
                           type="tel"
                           placeholder="Contact phone number"
                           value={form.phone}
-                          onChange={(e) => setField("phone", e.target.value)}
+                          path="phone"
+                          onChange={setField} // Pass `setField` directly
                         />
                       </div>
 
@@ -233,7 +245,8 @@ export default function AdminCreateStockist() {
                         type="email"
                         placeholder="Business email address"
                         value={form.email}
-                        onChange={(e) => setField("email", e.target.value)}
+                        path="email"
+                        onChange={setField} // Pass `setField` directly
                       />
                     </div>
                   </div>
@@ -254,7 +267,8 @@ export default function AdminCreateStockist() {
                         label="Street Address"
                         placeholder="Street address"
                         value={form.address.street}
-                        onChange={(e) => setField("address.street", e.target.value)}
+                        path="address.street"
+                        onChange={setField} // Pass `setField` directly
                       />
 
                       <InputField
@@ -262,7 +276,8 @@ export default function AdminCreateStockist() {
                         label="City"
                         placeholder="City name"
                         value={form.address.city}
-                        onChange={(e) => setField("address.city", e.target.value)}
+                        path="address.city"
+                        onChange={setField} // Pass `setField` directly
                       />
 
                       <InputField
@@ -270,7 +285,8 @@ export default function AdminCreateStockist() {
                         label="State"
                         placeholder="State/Province"
                         value={form.address.state}
-                        onChange={(e) => setField("address.state", e.target.value)}
+                        path="address.state"
+                        onChange={setField} // Pass `setField` directly
                       />
 
                       <InputField
@@ -279,7 +295,8 @@ export default function AdminCreateStockist() {
                         inputMode="numeric"
                         placeholder="Postal code"
                         value={form.address.pincode}
-                        onChange={(e) => setField("address.pincode", e.target.value)}
+                        path="address.pincode"
+                        onChange={setField} // Pass `setField` directly
                       />
                     </div>
                   </div>
@@ -300,7 +317,8 @@ export default function AdminCreateStockist() {
                         label="License Number"
                         placeholder="Enter license number"
                         value={form.licenseNumber}
-                        onChange={(e) => setField("licenseNumber", e.target.value)}
+                        path="licenseNumber"
+                        onChange={setField} // Pass `setField` directly
                       />
 
                       <InputField
@@ -308,7 +326,8 @@ export default function AdminCreateStockist() {
                         label="License Expiry Date"
                         type="date"
                         value={form.licenseExpiry}
-                        onChange={(e) => setField("licenseExpiry", e.target.value)}
+                        path="licenseExpiry"
+                        onChange={setField} // Pass `setField` directly
                       />
                     </div>
                   </div>

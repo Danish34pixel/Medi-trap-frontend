@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { apiUrl } from "../config/api";
 import { useNavigate } from "react-router-dom";
 import {
-  Building2,
   Mail,
   Lock,
   AlertCircle,
@@ -10,7 +9,74 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import Logo from '../Logo';
+import Logo from "../Logo";
+
+// The InputField component is now a separate, reusable component.
+// It receives all necessary state and handlers as props.
+const InputField = ({
+  icon: Icon,
+  label,
+  name,
+  type = "text",
+  placeholder,
+  required = false,
+  showPasswordToggle = false,
+  form,
+  handleChange,
+  focusedField,
+  setFocusedField,
+  showPassword,
+  setShowPassword,
+}) => (
+  <div className="relative group">
+    <label
+      className={`block text-sm font-medium transition-all duration-300 mb-2 ${
+        focusedField === name ? "text-blue-600" : "text-gray-700"
+      }`}
+    >
+      {label}
+    </label>
+    <div className="relative">
+      <div
+        className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all duration-300 ${
+          focusedField === name ? "text-blue-500" : "text-gray-400"
+        }`}
+      >
+        <Icon className="h-5 w-5" />
+      </div>
+      <input
+        name={name}
+        type={
+          showPasswordToggle ? (showPassword ? "text" : "password") : type
+        }
+        placeholder={placeholder}
+        value={form[name]}
+        onChange={handleChange}
+        onFocus={() => setFocusedField(name)}
+        onBlur={() => setFocusedField(null)}
+        required={required}
+        className={`block w-full pl-10 pr-12 py-3 border rounded-lg shadow-sm placeholder-gray-500 transition-all duration-300 transform hover:scale-[1.01] focus:scale-[1.01] ${
+          focusedField === name
+            ? "border-blue-500 ring-2 ring-blue-200 bg-blue-50/50"
+            : "border-gray-300 hover:border-gray-400 bg-white"
+        }`}
+      />
+      {showPasswordToggle && (
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-all duration-200 hover:scale-110"
+        >
+          {showPassword ? (
+            <EyeOff className="h-5 w-5" />
+          ) : (
+            <Eye className="h-5 w-5" />
+          )}
+        </button>
+      )}
+    </div>
+  </div>
+);
 
 const Login = () => {
   const navigate = useNavigate();
@@ -35,7 +101,6 @@ const Login = () => {
     setMessage("");
 
     try {
-      // Use configured API base so production builds point to the Render backend
       const response = await fetch(apiUrl(`/api/auth/login`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -50,8 +115,7 @@ const Login = () => {
       if (data.success && data.token && data.user) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
-        setMessage("Login successfull!");
-        // Redirect to dashboard after a short delay so the success message is visible
+        setMessage("Login successful!");
         setTimeout(() => navigate("/dashboard"), 700);
       } else {
         throw new Error("Invalid response format from server");
@@ -63,189 +127,29 @@ const Login = () => {
     }
   };
 
-  const InputField = ({
-    icon: Icon,
-    label,
-    name,
-    type = "text",
-    placeholder,
-    required = false,
-    showPasswordToggle = false,
-  }) => (
-    <div className="relative group">
-      <label
-        className={`block text-sm font-medium transition-all duration-300 mb-2 ${
-          focusedField === name ? "text-blue-600" : "text-gray-700"
-        }`}
-      >
-        {label}
-      </label>
-      <div className="relative">
-        <div
-          className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all duration-300 ${
-            focusedField === name ? "text-blue-500" : "text-gray-400"
-          }`}
-        >
-          <Icon className="h-5 w-5" />
-        </div>
-        <input
-          name={name}
-          type={
-            showPasswordToggle ? (showPassword ? "text" : "password") : type
-          }
-          placeholder={placeholder}
-          value={form[name]}
-          onChange={handleChange}
-          onFocus={() => setFocusedField(name)}
-          onBlur={() => setFocusedField(null)}
-          required={required}
-          className={`block w-full pl-10 pr-12 py-3 border rounded-lg shadow-sm placeholder-gray-500 transition-all duration-300 transform hover:scale-[1.01] focus:scale-[1.01] ${
-            focusedField === name
-              ? "border-blue-500 ring-2 ring-blue-200 bg-blue-50/50"
-              : "border-gray-300 hover:border-gray-400 bg-white"
-          }`}
-        />
-        {showPasswordToggle && (
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-all duration-200 hover:scale-110"
-          >
-            {showPassword ? (
-              <EyeOff className="h-5 w-5" />
-            ) : (
-              <Eye className="h-5 w-5" />
-            )}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-
   return (
     <>
       {/* Custom Fonts */}
       <style>{`
         @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap");
 
-        * {
-          font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-            Roboto, sans-serif;
-        }
-
-        .brand-font {
-          font-family: "Poppins", sans-serif;
-        }
-
-        .fade-in {
-          opacity: ${isVisible ? 1 : 0};
-          transform: translateY(${isVisible ? "0" : "30px"});
-          transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .slide-in-left {
-          opacity: ${isVisible ? 1 : 0};
-          transform: translateX(${isVisible ? "0" : "-50px"});
-          transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
-        }
-
-        .slide-in-right {
-          opacity: ${isVisible ? 1 : 0};
-          transform: translateX(${isVisible ? "0" : "50px"});
-          transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.4s;
-        }
-
-        .scale-in {
-          opacity: ${isVisible ? 1 : 0};
-          transform: scale(${isVisible ? 1 : 0.8});
-          transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.6s;
-        }
-
-        .floating {
-          animation: floating 6s ease-in-out infinite;
-        }
-
-        .pulse-ring {
-          animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        @keyframes floating {
-          0%,
-          100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-10px);
-          }
-        }
-
-        @keyframes pulse-ring {
-          0% {
-            transform: scale(1);
-            opacity: 1;
-          }
-          100% {
-            transform: scale(1.2);
-            opacity: 0;
-          }
-        }
-
-        .gradient-text {
-          background: linear-gradient(135deg, #3b82f6, #10b981);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .glass-effect {
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .hover-lift:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-            0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        .button-gradient {
-          background: linear-gradient(135deg, #3b82f6, #10b981);
-          background-size: 200% 200%;
-          animation: gradient-shift 3s ease infinite;
-        }
-
-        .button-gradient:hover {
-          animation: gradient-shift 0.5s ease infinite;
-        }
-
-        @keyframes gradient-shift {
-          0% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-          100% {
-            background-position: 0% 50%;
-          }
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 640px) {
-          .mobile-padding {
-            padding: 1rem;
-          }
-
-          .mobile-text {
-            font-size: 2rem;
-          }
-
-          .mobile-card {
-            margin: 1rem;
-            padding: 1.5rem;
-          }
-        }
+        * { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .brand-font { font-family: "Poppins", sans-serif; }
+        .fade-in { opacity: ${isVisible ? 1 : 0}; transform: translateY(${isVisible ? "0" : "30px"}); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .slide-in-left { opacity: ${isVisible ? 1 : 0}; transform: translateX(${isVisible ? "0" : "-50px"}); transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s; }
+        .slide-in-right { opacity: ${isVisible ? 1 : 0}; transform: translateX(${isVisible ? "0" : "50px"}); transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.4s; }
+        .scale-in { opacity: ${isVisible ? 1 : 0}; transform: scale(${isVisible ? 1 : 0.8}); transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.6s; }
+        .floating { animation: floating 6s ease-in-out infinite; }
+        .pulse-ring { animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes floating { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        @keyframes pulse-ring { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.2); opacity: 0; } }
+        .gradient-text { background: linear-gradient(135deg, #3b82f6, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .button-gradient { background: linear-gradient(135deg, #3b82f6, #10b981); background-size: 200% 200%; animation: gradient-shift 3s ease infinite; }
+        .button-gradient:hover { animation: gradient-shift 0.5s ease infinite; }
+        @keyframes gradient-shift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @media (max-width: 640px) { .mobile-padding { padding: 1rem; } .mobile-text { font-size: 2rem; } .mobile-card { margin: 1rem; padding: 1.5rem; } }
       `}</style>
 
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center py-4 sm:py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
@@ -268,8 +172,7 @@ const Login = () => {
             className="relative flex justify-center items-center mb-4"
             style={{ height: "80px" }}
           >
-            
-              <Logo className="w-45 h-45" />
+            <Logo className="h-25 w-32"/>
           </div>
           {/* Login Form */}
           <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-100 glass-effect hover-lift transition-all duration-500 scale-in mobile-card">
@@ -290,6 +193,10 @@ const Login = () => {
                 type="email"
                 placeholder="Enter your email address"
                 required
+                form={form}
+                handleChange={handleChange}
+                focusedField={focusedField}
+                setFocusedField={setFocusedField}
               />
 
               <InputField
@@ -300,6 +207,12 @@ const Login = () => {
                 placeholder="Enter your password"
                 required
                 showPasswordToggle={true}
+                form={form}
+                handleChange={handleChange}
+                focusedField={focusedField}
+                setFocusedField={setFocusedField}
+                showPassword={showPassword}
+                setShowPassword={setShowPassword}
               />
 
               <div className="flex items-center justify-between text-sm">
