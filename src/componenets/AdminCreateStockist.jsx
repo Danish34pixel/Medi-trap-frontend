@@ -105,6 +105,7 @@ export default function AdminCreateStockist() {
               required
             />
           </div>
+        
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -204,6 +205,7 @@ export default function AdminCreateStockist() {
               </div>
             </div>
           </div>
+
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
