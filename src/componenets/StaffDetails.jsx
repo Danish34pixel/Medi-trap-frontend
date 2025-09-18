@@ -7,6 +7,14 @@ export default function StaffDetails() {
   const { id } = useParams();
   const [staff, setStaff] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [user] = useState(() => {
+    try {
+      const u = localStorage.getItem("user");
+      return u ? JSON.parse(u) : null;
+    } catch (e) {
+      return null;
+    }
+  });
 
   useEffect(() => {
     (async () => {
@@ -68,6 +76,24 @@ export default function StaffDetails() {
             <div className="ml-auto">
               <QRCodeCanvas value={qrUrl} size={90} />
             </div>
+          </div>
+          <div className="mt-4 flex gap-3">
+            {user &&
+            (user.role === "admin" ||
+              String(user._id) === String(staff.stockist)) ? (
+              <>
+                <button className="px-4 py-2 bg-blue-600 text-white rounded">
+                  Edit
+                </button>
+                <button className="px-4 py-2 bg-red-600 text-white rounded">
+                  Delete
+                </button>
+              </>
+            ) : (
+              <div className="text-sm text-gray-500">
+                You do not have permissions to modify this staff.
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -18,6 +18,7 @@ import StaffList from "./componenets/StaffList";
 import StaffCreate from "./componenets/StaffCreate";
 import StaffDetails from "./componenets/StaffDetails";
 import Demand from "./componenets/Demand";
+import StockistLogin from "./componenets/StockistLogin";
 
 const App = () => {
   return (
@@ -32,6 +33,7 @@ const App = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/adminpanel" element={<AdminPanel />} />
         <Route path="/adminCreateStockist" element={<AdminCreateStockist />} />
+        <Route path="/stockist-login" element={<StockistLogin />} />
         <Route path="/adminCreateCompany" element={<AdminCreateCompany />} />
         <Route path="/adminCreateMedicine" element={<AdminCreateMedicine />} />
         <Route path="/adminCreateStaff" element={<StaffCreate />} />
