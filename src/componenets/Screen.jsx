@@ -406,9 +406,9 @@ const Screen = ({ navigation: navProp }) => {
         <p className="text-sm text-slate-500 mt-1">
           Find the best marketing partners for your business
         </p>
-        {isAdmin && (
+            {isAdmin && (
           <button
-            onClick={() => navigation.navigate("/adminPanel")}
+            onClick={() => navigation.navigate("/adminpanel")}
             className="mt-3 inline-block bg-violet-600 text-white text-sm font-semibold px-4 py-2 rounded-lg"
           >
             Admin Panel
