@@ -2,10 +2,24 @@ import React, { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { apiUrl } from "./config/api";
+import API_BASE from "./config/api";
 
 // Mock StaffCard component
 const StaffCard = ({ staff, onOpen }) => {
   const handleClick = () => onOpen(staff);
+
+  // normalize image URL: accept absolute URLs (cloudinary) or relative paths from backend
+  const resolveImg = (img) => {
+    if (!img) return null;
+    try {
+      if (img.startsWith("http")) return img;
+    } catch (e) {}
+    // ensure leading slash
+    const path = img.startsWith("/") ? img : `/${img}`;
+    return `${API_BASE}${path}`;
+  };
+
+  const imgSrc = resolveImg(staff.image);
 
   return (
     <div
@@ -14,15 +28,15 @@ const StaffCard = ({ staff, onOpen }) => {
     >
       <div className="flex items-center gap-4">
         <div className="relative">
-          {staff.image ? (
+          {imgSrc ? (
             <img
-              src={staff.image}
+              src={imgSrc}
               alt={staff.fullName}
               className="w-14 h-14 rounded-xl object-cover"
             />
           ) : (
             <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">
-              {staff.fullName.charAt(0)}
+              {staff.fullName ? staff.fullName.charAt(0) : "S"}
             </div>
           )}
           <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
@@ -84,17 +98,25 @@ const StaffModal = ({ staff, onClose }) => {
 
         <div className="space-y-4">
           <div className="flex items-center gap-4">
-            {staff.image ? (
-              <img
-                src={staff.image}
-                alt={staff.fullName}
-                className="w-16 h-16 rounded-xl object-cover"
-              />
-            ) : (
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
-                {staff.fullName.charAt(0)}
-              </div>
-            )}
+            {(() => {
+              const img = staff.image;
+              const src =
+                img &&
+                (img.startsWith("http")
+                  ? img
+                  : `${API_BASE}${img.startsWith("/") ? img : `/${img}`}`);
+              return src ? (
+                <img
+                  src={src}
+                  alt={staff.fullName}
+                  className="w-16 h-16 rounded-xl object-cover"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
+                  {staff.fullName ? staff.fullName.charAt(0) : "S"}
+                </div>
+              );
+            })()}
             <div>
               <h3 className="font-semibold text-gray-800">{staff.fullName}</h3>
               <p className="text-sm text-gray-500">{staff.contact}</p>
