@@ -19,6 +19,7 @@ import StaffCreate from "./componenets/StaffCreate";
 import StaffDetails from "./componenets/StaffDetails";
 import Demand from "./componenets/Demand";
 import StockistLogin from "./componenets/StockistLogin";
+import Stockistoutcode from "./componenets/Stockistoutcode";
 
 const App = () => {
   return (
@@ -34,6 +35,7 @@ const App = () => {
         <Route path="/adminpanel" element={<AdminPanel />} />
         <Route path="/adminCreateStockist" element={<AdminCreateStockist />} />
         <Route path="/stockist-login" element={<StockistLogin />} />
+        <Route path="/stockist-outcode" element={<Stockistoutcode />} />
         <Route path="/adminCreateCompany" element={<AdminCreateCompany />} />
         <Route path="/adminCreateMedicine" element={<AdminCreateMedicine />} />
         <Route path="/adminCreateStaff" element={<StaffCreate />} />

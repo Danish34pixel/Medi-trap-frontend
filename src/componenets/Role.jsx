@@ -100,8 +100,8 @@ export default function SelectRolePage() {
       <div className="relative bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-8 w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="mt-10" >
-            <Logo className="h-25 w-32"/>
+          <div className="mt-10">
+            <Logo className="h-25 w-32" />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
             Select Your Role
@@ -229,7 +229,6 @@ export default function SelectRolePage() {
         </div>
 
         {/* Pagination Dots */}
-       
       </div>
     </div>
   );

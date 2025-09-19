@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff, Mail, Lock, Shield } from "lucide-react";
 import { apiUrl } from "./config/api";
 
 export default function StockistLogin() {
@@ -8,6 +9,8 @@ export default function StockistLogin() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function submit(e) {
     e.preventDefault();
@@ -19,14 +22,24 @@ export default function StockistLogin() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.message || "Login failed");
+        setError((data && data.message) || "Login failed");
+        setLoading(false);
         return;
       }
+
       if (data.token) localStorage.setItem("token", data.token);
       if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
-      navigate("/dashboard");
+
+      // Optionally respect "remember me"
+      if (!rememberMe) {
+        // If not remembering, we could store session-only. Browsers don't provide
+        // an easy session-only localStorage — keeping token in localStorage for
+        // simplicity. For a real app, consider httpOnly cookies.
+      }
+
+      navigate("/stockist-outcode");
     } catch (err) {
       setError("Network error");
     } finally {
@@ -35,66 +48,157 @@ export default function StockistLogin() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <div
-        style={{
-          width: 420,
-          padding: 20,
-          borderRadius: 6,
-          background: "#fff",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-        }}
-      >
-        <h3 style={{ marginBottom: 12 }}>Stockist Login</h3>
-        {error && (
-          <div style={{ color: "crimson", marginBottom: 8 }}>{error}</div>
-        )}
-        <form onSubmit={submit}>
-          <div style={{ marginBottom: 8 }}>
-            <label style={{ display: "block", marginBottom: 4 }}>Email</label>
-            <input
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{ width: "100%", padding: 8 }}
-            />
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="relative inline-block">
+            <div className="w-20 h-20 bg-gradient-to-r from-teal-400 via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 mx-auto shadow-lg transform rotate-12">
+              <div className="bg-white rounded-lg p-2 transform -rotate-12">
+                <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-blue-600 rounded-md flex items-center justify-center">
+                  <div className="w-4 h-4 bg-white rounded-sm flex items-center justify-center">
+                    <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center">
+              <div className="w-3 h-3 bg-white rounded-full flex items-center justify-center">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+              </div>
+            </div>
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ display: "block", marginBottom: 4 }}>
-              Password
-            </label>
-            <input
-              required
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ width: "100%", padding: 8 }}
-            />
+        </div>
+
+        {/* Login Form */}
+        <div className="bg-white rounded-3xl shadow-xl p-8 backdrop-blur-sm">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">
+              Welcome Back
+            </h1>
+            <p className="text-gray-600">Sign in to your MedTrap account</p>
           </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <a href="/adminCreateStockist">Sign up</a>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={submit} className="space-y-6">
+            {/* Email Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email address"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50"
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Remember Me & Forgot Password */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 text-teal-600 bg-gray-100 border-gray-300 rounded focus:ring-teal-500 focus:ring-2"
+                />
+                <span className="ml-2 text-sm text-gray-600">Remember me</span>
+              </label>
+              <a
+                href="/forgot-password"
+                className="text-sm text-teal-600 hover:text-teal-500 font-medium transition-colors"
+              >
+                Forgot password?
+              </a>
+            </div>
+
+            {/* Sign In Button */}
             <button
               type="submit"
               disabled={loading}
-              style={{ padding: "8px 14px" }}
+              className="w-full bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Signing in...
+                </div>
+              ) : (
+                "Sign In"
+              )}
             </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white text-gray-500">
+                New to MedTrap?
+              </span>
+            </div>
           </div>
-        </form>
+
+          {/* Create Account Link */}
+          <div className="text-center">
+            <a
+              href="/adminCreateStockist"
+              className="text-teal-600 hover:text-teal-500 font-semibold transition-colors"
+            >
+              Create your account
+            </a>
+          </div>
+        </div>
+
+        {/* Security Notice */}
+        <div className="text-center mt-6">
+          <div className="flex items-center justify-center text-sm text-gray-500">
+            <Shield className="w-4 h-4 text-amber-500 mr-1" />
+            Protected by industry-standard security measures
+          </div>
+        </div>
       </div>
     </div>
   );

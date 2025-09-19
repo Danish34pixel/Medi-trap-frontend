@@ -140,9 +140,25 @@ const StaffModal = ({ staff, onClose }) => {
           >
             Close
           </button>
-          <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200">
-            Edit Staff
-          </button>
+          {/* Only show management actions to admin or owning stockist */}
+          {window &&
+            window.localStorage &&
+            (() => {
+              try {
+                const u = JSON.parse(window.localStorage.getItem("user"));
+                return (
+                  u &&
+                  (u.role === "admin" ||
+                    String(u._id) === String(staff.stockist))
+                );
+              } catch (e) {
+                return false;
+              }
+            })() && (
+              <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200">
+                Edit Staff
+              </button>
+            )}
         </div>
       </div>
     </div>

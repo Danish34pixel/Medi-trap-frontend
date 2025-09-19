@@ -19,8 +19,26 @@ export default function StaffCreate() {
   });
   const [image, setImage] = useState(null);
   const [aadhar, setAadhar] = useState(null);
+  const [stockistsList, setStockistsList] = useState([]);
+  const [selectedStockist, setSelectedStockist] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    // if admin, load stockists for selection
+    (async () => {
+      try {
+        if (user && user.role === "admin") {
+          const res = await fetch(apiUrl("/api/stockist"));
+          const j = await res.json().catch(() => ({}));
+          const list = (j && j.data) || [];
+          if (res.ok && Array.isArray(list)) setStockistsList(list);
+        }
+      } catch (e) {
+        console.error("Failed to load stockists", e);
+      }
+    })();
+  }, [user]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -33,6 +51,10 @@ export default function StaffCreate() {
       fd.append("contact", form.contact);
       fd.append("email", form.email);
       fd.append("address", form.address);
+      // if admin creating for a specific stockist, include it
+      if (user && user.role === "admin" && selectedStockist) {
+        fd.append("stockist", selectedStockist);
+      }
       fd.append("image", image);
       fd.append("aadharCard", aadhar);
 
@@ -106,6 +128,25 @@ export default function StaffCreate() {
           </div>
 
           <div className="space-y-6">
+            {user && user.role === "admin" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Assign to Stockist
+                </label>
+                <select
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl"
+                  value={selectedStockist}
+                  onChange={(e) => setSelectedStockist(e.target.value)}
+                >
+                  <option value="">-- Select stockist (optional) --</option>
+                  {stockistsList.map((s) => (
+                    <option key={s._id} value={s._id}>
+                      {s.name || s.title || s.companyName || s.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name
