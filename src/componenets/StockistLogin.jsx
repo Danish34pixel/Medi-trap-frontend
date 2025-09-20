@@ -54,6 +54,7 @@ export default function StockistLogin() {
         <div className="text-center mb-8">
           <div className="relative inline-block">
             <div className="w-20 h-20 bg-gradient-to-r from-teal-400 via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 mx-auto shadow-lg transform rotate-12">
+              <img src="/final-logo.png" alt="" />
               <div className="bg-white rounded-lg p-2 transform -rotate-12">
                 <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-blue-600 rounded-md flex items-center justify-center">
                   <div className="w-4 h-4 bg-white rounded-sm flex items-center justify-center">
