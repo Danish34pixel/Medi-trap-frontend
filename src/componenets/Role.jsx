@@ -6,7 +6,8 @@ import { Package, ShoppingCart, Stethoscope } from "lucide-react";
 const Logo = ({ className }) => (
   <div className={`${className}  rounded-lg flex items-center justify-center`}>
     <span className="text-white font-bold text-xl">
-      <img src="/final-logo.png" alt="" />
+      <Logo />
+      <img src="/logo.png" alt="" />
     </span>
   </div>
 );

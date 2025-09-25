@@ -69,8 +69,16 @@ export default function AdminCreateStockist() {
     address: { street: "", city: "", state: "", pincode: "" },
     licenseNumber: "",
     licenseExpiry: "",
+    licenseImageUrl: "",
+    dob: "",
+    bloodGroup: "",
+    profileImageUrl: "",
+    roleType: "", // Proprietor or Pharmacist
+    cntxNumber: "",
   });
   const [loading, setLoading] = useState(false);
+  const [licenseImageFile, setLicenseImageFile] = useState(null);
+  const [profileImageFile, setProfileImageFile] = useState(null);
 
   const setField = useCallback((path, value) => {
     if (path && path.startsWith("address.")) {
@@ -80,6 +88,38 @@ export default function AdminCreateStockist() {
       setForm((f) => ({ ...f, [path]: value }));
     }
   }, []);
+
+  const handleFileChange = (e) => {
+    const file = e?.target?.files?.[0] || null;
+    setLicenseImageFile(file);
+  };
+
+  const handleProfileFileChange = (e) => {
+    const file = e?.target?.files?.[0] || null;
+    setProfileImageFile(file);
+  };
+
+  const uploadToCloudinary = async (file) => {
+    if (!file) return "";
+
+    const formData = new FormData();
+    // caller determines field name: licenseImage or profileImage
+    // when calling this helper from frontend we always use licenseImage for license upload
+    formData.append("licenseImage", file);
+
+    const token = localStorage.getItem("token");
+    const res = await fetch(apiUrl("/api/stockist/upload-license"), {
+      method: "POST",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.message || "Upload failed");
+    return json.url || json.data?.url || "";
+  };
 
   const submit = async (e) => {
     e && e.preventDefault();
@@ -93,13 +133,66 @@ export default function AdminCreateStockist() {
         navigate("/login");
         return;
       }
+      // Upload profile image (if provided)
+      let profileImageUrl = form.profileImageUrl || "";
+      if (profileImageFile) {
+        try {
+          // adjust form field name expected by backend
+          const formData = new FormData();
+          formData.append("profileImage", profileImageFile);
+          const token = localStorage.getItem("token");
+          const upRes = await fetch(apiUrl("/api/stockist/upload-profile"), {
+            method: "POST",
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: formData,
+          });
+          const upJson = await upRes.json().catch(() => ({}));
+          if (!upRes.ok)
+            throw new Error(upJson.message || "Profile upload failed");
+          profileImageUrl = upJson.url || "";
+        } catch (err) {
+          window.alert("Profile image upload failed: " + String(err));
+          setLoading(false);
+          return;
+        }
+      }
+
+      // If a license image file is selected, upload it first and set its URL
+      let licenseImageUrl = form.licenseImageUrl || "";
+      if (licenseImageFile) {
+        try {
+          const formData = new FormData();
+          formData.append("licenseImage", licenseImageFile);
+          const token = localStorage.getItem("token");
+          const upRes = await fetch(apiUrl("/api/stockist/upload-license"), {
+            method: "POST",
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: formData,
+          });
+          const upJson = await upRes.json().catch(() => ({}));
+          if (!upRes.ok)
+            throw new Error(upJson.message || "License upload failed");
+          licenseImageUrl = upJson.url || "";
+        } catch (err) {
+          window.alert("License image upload failed: " + String(err));
+          setLoading(false);
+          return;
+        }
+      }
+
+      const payload = { ...form, licenseImageUrl, profileImageUrl };
+
       const res = await fetch(apiUrl("/api/stockist"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -136,7 +229,7 @@ export default function AdminCreateStockist() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <InputField
               icon={Building}
-              label="Stockist Name"
+              label="Firm Name"
               placeholder="Enter stockist name"
               value={form.name}
               path="name"
@@ -145,8 +238,8 @@ export default function AdminCreateStockist() {
             />
             <InputField
               icon={User}
-              label="Contact Person"
-              placeholder="Contact person"
+              label="Stockist Name"
+              placeholder="Stockist Name"
               value={form.contactPerson}
               path="contactPerson"
               onChange={setField}
@@ -238,6 +331,101 @@ export default function AdminCreateStockist() {
               path="licenseExpiry"
               onChange={setField}
             />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-600 mb-2">
+                Date of Birth
+              </label>
+              <input
+                type="date"
+                value={form.dob}
+                onChange={(e) => setField("dob", e.target.value)}
+                className="w-full rounded-xl border px-4 py-3 bg-white/90"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-600 mb-2">
+                Blood Group
+              </label>
+              <select
+                value={form.bloodGroup}
+                onChange={(e) => setField("bloodGroup", e.target.value)}
+                className="w-full rounded-xl border px-4 py-3 bg-white/90"
+              >
+                <option value="">Select</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-600 mb-2">
+                Role Type
+              </label>
+              <select
+                value={form.roleType}
+                onChange={(e) => setField("roleType", e.target.value)}
+                className="w-full rounded-xl border px-4 py-3 bg-white/90"
+              >
+                <option value="">Select</option>
+                <option value="Proprietor">Proprietor</option>
+                <option value="Pharmacist">Pharmacist</option>
+              </select>
+            </div>
+
+            <InputField
+              icon={User}
+              label="CNTX Number"
+              placeholder="CNTX number"
+              value={form.cntxNumber}
+              path="cntxNumber"
+              onChange={setField}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-600 mb-2 flex items-center gap-2">
+              Profile Image
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleProfileFileChange}
+              className="w-full rounded-xl border px-4 py-3 bg-white/90"
+            />
+            {form.profileImageUrl && (
+              <p className="text-xs text-slate-500 mt-2">
+                Existing URL will be used if no file is chosen.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-600 mb-2 flex items-center gap-2">
+              License Image
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="w-full rounded-xl border px-4 py-3 bg-white/90"
+            />
+            {form.licenseImageUrl && (
+              <p className="text-xs text-slate-500 mt-2">
+                Existing URL will be used if no file is chosen.
+              </p>
+            )}
           </div>
 
           <div>
