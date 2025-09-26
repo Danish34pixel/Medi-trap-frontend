@@ -53,13 +53,7 @@ export default function AdminCreateStockist() {
   // Ensure the user is authenticated (any logged-in user may create stockists)
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      window.alert(
-        "You must be signed in to create a stockist. Redirecting to login."
-      );
-      navigate("/login");
-    }
-  }, [navigate]);
+  }, []);
   const [form, setForm] = useState({
     name: "",
     contactPerson: "",
@@ -127,10 +121,7 @@ export default function AdminCreateStockist() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        window.alert(
-          "You must be signed in to perform this action. Redirecting to login."
-        );
-        navigate("/login");
+        navigate("/stockist-login");
         return;
       }
       // Upload profile image (if provided)
@@ -153,7 +144,7 @@ export default function AdminCreateStockist() {
             throw new Error(upJson.message || "Profile upload failed");
           profileImageUrl = upJson.url || "";
         } catch (err) {
-          window.alert("Profile image upload failed: " + String(err));
+          console.error("Profile image upload failed:", err);
           setLoading(false);
           return;
         }
@@ -178,7 +169,7 @@ export default function AdminCreateStockist() {
             throw new Error(upJson.message || "License upload failed");
           licenseImageUrl = upJson.url || "";
         } catch (err) {
-          window.alert("License image upload failed: " + String(err));
+          console.error("License image upload failed:", err);
           setLoading(false);
           return;
         }
@@ -199,14 +190,14 @@ export default function AdminCreateStockist() {
       if (!res.ok) {
         const msg =
           (data && data.message) || JSON.stringify(data) || res.statusText;
-        window.alert(`Error: ${msg}`);
+        console.error(`Error creating stockist: ${msg}`);
         return;
       }
 
-      window.alert("Success — stockist created.");
+      console.info("Success — stockist created.");
       navigate("/stockist-login");
     } catch (err) {
-      window.alert(`Error submitting stockist: ${String(err)}`);
+      console.error("Error submitting stockist:", err);
     } finally {
       setLoading(false);
     }
