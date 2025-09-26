@@ -4,6 +4,31 @@ import { apiUrl } from "./config/api";
 import API_BASE from "./config/api";
 import { QRCodeSVG } from "qrcode.react";
 
+// Small helper that tries multiple candidate URLs and falls back to a placeholder
+const SmartImage = ({ srcCandidates = [], alt = "", className = "" }) => {
+  const [index, setIndex] = React.useState(0);
+  const src =
+    srcCandidates && srcCandidates.length ? srcCandidates[index] : null;
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      onError={(e) => {
+        // try next candidate, otherwise show inline svg placeholder
+        if (index + 1 < srcCandidates.length) {
+          setIndex(index + 1);
+        } else {
+          e.currentTarget.onerror = null;
+          e.currentTarget.src =
+            "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='100%' height='100%' fill='%23e6eefc'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%236b8bd7' font-size='20'>Photo</text></svg>";
+        }
+      }}
+    />
+  );
+};
+
 const Purchaser = () => {
   const [purchasers, setPurchasers] = useState([]);
   // Fetch purchasers from backend
@@ -299,23 +324,30 @@ const Purchaser = () => {
                                 />
                               </svg>
                             );
-                          // resolve absolute vs relative
-                          const src = img.startsWith("http")
-                            ? img
-                            : `${API_BASE}${
-                                img.startsWith("/") ? img : `/${img}`
-                              }`;
+
+                          // candidate urls to try (in order): absolute, API_BASE prefixed, Vite base prefixed
+                          const candidates = [];
+                          if (img.startsWith("http")) candidates.push(img);
+                          // prefix api base
+                          candidates.push(
+                            `${API_BASE}${
+                              img.startsWith("/") ? img : `/${img}`
+                            }`
+                          );
+                          // try Vite base (for public/ assets)
+                          const viteBase = import.meta.env.BASE_URL || "/";
+                          candidates.push(
+                            `${viteBase.replace(/\/$/, "")}/${img.replace(
+                              /^\//,
+                              ""
+                            )}`
+                          );
+
                           return (
-                            <img
-                              src={src}
+                            <SmartImage
+                              srcCandidates={candidates}
                               alt="Photo"
                               className="object-cover w-full h-full"
-                              onError={(e) => {
-                                // fallback to placeholder on load error
-                                e.currentTarget.onerror = null;
-                                e.currentTarget.src =
-                                  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='100%' height='100%' fill='%23e6eefc'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%236b8bd7' font-size='20'>Photo</text></svg>";
-                              }}
                             />
                           );
                         })()}
