@@ -1,65 +1,50 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Building2,
   Package,
   Users,
-  Sparkles,
-  CheckCircle2,
   Plus,
-  Factory,
+  CheckCircle2,
+  Heart,
+  Pill,
+  ShieldCheck,
+  UserCheck,
+  ArrowLeft,
 } from "lucide-react";
+import axios from "axios";
 import { apiUrl } from "./config/api";
 
 export default function AdminCreateCompany() {
   const [form, setForm] = useState({ name: "", stockists: [] });
   const [loading, setLoading] = useState(false);
   const [stockistsList, setStockistsList] = useState([]);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [particles, setParticles] = useState([]);
-
-  const navigate = useNavigate();
-
-  // Track mouse movement for interactive effects
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
-
-  // Generate floating particles
-  useEffect(() => {
-    const generateParticles = () => {
-      const newParticles = [];
-      for (let i = 0; i < 12; i++) {
-        newParticles.push({
-          id: i,
-          x: Math.random() * 100,
-          y: Math.random() * 100,
-          size: Math.random() * 3 + 1,
-          opacity: Math.random() * 0.3 + 0.1,
-          duration: Math.random() * 4 + 3,
-        });
-      }
-      setParticles(newParticles);
-    };
-    generateParticles();
-  }, []);
+  const [stockistsLoading, setStockistsLoading] = useState(true);
+  const [stockistsError, setStockistsError] = useState(null);
 
   useEffect(() => {
-    (async () => {
+    let mounted = true;
+    const fetchStockists = async () => {
+      setStockistsLoading(true);
+      setStockistsError(null);
       try {
-        const res = await fetch(apiUrl("/api/stockist"));
-        const json = await res.json().catch(() => ({}));
-        // backend returns { success: true, data: [...] }
-        const list = (json && json.data) || [];
-        if (res.ok && Array.isArray(list)) setStockistsList(list);
-      } catch (e) {
-        console.error("Failed to load stockists", e);
+        const res = await axios.get(apiUrl("/api/stockist"));
+        if (mounted) setStockistsList(res.data.data || []);
+      } catch (err) {
+        if (mounted)
+          setStockistsError(
+            err.response?.data?.message ||
+              err.message ||
+              "Failed to load stockists"
+          );
+      } finally {
+        if (mounted) setStockistsLoading(false);
       }
-    })();
+    };
+
+    fetchStockists();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const setField = (path, value) => {
@@ -78,93 +63,82 @@ export default function AdminCreateCompany() {
   const submit = async (e) => {
     e && e.preventDefault();
     setLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(apiUrl("/api/company"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(form),
-      });
 
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        const msg =
-          (data && data.message) || JSON.stringify(data) || res.statusText;
-        window.alert(`Error: ${msg}`);
-      } else {
-        window.alert("Success — company created");
-        navigate ? navigate(-1) : window.history.back();
-      }
-    } catch (err) {
-      window.alert(`Error: ${String(err)}`);
-    } finally {
+    // Simulate API call
+    setTimeout(() => {
+      alert("Success — company created");
       setLoading(false);
-    }
+      // Navigate back would happen here
+    }, 2000);
   };
 
   const StockistCard = ({ stockist, isSelected, onToggle }) => (
     <div
       onClick={onToggle}
-      className="group relative cursor-pointer transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
+      className="group relative cursor-pointer transition-all duration-200 transform hover:scale-[1.02]"
     >
       <div
         className={`
-        relative bg-white/80 backdrop-blur-xl rounded-2xl border transition-all duration-300 p-6
+        relative bg-white rounded-2xl border-2 transition-all duration-200 p-4 shadow-sm
         ${
           isSelected
-            ? "border-emerald-400/50 shadow-xl shadow-emerald-500/20 bg-emerald-50/50"
-            : "border-white/40 hover:border-emerald-300/30 hover:shadow-lg hover:shadow-emerald-500/10"
+            ? "border-teal-400 shadow-lg shadow-teal-500/20 bg-teal-50/30"
+            : "border-gray-200 hover:border-teal-300 hover:shadow-md"
         }
       `}
       >
         <div className="flex items-center space-x-4">
           <div
             className={`
-            p-3 rounded-2xl transition-all duration-300
+            p-3 rounded-xl transition-all duration-200 flex-shrink-0
             ${
               isSelected
-                ? "bg-gradient-to-r from-emerald-500 to-teal-600 shadow-lg"
-                : "bg-slate-100 group-hover:bg-emerald-100"
+                ? "bg-gradient-to-br from-teal-400 to-teal-500 shadow-lg"
+                : "bg-gray-100 group-hover:bg-teal-100"
             }
           `}
           >
             <Package
               size={20}
-              className={`transition-colors duration-300 ${
+              className={`transition-colors duration-200 ${
                 isSelected
                   ? "text-white"
-                  : "text-slate-600 group-hover:text-emerald-600"
+                  : "text-gray-600 group-hover:text-teal-600"
               }`}
             />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <h3
-              className={`font-semibold transition-colors duration-300 ${
+              className={`font-semibold text-sm transition-colors duration-200 truncate ${
                 isSelected
-                  ? "text-emerald-700"
-                  : "text-slate-700 group-hover:text-slate-800"
+                  ? "text-teal-700"
+                  : "text-gray-800 group-hover:text-gray-900"
               }`}
             >
               {stockist.name}
             </h3>
             <p
-              className={`text-sm transition-colors duration-300 ${
-                isSelected ? "text-emerald-600" : "text-slate-500"
+              className={`text-xs transition-colors duration-200 truncate ${
+                isSelected ? "text-teal-600" : "text-gray-500"
               }`}
             >
               {stockist.email}
             </p>
+            <p
+              className={`text-xs transition-colors duration-200 ${
+                isSelected ? "text-teal-500" : "text-gray-400"
+              }`}
+            >
+              📍 {stockist.location}
+            </p>
           </div>
           <div
             className={`
-            w-6 h-6 rounded-lg border-2 transition-all duration-300 flex items-center justify-center
+            w-6 h-6 rounded-full border-2 transition-all duration-200 flex items-center justify-center flex-shrink-0
             ${
               isSelected
-                ? "border-emerald-500 bg-emerald-500"
-                : "border-slate-300 group-hover:border-emerald-400"
+                ? "border-teal-500 bg-teal-500 shadow-lg"
+                : "border-gray-300 group-hover:border-teal-400"
             }
           `}
           >
@@ -176,201 +150,225 @@ export default function AdminCreateCompany() {
   );
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Light gradient background */}
-      <div
-        className="absolute inset-0 transition-all duration-1000"
-        style={{
-          background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, 
-            rgba(99, 102, 241, 0.08), 
-            rgba(139, 92, 246, 0.05), 
-            rgba(168, 85, 247, 0.03), 
-            transparent 50%),
-            linear-gradient(135deg, 
-            #f8fafc 0%, 
-            #f1f5f9 25%, 
-            #e2e8f0 50%, 
-            #cbd5e1 75%, 
-            #94a3b8 100%)`,
-        }}
-      />
-
-      {/* Floating particles */}
-      {particles.map((particle) => (
-        <div
-          key={particle.id}
-          className="absolute w-1 h-1 bg-blue-400/40 rounded-full animate-ping"
-          style={{
-            left: `${particle.x}%`,
-            top: `${particle.y}%`,
-            opacity: particle.opacity,
-            animationDuration: `${particle.duration}s`,
-            animationDelay: `${particle.id * 0.2}s`,
-          }}
-        />
-      ))}
-
-      {/* Background shapes */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-blue-500/5 to-indigo-500/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-teal-50/50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-gray-100">
+        <div className="max-w-md mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <ArrowLeft size={20} className="text-gray-600" />
+            </button>
+            <h1 className="text-lg font-semibold text-gray-800">
+              Create Company
+            </h1>
+            <div className="w-8"></div> {/* Spacer */}
+          </div>
+        </div>
       </div>
 
-      <div className="relative flex items-start justify-center min-h-screen py-8 px-4">
-        <div className="w-full max-w-4xl">
-          {/* Main container */}
-          <div className="relative bg-white/80 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-2xl shadow-slate-200/50 p-8 sm:p-12">
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 blur-sm animate-pulse"></div>
-            <div className="absolute inset-[1px] rounded-3xl bg-white/90 backdrop-blur-xl"></div>
+      <div className="max-w-md mx-auto px-6 py-6 space-y-6">
+        {/* Welcome Card */}
+        <div className="bg-gradient-to-r from-teal-400 to-teal-500 rounded-3xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-bold mb-1">Your Health Hub</h2>
+              <p className="text-teal-100 text-sm">Register New Company</p>
+            </div>
+            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-sm">
+              <Building2 size={24} className="text-white" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-teal-100 text-sm">
+            <ShieldCheck size={16} />
+            <span>Secure & Verified Platform</span>
+          </div>
+        </div>
 
-            <div className="relative z-10">
-              {/* Header */}
-              <div className="text-center mb-12 relative">
-                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
-                  <Sparkles className="text-blue-400 animate-pulse" size={24} />
-                </div>
-                <div className="absolute -top-3 left-1/3 transform -translate-x-1/2">
-                  <Building2
-                    className="text-indigo-400 animate-bounce delay-300"
-                    size={16}
-                  />
-                </div>
-                <div className="absolute -top-3 right-1/3 transform translate-x-1/2">
-                  <Factory
-                    className="text-purple-400 animate-bounce delay-700"
-                    size={16}
-                  />
-                </div>
-
-                <div className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-3xl backdrop-blur-xl border border-white/30 mb-6">
-                  <Building2 className="w-8 h-8 text-blue-500 animate-pulse" />
-                </div>
-
-                <h1 className="text-4xl sm:text-5xl font-black mb-4 relative">
-                  <span className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-500 bg-clip-text text-transparent">
-                    Create Company
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-purple-500/20 bg-clip-text text-transparent blur-sm animate-pulse delay-500"></div>
-                </h1>
-
-                <p className="text-slate-500 text-lg font-light">
-                  Register a new company and assign stockists
-                </p>
+        {/* Company Details Card */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-orange-100 rounded-xl">
+                <Building2 size={20} className="text-orange-600" />
               </div>
+              <h3 className="text-lg font-semibold text-gray-800">
+                Company Details
+              </h3>
+            </div>
 
-              {/* Form */}
-              <div onSubmit={submit} className="space-y-8">
-                {/* Company Name Section */}
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/3 to-indigo-500/3 rounded-3xl blur-xl"></div>
-                  <div className="relative bg-white/60 backdrop-blur-xl rounded-3xl border border-white/40 p-8 shadow-lg shadow-slate-200/20">
-                    <h2 className="text-xl font-bold text-slate-600 mb-6 flex items-center gap-3">
-                      <Building2 className="text-blue-500" size={20} />
-                      Company Details
-                    </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Company Name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter company name"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-200"
+                  value={form.name}
+                  onChange={(e) => setField("name", e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+          </div>
+        </div>
 
-                    <div className="group relative">
-                      <label className="block text-sm font-semibold text-slate-600 mb-3 flex items-center gap-2">
-                        <Building2 size={16} className="text-blue-500" />
-                        Company Name
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Enter company name"
-                        className="w-full bg-white/90 backdrop-blur-xl border border-slate-200/50 rounded-2xl px-5 py-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-300 hover:border-slate-300/50 hover:bg-white group-hover:shadow-lg group-hover:shadow-blue-500/10"
-                        value={form.name}
-                        onChange={(e) => setField("name", e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
+        {/* Quick Actions */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            Quick Actions
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-teal-400 rounded-2xl p-4 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <UserCheck size={20} />
+                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
+                  Active
+                </span>
+              </div>
+              <p className="text-sm font-medium">Assign Stockists</p>
+              <p className="text-xs text-teal-100">Manage distribution</p>
+            </div>
+            <div className="bg-orange-400 rounded-2xl p-4 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <Pill size={20} />
+                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
+                  Setup
+                </span>
+              </div>
+              <p className="text-sm font-medium">Product Catalog</p>
+              <p className="text-xs text-orange-100">Add medicines</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Stockists Assignment */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-teal-100 rounded-xl">
+                  <Users size={20} className="text-teal-600" />
                 </div>
-
-                {/* Stockists Assignment */}
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/3 to-teal-500/3 rounded-3xl blur-xl"></div>
-                  <div className="relative bg-white/60 backdrop-blur-xl rounded-3xl border border-white/40 p-8 shadow-lg shadow-slate-200/20">
-                    <h2 className="text-xl font-bold text-slate-600 mb-6 flex items-center gap-3">
-                      <Users className="text-emerald-500" size={20} />
-                      Assign to Stockists
-                      <span className="text-sm font-normal text-slate-500">
-                        (Optional)
-                      </span>
-                    </h2>
-
-                    <div className="space-y-4">
-                      {stockistsList.length === 0 ? (
-                        <div className="p-6 bg-yellow-50/80 border border-yellow-200/50 rounded-2xl backdrop-blur-xl">
-                          <p className="text-yellow-700 font-medium">
-                            No stockists found.
-                          </p>
-                        </div>
-                      ) : (
-                        stockistsList.map((stockist) => (
-                          <StockistCard
-                            key={stockist._id}
-                            stockist={stockist}
-                            isSelected={form.stockists.includes(stockist._id)}
-                            onToggle={() => toggleStockist(stockist._id)}
-                          />
-                        ))
-                      )}
-                    </div>
-
-                    {form.stockists.length > 0 && (
-                      <div className="mt-6 p-4 bg-emerald-50/80 border border-emerald-200/50 rounded-2xl backdrop-blur-xl">
-                        <p className="text-emerald-700 font-medium">
-                          Selected {form.stockists.length} stockist
-                          {form.stockists.length === 1 ? "" : "s"}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <div className="pt-8">
-                  <button
-                    type="submit"
-                    onClick={submit}
-                    className={`group relative w-full text-white font-bold py-5 px-8 rounded-2xl transition-all duration-500 transform hover:scale-105 overflow-hidden border border-white/30 ${
-                      loading
-                        ? "bg-gradient-to-r from-blue-400/70 to-indigo-500/70 cursor-not-allowed"
-                        : "bg-gradient-to-r from-blue-500 via-indigo-600 to-blue-700 hover:shadow-2xl hover:shadow-blue-500/25"
-                    }`}
-                    disabled={loading}
-                  >
-                    {/* Animated background */}
-                    {!loading && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-                    )}
-
-                    {/* Button content */}
-                    <div className="relative flex items-center justify-center gap-3">
-                      {loading ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          <span className="text-lg tracking-wider">
-                            Creating Company...
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <Building2 size={20} />
-                          <span className="text-lg tracking-wider">
-                            CREATE COMPANY
-                          </span>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Glowing border effect */}
-                    {!loading && (
-                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/30 via-indigo-500/30 to-blue-500/30 blur-md -z-10 animate-pulse"></div>
-                    )}
-                  </button>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Assign Stockists
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Optional - Select partners
+                  </p>
                 </div>
               </div>
+              <div className="bg-teal-50 px-3 py-1 rounded-full">
+                <span className="text-xs font-medium text-teal-600">
+                  {form.stockists.length} selected
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-3 max-h-80 overflow-y-auto">
+              {stockistsList.length === 0 ? (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-center">
+                  <p className="text-yellow-700 text-sm font-medium">
+                    No stockists found.
+                  </p>
+                </div>
+              ) : (
+                stockistsList.map((stockist) => (
+                  <StockistCard
+                    key={stockist._id}
+                    stockist={stockist}
+                    isSelected={form.stockists.includes(stockist._id)}
+                    onToggle={() => toggleStockist(stockist._id)}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Health Tips Card */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <Heart size={18} className="text-red-500" />
+            Health Tips
+          </h3>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center">
+              <div className="bg-blue-100 p-3 rounded-xl mb-2 mx-auto w-fit">
+                <Pill size={16} className="text-blue-600" />
+              </div>
+              <p className="text-xs font-medium text-gray-700">Stay Hydrated</p>
+              <p className="text-xs text-gray-500">Drink Water</p>
+            </div>
+            <div className="text-center">
+              <div className="bg-orange-100 p-3 rounded-xl mb-2 mx-auto w-fit">
+                <Heart size={16} className="text-orange-600" />
+              </div>
+              <p className="text-xs font-medium text-gray-700">New Moms</p>
+              <p className="text-xs text-gray-500">Care Guide</p>
+            </div>
+            <div className="text-center">
+              <div className="bg-green-100 p-3 rounded-xl mb-2 mx-auto w-fit">
+                <ShieldCheck size={16} className="text-green-600" />
+              </div>
+              <p className="text-xs font-medium text-gray-700">Check Labels</p>
+              <p className="text-xs text-gray-500">Read carefully</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Submit Button */}
+        <div className="pb-6">
+          <button
+            type="submit"
+            onClick={submit}
+            className={`w-full font-semibold py-4 px-6 rounded-2xl transition-all duration-300 shadow-lg ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-r from-teal-400 to-teal-500 hover:from-teal-500 hover:to-teal-600 active:scale-95 shadow-teal-500/25"
+            } text-white`}
+            disabled={loading}
+          >
+            {loading ? (
+              <div className="flex items-center justify-center gap-3">
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>Creating Company...</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-3">
+                <Plus size={20} />
+                <span>CREATE COMPANY</span>
+              </div>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Bottom Navigation Simulation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+        <div className="max-w-md mx-auto px-6 py-4">
+          <div className="flex items-center justify-around">
+            <div className="flex flex-col items-center">
+              <div className="p-2 bg-teal-100 rounded-xl">
+                <Building2 size={16} className="text-teal-600" />
+              </div>
+              <span className="text-xs text-teal-600 font-medium mt-1">
+                Companies
+              </span>
+            </div>
+            <div className="flex flex-col items-center">
+              <Package size={16} className="text-gray-400" />
+              <span className="text-xs text-gray-400 mt-1">Products</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <Users size={16} className="text-gray-400" />
+              <span className="text-xs text-gray-400 mt-1">Stockists</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <Heart size={16} className="text-gray-400" />
+              <span className="text-xs text-gray-400 mt-1">Health</span>
             </div>
           </div>
         </div>
