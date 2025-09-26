@@ -21,7 +21,7 @@ export default function SelectRolePage() {
     {
       id: "Stockist",
       name: "Stockist",
-      icon: Package,
+      icon: "/stockist.png",
       gradient: "from-emerald-400 to-teal-500",
       bgGlow: "bg-emerald-500/10",
       description: "Manage inventory",
@@ -30,7 +30,7 @@ export default function SelectRolePage() {
     {
       id: "Purchaser",
       name: "Purchaser",
-      icon: ShoppingCart,
+      icon: "/purchaser-removebg-preview.png",
       gradient: "from-blue-400 to-indigo-500",
       bgGlow: "bg-blue-500/10",
       description: "Handle procurement",
@@ -39,7 +39,7 @@ export default function SelectRolePage() {
     {
       id: "Medical Owner",
       name: "Medical Owner",
-      icon: Stethoscope,
+      icon: "/medical-shop.png",
       gradient: "from-orange-400 to-red-500",
       bgGlow: "bg-orange-500/10",
       description: "Clinic management",
@@ -158,17 +158,27 @@ export default function SelectRolePage() {
                   }
                 `}
                 >
-                  <IconComponent
-                    size={32}
-                    className={`
-                      transition-all duration-500
-                      ${
-                        isActive
-                          ? "text-white drop-shadow-lg"
-                          : "text-gray-600 group-hover:text-gray-700"
-                      }
-                    `}
-                  />
+                  {typeof IconComponent === "string" ? (
+                    <img
+                      src={IconComponent}
+                      alt={role.name + " icon"}
+                      className={`w-28 h-28 object-contain transition-all duration-500 ${
+                        isActive ? "" : "group-hover:opacity-90"
+                      }`}
+                    />
+                  ) : (
+                    <IconComponent
+                      size={32}
+                      className={`
+                        transition-all duration-500
+                        ${
+                          isActive
+                            ? "text-white drop-shadow-lg"
+                            : "text-gray-600 group-hover:text-gray-700"
+                        }
+                      `}
+                    />
+                  )}
 
                   {/* Enhanced floating particles effect */}
                   {isActive && (
