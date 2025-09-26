@@ -397,7 +397,10 @@ const Purchaser = () => {
                     <div className="text-blue-600 font-semibold text-sm">
                       QR Code
                     </div>
-                    <QRCode value={`/purchaser/${p._id}`} size={120} />
+                    <QRCode
+                      value={`${window.location.origin}/purchaser/${p._id}`}
+                      size={120}
+                    />
                     <div className="text-xs text-gray-500 text-center">
                       Scan to view profile
                     </div>
