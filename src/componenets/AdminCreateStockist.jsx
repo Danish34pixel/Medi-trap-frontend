@@ -14,6 +14,10 @@ import {
   ArrowLeft,
   Heart,
 } from "lucide-react";
+import axios from "axios";
+import { apiUrl } from "./config/api";
+import { uploadToCloudinary } from "../utils/cloudinaryUpload";
+import { useNavigate } from "react-router-dom";
 
 const InputField = memo(
   ({
@@ -130,6 +134,7 @@ export default function ModernStockistForm() {
   const [licenseImageFile, setLicenseImageFile] = useState(null);
   const [profileImageFile, setProfileImageFile] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
+  const navigate = useNavigate();
 
   const setField = useCallback((path, value) => {
     if (path && path.startsWith("address.")) {
@@ -153,13 +158,57 @@ export default function ModernStockistForm() {
   const submit = async (e) => {
     e && e.preventDefault();
     setLoading(true);
+    try {
+      // Upload files to Cloudinary (client-side helper)
+      let profileImageUrl = form.profileImageUrl || "";
+      let licenseImageUrl = form.licenseImageUrl || "";
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (profileImageFile) {
+        profileImageUrl = await uploadToCloudinary(profileImageFile);
+      }
+      if (licenseImageFile) {
+        licenseImageUrl = await uploadToCloudinary(licenseImageFile);
+      }
 
-    console.log("Form submitted:", form);
-    setLoading(false);
-    alert("Stockist created successfully!");
+      // Prepare payload matching backend expectations
+      const payload = {
+        name: form.name,
+        contactPerson: form.contactPerson,
+        phone: form.phone,
+        email: form.email,
+        password: form.password,
+        address: form.address,
+        licenseNumber: form.licenseNumber,
+        licenseExpiry: form.licenseExpiry || null,
+        licenseImageUrl,
+        dob: form.dob || null,
+        bloodGroup: form.bloodGroup || null,
+        profileImageUrl,
+        roleType: form.roleType || null,
+        cntxNumber: form.cntxNumber || null,
+      };
+
+      const res = await axios.post(apiUrl("/api/stockist/register"), payload, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (res?.data?.success) {
+        // Optionally store token for immediate use: res.data.token
+        // Redirect to stockist login page
+        navigate("/stockist-login");
+      } else {
+        alert(res?.data?.message || "Failed to create stockist");
+      }
+    } catch (err) {
+      console.error("Create stockist failed:", err);
+      alert(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to create stockist"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
@@ -433,6 +482,7 @@ export default function ModernStockistForm() {
           <div className="text-center pt-4">
             <button
               type="button"
+              onClick={() => navigate("/stockist-login")}
               className="px-8 py-3 rounded-xl bg-white border-2 border-gray-200 text-gray-600 font-semibold shadow-sm hover:border-cyan-400 hover:text-cyan-600 transition-colors duration-200"
             >
               Login as Stockist

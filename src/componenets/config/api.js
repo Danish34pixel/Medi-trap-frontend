@@ -8,8 +8,14 @@
 const REMOTE_API =
   import.meta.env.VITE_REMOTE_API || "https://medi-trap-backend-2.onrender.com";
 
-// In development, prefer VITE_API_URL; otherwise default to localhost:5000
-const DEV_FALLBACK = import.meta.env.VITE_API_URL || "http://localhost:5000";
+// In development, prefer VITE_API_URL; otherwise default to the current page's
+// hostname (helps when testing from a phone on the same Wi-Fi). Falls back
+// to localhost when window is not available.
+const DEV_FALLBACK =
+  import.meta.env.VITE_API_URL ||
+  `http://${
+    typeof window !== "undefined" ? window.location.hostname : "localhost"
+  }:5000`;
 
 const IS_DEV = import.meta.env.MODE === "development";
 
