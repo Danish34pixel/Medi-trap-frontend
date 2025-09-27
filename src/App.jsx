@@ -21,6 +21,8 @@ import Demand from "./componenets/Demand";
 import StockistLogin from "./componenets/StockistLogin";
 import Stockistoutcode from "./componenets/Stockistoutcode";
 import StockistCardView from "./componenets/StockistCardView";
+import ForgotPassword from "./componenets/Routes/ForgotPassword";
+import ResetPassword from "./componenets/Routes/ResetPassword";
 
 const App = () => {
   return (
@@ -29,6 +31,8 @@ const App = () => {
         <Route path="/" element={<RoleSelector />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
+  <Route path="/forgot-password" element={<ForgotPassword />} />
+  <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/CompanyResult" element={<CompanyResult />} />
         <Route path="/MedicineRes" element={<MedicineRes />} />

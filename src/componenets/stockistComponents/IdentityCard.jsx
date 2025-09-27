@@ -5,7 +5,7 @@ import Logo from "../Logo";
 export default function IdentityCard({ stockist, qrDataUrl, onPrint }) {
   // Helper function to format date
   const formatDate = (dateString) => {
-    if (!dateString) return "DD/MM/YEAR";
+    if (!dateString) return "DD/MM/YYYY";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-GB", {
       day: "2-digit",
@@ -15,143 +15,124 @@ export default function IdentityCard({ stockist, qrDataUrl, onPrint }) {
   };
 
   return (
-    <div className="w-full max-w-md bg-white rounded-lg shadow-xl border border-gray-200 print:shadow-none print:border-0">
-      {/* Header with company logo */}
-      <div className="bg-gradient-to-r from-red-600 to-red-700 text-white  rounded-t-lg relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700"></div>
-        <div className="relative z-10 mt-4 ml-1">
-          <Logo className="h-[5vh] absolute mr-80" />
+    // Landscape/Horizontal ID Card Size (3.375in x 2.125in aspect ratio)
+    <div className="w-96 h-60 bg-white rounded-xl shadow-2xl border border-gray-300 overflow-hidden mx-auto print:shadow-none print:border-0">
+      
+      {/* --- Top Header / Company Strip --- */}
+      <div className="flex items-center justify-between px-4 py-2 bg-blue-800 text-white h-12">
+        <Logo className="h-6 w-auto filter invert" /> {/* Inverting logo for dark background */}
+        <div className="text-right">
+          <h1 className="text-base font-extrabold tracking-widest leading-none uppercase">
+            {stockist.companyName || "GLOBAL CORP"}
+          </h1>
         </div>
       </div>
-
-      <div className="p-6">
-        {/* Profile section */}
-        <div className="flex items-start gap-4 mb-6">
-          <div className="flex-shrink-0">
+      
+      {/* --- Main Content Area (Photo, Details, QR) --- */}
+      <div className="flex p-4 h-[calc(100%-3rem)]">
+        
+        {/* --- Left Column: Photo & Role --- */}
+        <div className="flex flex-col items-center w-1/3 pr-3 border-r border-gray-100">
+          {/* Profile Photo */}
+          <div className="flex-shrink-0 mb-2">
             {stockist.profileImageUrl ? (
               <img
                 src={stockist.profileImageUrl}
                 alt={`${stockist.name} profile`}
-                className="w-20 h-20 rounded-lg object-cover border-2 border-gray-200"
+                className="w-24 h-24 rounded-full object-cover border-4 border-gray-200 shadow-md"
               />
             ) : (
-              <div className="w-20 h-20 bg-gray-300 rounded-lg flex items-center justify-center">
-                <Avatar name={stockist.name} size={80} />
+              <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center border-4 border-gray-200">
+                <Avatar name={stockist.name} size={60} />
               </div>
             )}
           </div>
-
-          <div className="flex-1">
-            <h2 className="text-xl font-bold text-gray-900 mb-1">
-              {stockist.contactPerson || stockist.name || "Unnamed"}
-            </h2>
-            <p className="text-red-600 font-medium text-sm">
-              {stockist.roleType || stockist.designation || "Proprietor"}
+          
+          {/* Name and Designation */}
+          <div className="text-center w-full">
+            <p className="text-xs font-semibold text-blue-800 uppercase leading-tight mt-1">
+              {stockist.roleType || stockist.designation || "DESIGNATION"}
             </p>
-          </div>
-
-          {/* QR Code */}
-          <div className="flex-shrink-0">
-            <div className="w-16 h-16 border border-gray-300 rounded">
-              {qrDataUrl ? (
-                <img
-                  src={qrDataUrl}
-                  alt="QR Code"
-                  className="w-full h-full object-cover rounded"
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
-                  <div className="w-8 h-8 bg-black rounded-sm opacity-80"></div>
-                </div>
-              )}
-            </div>
           </div>
         </div>
 
-        {/* Information Grid */}
-        <div className="space-y-4">
-          {/* First Row */}
-          <div className="grid grid-cols-3 gap-4 text-xs">
+        {/* --- Right Column: Details & QR/Signature --- */}
+        <div className="flex flex-col w-2/3 pl-4">
+          
+          {/* Main Name/ID */}
+          <h2 className="text-xl font-extrabold text-gray-900 truncate leading-tight">
+            {stockist.contactPerson || stockist.name || "Employee Name"}
+          </h2>
+          <p className="text-xs text-gray-500 mb-3">
+            ID: **{stockist._id ? String(stockist._id).slice(-8) : "00000000"}**
+          </p>
+
+          {/* Information Grid (Two columns, small gap) */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs flex-grow">
+            
+            {/* Row 1 */}
             <div>
-              <div className="font-medium text-gray-700 mb-1">ID No</div>
-              <div className="text-gray-900">
-                {stockist._id ? String(stockist._id).slice(-8) : "00000000"}
-              </div>
-            </div>
-            <div>
-              <div className="font-medium text-gray-700 mb-1">Joined Date</div>
-              <div className="text-gray-900">
+              <div className="font-medium text-gray-500">Joined</div>
+              <div className="font-semibold text-gray-900">
                 {formatDate(stockist.createdAt || stockist.joinedDate)}
               </div>
             </div>
             <div>
-              <div className="font-medium text-gray-700 mb-1">Email</div>
-              <div className="text-gray-900 truncate">
-                {stockist.email || "youremail@here"}
+              <div className="font-medium text-gray-500">D.O.B</div>
+              <div className="font-semibold text-gray-900">
+                {formatDate(stockist.dob)}
               </div>
             </div>
-          </div>
-
-          {/* Second Row */}
-          <div className="grid grid-cols-3 gap-4 text-xs">
+            
+            {/* Row 2 */}
             <div>
-              <div className="font-medium text-gray-700 mb-1">D.O.B</div>
-              <div className="text-gray-900">{formatDate(stockist.dob)}</div>
-            </div>
-            <div>
-              <div className="font-medium text-gray-700 mb-1">
-                License Expiry
-              </div>
-              <div className="text-gray-900">
-                {formatDate(stockist.licenseExpiry)}
-              </div>
-            </div>
-            <div>
-              <div className="font-medium text-gray-700 mb-1">Phone</div>
-              <div className="text-gray-900">
+              <div className="font-medium text-gray-500">Phone</div>
+              <div className="font-semibold text-gray-900">
                 {stockist.phone || stockist.contactNo || "000-000-123456"}
               </div>
             </div>
-          </div>
-
-          {/* Third Row: extra real fields */}
-          <div className="grid grid-cols-3 gap-4 text-xs">
             <div>
-              <div className="font-medium text-gray-700 mb-1">Blood Group</div>
-              <div className="text-gray-900">{stockist.bloodGroup || "-"}</div>
-            </div>
-            <div>
-              <div className="font-medium text-gray-700 mb-1">CNTX No</div>
-              <div className="text-gray-900">{stockist.cntxNumber || "-"}</div>
-            </div>
-            <div>
-              <div className="font-medium text-gray-700 mb-1">Role</div>
-              <div className="text-gray-900">{stockist.roleType || "-"}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Signature section */}
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <div className="flex justify-between items-end">
-            <div className="text-right">
-              <div className="text-xs text-gray-500 mb-1">Yours Signature</div>
-              <div className="text-xs font-medium text-gray-700">
-                Yours Sincerely
+              <div className="font-medium text-gray-500">Blood Group</div>
+              <div className="font-semibold text-gray-900">
+                {stockist.bloodGroup || "-"}
               </div>
             </div>
           </div>
+          
+          {/* Bottom Row: QR Code and Signature */}
+          <div className="flex justify-between items-end mt-2 pt-2 border-t border-gray-100">
+            
+            {/* QR Code */}
+            <div className="w-14 h-14 border border-gray-300 rounded-sm p-0.5">
+              {qrDataUrl ? (
+                <img
+                  src={qrDataUrl}
+                  alt="QR Code"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-100 rounded-sm"></div>
+              )}
+            </div>
+            
+            {/* Signature Placeholder */}
+            <div className="text-right">
+               <div className="h-6 w-24 border-b border-gray-400 mb-1">
+               </div>
+               <p className="text-[10px] text-gray-600">Authorized Signature</p>
+            </div>
+          </div>
         </div>
-
-        {/* Print button */}
-        <div className="mt-4 print:hidden">
-          <button
-            onClick={onPrint}
-            className="w-full px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg shadow hover:from-red-700 hover:to-red-800 transition-all duration-200 font-medium"
-          >
-            Print Card
-          </button>
-        </div>
+      </div>
+      
+      {/* Print button (outside the ID card view) */}
+      <div className="mt-4 print:hidden p-4">
+        <button
+          onClick={onPrint}
+          className="w-full px-4 py-2 bg-gradient-to-r from-blue-700 to-blue-800 text-white rounded-lg shadow hover:from-blue-800 hover:to-blue-900 transition-all duration-200 font-medium"
+        >
+          Print Card
+        </button>
       </div>
     </div>
   );
