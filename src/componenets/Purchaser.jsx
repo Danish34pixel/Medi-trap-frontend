@@ -8,8 +8,9 @@ import { QRCodeSVG } from "qrcode.react";
 const SmartImage = ({ srcCandidates = [], alt = "", className = "" }) => {
   const [index, setIndex] = React.useState(0);
   const [hasError, setHasError] = React.useState(false);
-  
-  const src = srcCandidates && srcCandidates.length ? srcCandidates[index] : null;
+
+  const src =
+    srcCandidates && srcCandidates.length ? srcCandidates[index] : null;
 
   const handleError = (e) => {
     if (index + 1 < srcCandidates.length) {
@@ -18,13 +19,15 @@ const SmartImage = ({ srcCandidates = [], alt = "", className = "" }) => {
     } else {
       setHasError(true);
       // Don't set src to avoid infinite error loop
-      e.currentTarget.style.display = 'none';
+      e.currentTarget.style.display = "none";
     }
   };
 
   if (!src || hasError) {
     return (
-      <div className={`${className} bg-gradient-to-br from-teal-100 to-teal-200 flex items-center justify-center`}>
+      <div
+        className={`${className} bg-gradient-to-br from-teal-100 to-teal-200 flex items-center justify-center`}
+      >
         <svg
           className="w-12 h-12 text-teal-500"
           fill="none"
@@ -43,12 +46,7 @@ const SmartImage = ({ srcCandidates = [], alt = "", className = "" }) => {
   }
 
   return (
-    <img
-      src={src}
-      alt={alt}
-      className={className}
-      onError={handleError}
-    />
+    <img src={src} alt={alt} className={className} onError={handleError} />
   );
 };
 
@@ -204,8 +202,18 @@ const Purchaser = () => {
                 </span>
               </div>
               <button className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5-5-5h5V3h5v14z" />
+                <svg
+                  className="w-4 h-4 text-gray-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 17h5l-5 5-5-5h5V3h5v14z"
+                  />
                 </svg>
               </button>
             </div>
@@ -263,7 +271,7 @@ const Purchaser = () => {
 
         {/* Enhanced Quick Actions with micro-animations */}
         <div className="grid grid-cols-2 gap-6">
-          <button 
+          <button
             onClick={showForm}
             className="group relative bg-gradient-to-br from-teal-400 via-teal-500 to-teal-600 text-white rounded-3xl p-7 text-left hover:shadow-2xl hover:scale-105 transition-all duration-300 overflow-hidden"
           >
@@ -291,8 +299,12 @@ const Purchaser = () => {
                   <div className="w-2 h-2 bg-white/10 rounded-full animate-pulse delay-150"></div>
                 </div>
               </div>
-              <h3 className="font-bold text-xl mb-2 group-hover:text-white transition-colors duration-300">Add New Purchaser</h3>
-              <p className="text-white/90 text-sm leading-relaxed">Register new purchaser profiles with QR generation</p>
+              <h3 className="font-bold text-xl mb-2 group-hover:text-white transition-colors duration-300">
+                Add New Purchaser
+              </h3>
+              <p className="text-white/90 text-sm leading-relaxed">
+                Register new purchaser profiles with QR generation
+              </p>
               <div className="mt-4 flex items-center gap-2 text-white/70 text-xs font-medium">
                 <div className="w-1.5 h-1.5 bg-white/70 rounded-full"></div>
                 Quick Setup
@@ -325,8 +337,12 @@ const Purchaser = () => {
                   <div className="w-2 h-2 bg-white/10 rounded-full animate-bounce delay-150"></div>
                 </div>
               </div>
-              <h3 className="font-bold text-xl mb-2 group-hover:text-white transition-colors duration-300">Bulk QR Generator</h3>
-              <p className="text-white/90 text-sm leading-relaxed">Generate multiple QR codes for existing purchasers</p>
+              <h3 className="font-bold text-xl mb-2 group-hover:text-white transition-colors duration-300">
+                Bulk QR Generator
+              </h3>
+              <p className="text-white/90 text-sm leading-relaxed">
+                Generate multiple QR codes for existing purchasers
+              </p>
               <div className="mt-4 flex items-center gap-2 text-white/70 text-xs font-medium">
                 <div className="w-1.5 h-1.5 bg-white/70 rounded-full"></div>
                 Mass Export
@@ -362,20 +378,36 @@ const Purchaser = () => {
                   <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
                     Active Purchasers
                   </h2>
-                  <p className="text-gray-500 text-sm mt-1">Manage and monitor purchaser profiles</p>
+                  <p className="text-gray-500 text-sm mt-1">
+                    Manage and monitor purchaser profiles
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <div className="bg-gradient-to-r from-teal-50 to-teal-100 px-6 py-3 rounded-2xl border border-teal-200/50 shadow-sm">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
-                    <span className="text-teal-700 font-bold text-lg">{purchasers.length}</span>
-                    <span className="text-teal-600 text-sm font-medium">Total</span>
+                    <span className="text-teal-700 font-bold text-lg">
+                      {purchasers.length}
+                    </span>
+                    <span className="text-teal-600 text-sm font-medium">
+                      Total
+                    </span>
                   </div>
                 </div>
                 <button className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-2xl flex items-center justify-center transition-all duration-200 hover:scale-105">
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                  <svg
+                    className="w-5 h-5 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                    />
                   </svg>
                 </button>
               </div>
@@ -465,22 +497,26 @@ const Purchaser = () => {
 
                             // Create better candidate URLs that might actually work
                             const candidates = [];
-                            
+
                             // If it's already a data URL (from uploaded files), use it directly
                             if (img.startsWith("data:")) {
                               candidates.push(img);
                             }
-                            
+
                             // If it's an absolute HTTP URL, use it
                             if (img.startsWith("http")) {
                               candidates.push(img);
                             }
-                            
+
                             // Try API_BASE prefixed URLs if we have API_BASE
-                            if (typeof API_BASE !== 'undefined' && API_BASE) {
-                              candidates.push(`${API_BASE}${img.startsWith("/") ? img : `/${img}`}`);
+                            if (typeof API_BASE !== "undefined" && API_BASE) {
+                              candidates.push(
+                                `${API_BASE}${
+                                  img.startsWith("/") ? img : `/${img}`
+                                }`
+                              );
                             }
-                            
+
                             // For demo purposes, add some sample images
                             candidates.push(
                               "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
@@ -511,7 +547,7 @@ const Purchaser = () => {
                             {p.address}
                           </p>
                         </div>
-                        
+
                         <div className="inline-flex items-center gap-3 bg-gradient-to-r from-teal-100 to-teal-50 px-6 py-3 rounded-2xl border border-teal-200/50 shadow-sm">
                           <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center">
                             <svg
@@ -540,7 +576,9 @@ const Purchaser = () => {
                       <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-2xl px-4 py-3 text-center shadow-inner">
                         <div className="flex items-center justify-center gap-2 mb-1">
                           <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                          <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">Purchaser ID</span>
+                          <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">
+                            Purchaser ID
+                          </span>
                           <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
                         </div>
                         <span className="text-xs font-mono text-gray-600 bg-white px-3 py-1 rounded-lg border">
@@ -554,7 +592,9 @@ const Purchaser = () => {
                   <div className="group bg-white/90 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border border-white/30 flex flex-col items-center space-y-4 hover:shadow-3xl transition-all duration-500 hover:scale-105">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
-                      <span className="text-teal-600 font-bold text-sm uppercase tracking-wider">QR Access Code</span>
+                      <span className="text-teal-600 font-bold text-sm uppercase tracking-wider">
+                        QR Access Code
+                      </span>
                       <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
                     </div>
                     <div className="relative p-4 bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-inner border border-gray-100">
@@ -565,7 +605,9 @@ const Purchaser = () => {
                       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-transparent via-transparent to-teal-500/5 group-hover:to-teal-500/10 transition-all duration-300"></div>
                     </div>
                     <div className="text-center space-y-2">
-                      <div className="text-xs text-gray-500 font-medium">Scan to view profile</div>
+                      <div className="text-xs text-gray-500 font-medium">
+                        Scan to view profile
+                      </div>
                       <button className="px-4 py-2 bg-teal-50 hover:bg-teal-100 text-teal-600 rounded-xl text-xs font-semibold transition-all duration-200 border border-teal-200/50">
                         Download QR
                       </button>
@@ -807,7 +849,8 @@ const Purchaser = () => {
                 Purchaser Added Successfully!
               </h4>
               <p className="text-green-600 text-lg mb-6">
-                QR code has been generated and the purchaser is now listed above.
+                QR code has been generated and the purchaser is now listed
+                above.
               </p>
             </div>
           )}
