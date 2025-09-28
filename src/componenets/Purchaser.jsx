@@ -147,7 +147,6 @@ const Purchaser = () => {
       setError(
         err.response?.data?.message || err.message || "Failed to add purchaser"
       );
-      setSubmitting(false);
     }
   };
 
