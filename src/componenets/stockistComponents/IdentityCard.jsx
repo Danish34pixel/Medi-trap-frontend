@@ -2,7 +2,7 @@ import React from "react";
 import Avatar from "./Avatar";
 import Logo from "../Logo";
 
-export default function IdentityCard({ stockist, qrDataUrl, onPrint }) {
+export default function IdentityCard({ stockist = {}, qrDataUrl, onPrint }) {
   // Helper function to format date
   const formatDate = (dateString) => {
     if (!dateString) return "DD/MM/YYYY";
@@ -17,91 +17,84 @@ export default function IdentityCard({ stockist, qrDataUrl, onPrint }) {
   return (
     // Landscape/Horizontal ID Card Size (3.375in x 2.125in aspect ratio)
     <div className="w-96 h-60 bg-white rounded-xl shadow-2xl border border-gray-300 overflow-hidden mx-auto print:shadow-none print:border-0">
-      
       {/* --- Top Header / Company Strip --- */}
       <div className="flex items-center justify-between px-4 py-2 bg-blue-800 text-white h-12">
-        <Logo className="h-6 w-auto filter invert" /> {/* Inverting logo for dark background */}
-        <div className="text-right">
-          <h1 className="text-base font-extrabold tracking-widest leading-none uppercase">
-            {stockist.companyName || "GLOBAL CORP"}
-          </h1>
-        </div>
+        <Logo className="h-6 w-auto filter invert" />{" "}
+        {/* Inverting logo for dark background */}
+        <div className="text-right"></div>
       </div>
-      
+
       {/* --- Main Content Area (Photo, Details, QR) --- */}
       <div className="flex p-4 h-[calc(100%-3rem)]">
-        
         {/* --- Left Column: Photo & Role --- */}
         <div className="flex flex-col items-center w-1/3 pr-3 border-r border-gray-100">
           {/* Profile Photo */}
           <div className="flex-shrink-0 mb-2">
-            {stockist.profileImageUrl ? (
+            {stockist?.profileImageUrl ? (
               <img
-                src={stockist.profileImageUrl}
-                alt={`${stockist.name} profile`}
+                src={stockist?.profileImageUrl}
+                alt={`${stockist?.name || "profile"} profile`}
                 className="w-24 h-24 rounded-full object-cover border-4 border-gray-200 shadow-md"
               />
             ) : (
               <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center border-4 border-gray-200">
-                <Avatar name={stockist.name} size={60} />
+                <Avatar name={stockist?.name || ""} size={60} />
               </div>
             )}
           </div>
-          
+
           {/* Name and Designation */}
           <div className="text-center w-full">
             <p className="text-xs font-semibold text-blue-800 uppercase leading-tight mt-1">
-              {stockist.roleType || stockist.designation || "DESIGNATION"}
+              {stockist?.roleType || stockist?.designation || "DESIGNATION"}
             </p>
           </div>
         </div>
 
         {/* --- Right Column: Details & QR/Signature --- */}
         <div className="flex flex-col w-2/3 pl-4">
-          
           {/* Main Name/ID */}
           <h2 className="text-xl font-extrabold text-gray-900 truncate leading-tight">
-            {stockist.contactPerson || stockist.name || "Employee Name"}
+            {stockist?.contactPerson || stockist?.name || "Employee Name"}
           </h2>
           <p className="text-xs text-gray-500 mb-3">
-            ID: **{stockist._id ? String(stockist._id).slice(-8) : "00000000"}**
+            ID: **{stockist?._id ? String(stockist._id).slice(-8) : "00000000"}
+            **
           </p>
 
           {/* Information Grid (Two columns, small gap) */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs flex-grow">
-            
             {/* Row 1 */}
             <div>
               <div className="font-medium text-gray-500">Joined</div>
               <div className="font-semibold text-gray-900">
-                {formatDate(stockist.createdAt || stockist.joinedDate)}
+                {formatDate(stockist?.createdAt || stockist?.joinedDate)}
               </div>
             </div>
             <div>
               <div className="font-medium text-gray-500">D.O.B</div>
               <div className="font-semibold text-gray-900">
-                {formatDate(stockist.dob)}
+                {formatDate(stockist?.dob)}
               </div>
             </div>
-            
+
             {/* Row 2 */}
             <div>
               <div className="font-medium text-gray-500">Phone</div>
               <div className="font-semibold text-gray-900">
-                {stockist.phone || stockist.contactNo || "000-000-123456"}
+                {stockist?.phone || stockist?.contactNo || "000-000-123456"}
               </div>
             </div>
             <div>
               <div className="font-medium text-gray-500">Blood Group</div>
               <div className="font-semibold text-gray-900">
-                {stockist.bloodGroup || "-"}
+                {stockist?.bloodGroup || "-"}
               </div>
             </div>
           </div>
-          
+
           {/* Bottom Row: QR Code and Signature */}
           <div className="flex justify-between items-end mt-2 pt-2 border-t border-gray-100">
-            
             {/* QR Code */}
             <div className="w-14 h-14 border border-gray-300 rounded-sm p-0.5">
               {qrDataUrl ? (
@@ -114,17 +107,16 @@ export default function IdentityCard({ stockist, qrDataUrl, onPrint }) {
                 <div className="w-full h-full bg-gray-100 rounded-sm"></div>
               )}
             </div>
-            
+
             {/* Signature Placeholder */}
             <div className="text-right">
-               <div className="h-6 w-24 border-b border-gray-400 mb-1">
-               </div>
-               <p className="text-[10px] text-gray-600">Authorized Signature</p>
+              <div className="h-6 w-24 border-b border-gray-400 mb-1"></div>
+              <p className="text-[10px] text-gray-600">Authorized Signature</p>
             </div>
           </div>
         </div>
       </div>
-      
+
       {/* Print button (outside the ID card view) */}
       <div className="mt-4 print:hidden p-4">
         <button

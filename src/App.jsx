@@ -6,6 +6,7 @@ import { Route, Routes } from "react-router-dom";
 import Login from "./componenets/Routes/Login";
 import Signup from "./componenets/Routes/Signup";
 import CompanyResult from "./componenets/Routes/CompanyResult";
+import CompanyProducts from "./componenets/Routes/CompanyProducts";
 import MedicineRes from "./componenets/MedicineRes";
 import Profile from "./componenets/Profile";
 import AdminPanel from "./componenets/AdminPanel";
@@ -31,10 +32,11 @@ const App = () => {
         <Route path="/" element={<RoleSelector />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
-  <Route path="/forgot-password" element={<ForgotPassword />} />
-  <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/CompanyResult" element={<CompanyResult />} />
+        <Route path="/company/:id/products" element={<CompanyProducts />} />
         <Route path="/MedicineRes" element={<MedicineRes />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/adminpanel" element={<AdminPanel />} />
