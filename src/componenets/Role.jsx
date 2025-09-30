@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, ShoppingCart, Stethoscope } from "lucide-react";
 
 // Mock Logo component for demonstration
-const Logo = ({ className }) => (
-  <div className={`${className}  rounded-lg flex items-center justify-center`}>
+const Logo = ({ className = "" }) => (
+  <div className={`${className} rounded-lg flex items-center justify-center`}>
     <span className="text-white font-bold text-xl">
-      <img src="/final-logo.png" alt="" />
-      <img src="/logo.png" alt="" />
+      <img src="/final-logo.png" alt="MedTrap" />
+      <img src="/logo.png" alt="MedTrap small" />
     </span>
   </div>
 );
@@ -21,7 +20,7 @@ export default function SelectRolePage() {
     {
       id: "Stockist",
       name: "Stockist",
-      icon: "/stockist.png",
+      icon: "/WhatsApp Image 2025-09-30 at 15.26.30_9f12fc65.jpg",
       gradient: "from-emerald-400 to-teal-500",
       bgGlow: "bg-emerald-500/10",
       description: "Manage inventory",
@@ -30,7 +29,7 @@ export default function SelectRolePage() {
     {
       id: "Purchaser",
       name: "Purchaser",
-      icon: "/purchaser-removebg-preview.png",
+      icon: "/WhatsApp Image 2025-09-30 at 15.26.31_55e2f48c.jpg",
       gradient: "from-blue-400 to-indigo-500",
       bgGlow: "bg-blue-500/10",
       description: "Handle procurement",
@@ -39,7 +38,7 @@ export default function SelectRolePage() {
     {
       id: "Medical Owner",
       name: "Medical Owner",
-      icon: "/medical-shop.png",
+      icon: "/WhatsApp Image 2025-09-30 at 15.26.30_99a6071d.jpg",
       gradient: "from-orange-400 to-red-500",
       bgGlow: "bg-orange-500/10",
       description: "Clinic management",
@@ -49,9 +48,7 @@ export default function SelectRolePage() {
 
   const handleRoleSelect = (roleId) => {
     setSelectedRole(roleId);
-    // Save selected role to localStorage if needed
     localStorage.setItem("selectedRole", roleId);
-    // If Staff is clicked, go directly to the staff listing page
     if (roleId === "Staff") {
       navigate("/staffs");
       return;
@@ -59,9 +56,7 @@ export default function SelectRolePage() {
   };
 
   const handleConfirm = () => {
-    // Save confirmed role to localStorage if needed
     localStorage.setItem("confirmedRole", selectedRole);
-    // Navigate to the appropriate page
     if (selectedRole === "Purchaser") {
       navigate("/purchaser");
       return;
@@ -74,7 +69,6 @@ export default function SelectRolePage() {
       navigate("/signup");
       return;
     }
-    // Default navigation for other roles
     navigate("/dashboard");
   };
 
@@ -130,9 +124,7 @@ export default function SelectRolePage() {
                       : "bg-white/70 border-2 border-gray-200/40 hover:bg-white/90 hover:border-gray-300/60 hover:shadow-xl"
                   }
                 `}
-                style={{
-                  animationDelay: `${index * 150}ms`,
-                }}
+                style={{ animationDelay: `${index * 150}ms` }}
               >
                 {/* Enhanced glow effect for active card */}
                 {isActive && (
@@ -149,14 +141,11 @@ export default function SelectRolePage() {
 
                 {/* Enhanced Icon container */}
                 <div
-                  className={`
-                  relative p-6 rounded-2xl mb-6 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-3
-                  ${
+                  className={`relative p-6 rounded-2xl mb-6 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-3 ${
                     isActive
                       ? `bg-gradient-to-r ${role.gradient} shadow-2xl`
                       : "bg-gradient-to-r from-gray-100/90 to-gray-200/90 group-hover:from-gray-200/90 group-hover:to-gray-300/90"
-                  }
-                `}
+                  }`}
                 >
                   {typeof IconComponent === "string" ? (
                     <img
@@ -169,14 +158,11 @@ export default function SelectRolePage() {
                   ) : (
                     <IconComponent
                       size={32}
-                      className={`
-                        transition-all duration-500
-                        ${
-                          isActive
-                            ? "text-white drop-shadow-lg"
-                            : "text-gray-600 group-hover:text-gray-700"
-                        }
-                      `}
+                      className={`transition-all duration-500 ${
+                        isActive
+                          ? "text-white drop-shadow-lg"
+                          : "text-gray-600 group-hover:text-gray-700"
+                      }`}
                     />
                   )}
 
@@ -200,42 +186,33 @@ export default function SelectRolePage() {
 
                 {/* Enhanced Role name */}
                 <h3
-                  className={`
-                  text-xl font-bold mb-3 transition-all duration-500 text-center tracking-wide
-                  ${
+                  className={`text-xl font-bold mb-3 transition-all duration-500 text-center tracking-wide ${
                     isActive
                       ? "text-gray-800 drop-shadow-sm"
                       : "text-gray-700 group-hover:text-gray-800"
-                  }
-                `}
+                  }`}
                 >
                   {role.name}
                 </h3>
 
                 {/* Enhanced Description */}
                 <p
-                  className={`
-                  text-sm transition-all duration-500 text-center font-medium
-                  ${
+                  className={`text-sm transition-all duration-500 text-center font-medium ${
                     isActive
                       ? "text-gray-600"
                       : "text-gray-500 group-hover:text-gray-600"
-                  }
-                `}
+                  }`}
                 >
                   {role.description}
                 </p>
 
                 {/* Enhanced Selection indicator */}
                 <div
-                  className={`
-                  absolute -top-3 -right-3 w-8 h-8 rounded-full border-3 border-white transition-all duration-500 flex items-center justify-center
-                  ${
+                  className={`absolute -top-3 -right-3 w-8 h-8 rounded-full border-3 border-white transition-all duration-500 flex items-center justify-center ${
                     isActive
                       ? "bg-gradient-to-r from-blue-500 to-indigo-600 scale-100 shadow-lg"
                       : "bg-gray-400/60 scale-0 group-hover:scale-75 group-hover:bg-gray-500/60"
-                  }
-                `}
+                  }`}
                 >
                   {isActive && (
                     <>
@@ -247,14 +224,11 @@ export default function SelectRolePage() {
 
                 {/* Progress indicator line at bottom */}
                 <div
-                  className={`
-                  absolute bottom-0 left-1/2 transform -translate-x-1/2 h-1 rounded-t-full transition-all duration-500
-                  ${
+                  className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-1 rounded-t-full transition-all duration-500 ${
                     isActive
                       ? "w-full bg-gradient-to-r from-blue-500 to-indigo-600"
                       : "w-0 bg-gray-400"
-                  }
-                `}
+                  }`}
                 ></div>
               </div>
             );

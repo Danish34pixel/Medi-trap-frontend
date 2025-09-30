@@ -1,116 +1,264 @@
 import React, { useEffect, useState } from "react";
-import {
-  User,
-  Building2,
-  Mail,
-  Phone,
-  MapPin,
-  FileText,
-  Image as ImageIcon,
-  LogOut,
-} from "lucide-react";
-import API_BASE from "./config/api";
 import { useNavigate } from "react-router-dom";
+import API_BASE, { apiUrl } from "./config/api";
 
 const Profile = () => {
-  const navigate = useNavigate();
-  const [user, setUser] = useState(() => {
+  const storedUser = (() => {
     try {
-      const stored = localStorage.getItem("user");
-      return stored ? JSON.parse(stored) : null;
-    } catch {
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
       return null;
     }
-  });
+  })();
+
+  const [user, setUser] = useState(
+    storedUser || {
+      medicalName: "HealthCare Pharmacy",
+      ownerName: "John Doe",
+      email: "john@healthcare.com",
+      contactNo: "+1 234-567-8900",
+      address: "123 Medical Street, Health City, HC 12345",
+      drugLicenseNo: "DL-2024-12345",
+      drugLicenseImage: null,
+    }
+  );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const loadMe = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-      setLoading(true);
+    // Load/refresh real user data when a token exists
+    let mounted = true;
+    (async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/auth/me`, {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        setLoading(true);
+        const res = await fetch(apiUrl("/api/auth/me"), {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Failed to load profile");
-        if (data.success && data.user) {
-          setUser(data.user);
-          localStorage.setItem("user", JSON.stringify(data.user));
+        const json = await res.json().catch(() => ({}));
+        if (!mounted) return;
+        if (res.ok && json && json.success && json.user) {
+          setUser(json.user);
+          try {
+            localStorage.setItem("user", JSON.stringify(json.user));
+          } catch (e) {}
         } else {
-          throw new Error("Invalid response format");
+          // If server returned an error, fall back to stored value
+          if (json && json.message) setError(json.message);
         }
-      } catch (e) {
-        setError(e.message);
+      } catch (err) {
+        console.warn("Profile: failed to load current user", err);
+        setError("Failed to load profile");
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
+    })();
+    return () => {
+      mounted = false;
     };
-    // If we don't have full user (e.g., after refresh), fetch it
-    if (!user) loadMe();
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/");
+    // Clear stored auth and redirect to login
+    try {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    } catch (e) {
+      // ignore
+    }
+    navigate("/login");
   };
 
-  if (!localStorage.getItem("token")) {
+  // Icon Components
+  const User = (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2.5}
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+      />
+    </svg>
+  );
+
+  const Building2 = (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2.5}
+        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m11 0v-4a2 2 0 00-2-2h-2a2 2 0 00-2 2v4m6 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v12"
+      />
+    </svg>
+  );
+
+  const Mail = (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2.5}
+        d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+      />
+    </svg>
+  );
+
+  const Phone = (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2.5}
+        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+      />
+    </svg>
+  );
+
+  const MapPin = (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2.5}
+        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2.5}
+        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+      />
+    </svg>
+  );
+
+  const FileText = (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2.5}
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    </svg>
+  );
+
+  const ImageIcon = (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2.5}
+        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+      />
+    </svg>
+  );
+
+  const LogOut = (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2.5}
+        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+      />
+    </svg>
+  );
+
+  const Pill = ({ imageUrl }) => {
+    const initials = (() => {
+      const name = user && (user.ownerName || user.medicalName || "");
+      if (!name) return "U";
+      return name
+        .split(" ")
+        .map((s) => s[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase();
+    })();
+
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 via-white to-green-50">
-        <div className="bg-white/80 backdrop-blur-sm text-yellow-800 px-8 py-6 rounded-2xl border border-yellow-200 shadow-xl max-w-md text-center">
-          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <User size={32} className="text-yellow-600" />
-          </div>
-          <h2 className="text-xl font-semibold mb-2">
-            Authentication Required
-          </h2>
-          <p className="text-yellow-700 mb-4">
-            Please log in to view your profile.
-          </p>
-          <button
-            onClick={() => navigate("/login")}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-xl font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105"
-          >
-            Go to Login
-          </button>
+      <div className="relative">
+        <div className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden bg-white">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt="profile"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-cyan-400 to-cyan-500 flex items-center justify-center text-white text-xl font-bold">
+              {initials}
+            </div>
+          )}
         </div>
+        <div className="absolute -top-1 -right-1 w-6 h-6 bg-orange-400 rounded-full"></div>
+        <div className="absolute -bottom-1 -left-1 w-5 h-5 bg-orange-300 rounded-full"></div>
       </div>
     );
-  }
+  };
+
+  // Normalize image URLs coming from backend or user object
+  const normalizeImageUrl = (url) => {
+    if (!url || typeof url !== "string") return null;
+    // protocol-relative URLs
+    if (url.startsWith("//")) return `https:${url}`;
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    // relative paths: prefix with API base
+    return `${API_BASE}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
+
+  const [licenseImageBroken, setLicenseImageBroken] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
+      <div className="max-w-5xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-8">
-          <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <User size={48} className="text-blue-600" />
+          <div className="flex justify-center mb-4">
+            {/* compute profile image from common fields used across models */}
+            <Pill
+              imageUrl={
+                (user &&
+                  (user.profileImageUrl ||
+                    user.image ||
+                    user.photo ||
+                    user.avatar ||
+                    (user.logo && user.logo.url) ||
+                    user.photoUrl)) ||
+                null
+              }
+            />
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent mb-2">
             Your Profile
           </h1>
-          <p className="text-gray-600">Manage your medical store information</p>
+          <p className="text-gray-600 font-medium">
+            Manage your medical store information
+          </p>
         </div>
 
-        {/* Loading and Error States */}
+        {/* Loading State */}
         {loading && (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 text-center border border-gray-100 mb-6">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="bg-white rounded-3xl shadow-xl p-8 text-center border-2 border-gray-100 mb-6">
+            <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
-            <p className="text-gray-600 text-lg">Loading your profile...</p>
+            <p className="text-gray-600 text-lg font-medium">
+              Loading your profile...
+            </p>
           </div>
         )}
 
+        {/* Error State */}
         {error && (
-          <div className="bg-red-50/80 backdrop-blur-sm text-red-700 px-6 py-4 rounded-2xl border border-red-200 mb-6 shadow-lg">
+          <div className="bg-red-50 text-red-700 px-6 py-4 rounded-2xl border-2 border-red-200 mb-6 shadow-lg">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <span className="text-red-600 text-lg">⚠️</span>
+              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-red-600 text-lg">⚠</span>
               </div>
               <div>
                 <h3 className="font-semibold">Error Loading Profile</h3>
@@ -122,97 +270,89 @@ const Profile = () => {
 
         {/* Profile Content */}
         {user && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Personal Information */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Personal Details Card */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <Building2 size={24} className="text-blue-600" />
+              {/* Store Information Card */}
+              <div className="bg-white rounded-3xl shadow-xl p-6 border-2 border-gray-100">
+                <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
+                  <Building2 className="w-6 h-6 text-cyan-500" />
                   Store Information
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Building2 size={20} className="text-blue-600" />
-                        <span className="text-gray-500 text-sm font-medium">
-                          Medical Store Name
-                        </span>
-                      </div>
-                      <p className="text-gray-900 font-semibold text-lg">
-                        {user.medicalName}
-                      </p>
+                  <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 p-5 rounded-2xl border-2 border-cyan-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Building2 className="w-5 h-5 text-cyan-600" />
+                      <span className="text-gray-600 text-sm font-semibold">
+                        Medical Store Name
+                      </span>
                     </div>
-
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border border-green-100">
-                      <div className="flex items-center gap-3 mb-2">
-                        <User size={20} className="text-green-600" />
-                        <span className="text-gray-500 text-sm font-medium">
-                          Owner Name
-                        </span>
-                      </div>
-                      <p className="text-gray-900 font-semibold text-lg">
-                        {user.ownerName}
-                      </p>
-                    </div>
+                    <p className="text-gray-900 font-bold text-lg">
+                      {user.medicalName}
+                    </p>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl border border-purple-100">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Mail size={20} className="text-purple-600" />
-                        <span className="text-gray-500 text-sm font-medium">
-                          Email Address
-                        </span>
-                      </div>
-                      <p className="text-gray-900 font-semibold break-all">
-                        {user.email}
-                      </p>
+                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-5 rounded-2xl border-2 border-orange-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <User className="w-5 h-5 text-orange-600" />
+                      <span className="text-gray-600 text-sm font-semibold">
+                        Owner Name
+                      </span>
                     </div>
+                    <p className="text-gray-900 font-bold text-lg">
+                      {user.ownerName}
+                    </p>
+                  </div>
 
-                    <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-xl border border-orange-100">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Phone size={20} className="text-orange-600" />
-                        <span className="text-gray-500 text-sm font-medium">
-                          Contact Number
-                        </span>
-                      </div>
-                      <p className="text-gray-900 font-semibold">
-                        {user.contactNo}
-                      </p>
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-5 rounded-2xl border-2 border-purple-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Mail className="w-5 h-5 text-purple-600" />
+                      <span className="text-gray-600 text-sm font-semibold">
+                        Email Address
+                      </span>
                     </div>
+                    <p className="text-gray-900 font-bold break-all">
+                      {user.email}
+                    </p>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 p-5 rounded-2xl border-2 border-green-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Phone className="w-5 h-5 text-green-600" />
+                      <span className="text-gray-600 text-sm font-semibold">
+                        Contact Number
+                      </span>
+                    </div>
+                    <p className="text-gray-900 font-bold">{user.contactNo}</p>
                   </div>
                 </div>
               </div>
 
               {/* Address and License Card */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <MapPin size={24} className="text-green-600" />
+              <div className="bg-white rounded-3xl shadow-xl p-6 border-2 border-gray-100">
+                <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
+                  <MapPin className="w-6 h-6 text-cyan-500" />
                   Location & License
                 </h2>
                 <div className="space-y-4">
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border border-green-100">
-                    <div className="flex items-center gap-3 mb-2">
-                      <MapPin size={20} className="text-green-600" />
-                      <span className="text-gray-500 text-sm font-medium">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-2xl border-2 border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin className="w-5 h-5 text-blue-600" />
+                      <span className="text-gray-600 text-sm font-semibold">
                         Store Address
                       </span>
                     </div>
-                    <p className="text-gray-900 font-semibold">
-                      {user.address}
-                    </p>
+                    <p className="text-gray-900 font-bold">{user.address}</p>
                   </div>
 
-                  <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-xl border border-indigo-100">
-                    <div className="flex items-center gap-3 mb-2">
-                      <FileText size={20} className="text-indigo-600" />
-                      <span className="text-gray-500 text-sm font-medium">
+                  <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-5 rounded-2xl border-2 border-amber-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FileText className="w-5 h-5 text-amber-600" />
+                      <span className="text-gray-600 text-sm font-semibold">
                         Drug License Number
                       </span>
                     </div>
-                    <p className="text-gray-900 font-semibold text-lg font-mono">
+                    <p className="text-gray-900 font-bold text-lg font-mono">
                       {user.drugLicenseNo}
                     </p>
                   </div>
@@ -220,29 +360,77 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Right Column - Drug License Image */}
+            {/* Right Column - Drug License Image & Actions */}
             <div className="space-y-6">
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <ImageIcon size={24} className="text-purple-600" />
-                  Drug License Image
+              {/* Drug License Image Card */}
+              <div className="bg-white rounded-3xl shadow-xl p-6 border-2 border-gray-100">
+                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  <ImageIcon className="w-6 h-6 text-cyan-500" />
+                  Drug License
                 </h2>
-                <div className="border-2 border-dashed border-purple-200 rounded-xl overflow-hidden bg-gradient-to-br from-purple-50 to-pink-50">
+                <div className="border-3 border-dashed border-gray-200 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
                   {user.drugLicenseImage ? (
-                    <img
-                      src={
-                        user.drugLicenseImage.startsWith("http")
-                          ? user.drugLicenseImage
-                          : `${API_BASE}${user.drugLicenseImage}`
+                    (() => {
+                      const licenseUrl = normalizeImageUrl(
+                        user.drugLicenseImage
+                      );
+                      // log for debugging when developer tools are open
+                      // eslint-disable-next-line no-console
+                      console.debug("Profile: licenseUrl ->", licenseUrl);
+                      if (!licenseUrl) {
+                        return (
+                          <div className="h-64 flex flex-col items-center justify-center text-gray-400">
+                            <ImageIcon className="w-16 h-16 mb-3 text-gray-300" />
+                            <p className="text-center font-semibold text-gray-500">
+                              No valid image URL
+                            </p>
+                          </div>
+                        );
                       }
-                      alt="Drug License"
-                      className="w-full h-80 object-contain bg-white"
-                    />
+
+                      if (!licenseImageBroken) {
+                        return (
+                          <img
+                            src={licenseUrl}
+                            alt="Drug License"
+                            onError={() => {
+                              // eslint-disable-next-line no-console
+                              console.warn(
+                                "Drug license image failed to load:",
+                                licenseUrl
+                              );
+                              setLicenseImageBroken(true);
+                            }}
+                            className="w-full h-64 object-contain bg-white"
+                          />
+                        );
+                      }
+
+                      // If image failed to load, show fallback with a link to open it in a new tab
+                      return (
+                        <div className="h-64 flex flex-col items-center justify-center text-gray-500 p-4">
+                          <ImageIcon className="w-12 h-12 mb-2 text-gray-300" />
+                          <p className="text-sm text-center mb-2">
+                            Image failed to load in the preview.
+                          </p>
+                          <a
+                            href={licenseUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-600 underline"
+                          >
+                            Open image in new tab
+                          </a>
+                        </div>
+                      );
+                    })()
                   ) : (
-                    <div className="h-80 flex flex-col items-center justify-center text-gray-400">
-                      <ImageIcon size={48} className="mb-2 text-gray-300" />
-                      <p className="text-center">No image uploaded</p>
-                      <p className="text-sm text-gray-300">
+                    <div className="h-64 flex flex-col items-center justify-center text-gray-400">
+                      <ImageIcon className="w-16 h-16 mb-3 text-gray-300" />
+                      <p className="text-center font-semibold text-gray-500">
+                        No image uploaded
+                      </p>
+                      <p className="text-sm text-gray-400 mt-1">
                         Upload your drug license
                       </p>
                     </div>
@@ -250,15 +438,40 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* Logout Button */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20">
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
-                >
-                  <LogOut size={20} />
-                  <span>Logout</span>
-                </button>
+              {/* Quick Actions Card */}
+              <div className="bg-white rounded-3xl shadow-xl p-6 border-2 border-gray-100">
+                <h2 className="text-lg font-bold text-gray-800 mb-4">
+                  Quick Actions
+                </h2>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => navigate("/profile/edit")}
+                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-400 to-cyan-500 text-white px-5 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                    <span>Edit Profile</span>
+                  </button>
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-5 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span>Logout</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
