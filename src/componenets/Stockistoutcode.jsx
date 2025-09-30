@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { apiUrl } from "./config/api";
 import {
   ArrowLeft,
@@ -183,6 +184,8 @@ const StatsCard = ({ icon: Icon, label, value, gradient }) => (
 );
 
 export default function PharmacyStockist() {
+  const [searchParams] = useSearchParams();
+  const routeId = searchParams.get("id") || null;
   const [stockist, setStockist] = useState(null);
   const [companiesList, setCompaniesList] = useState([]);
   const [medicinesList, setMedicinesList] = useState([]);
@@ -228,110 +231,115 @@ export default function PharmacyStockist() {
     [companiesList, medicinesList, staffs, filterByQuery]
   );
 
-  useEffect(() => {
-    let mounted = true;
+  // Load stockist data
+  const loadStockistData = useCallback(async () => {
+    setLoading(true);
+    setError("");
 
-    const safeJson = async (res) => {
-      try {
-        if (!res) return null;
-        if (!res.ok)
-          return { ok: false, status: res.status, body: await res.text() };
-        return await res.json();
-      } catch (e) {
-        return null;
+    try {
+      const res = await fetch(apiUrl("/api/stockist"));
+      const json = await res.json().catch(() => ({}));
+      const list = json?.data || [];
+
+      let target = null;
+      if (routeId && routeId !== "me") {
+        target = list.find((s) => String(s._id) === String(routeId));
+      } else if (routeId === "me") {
+        target = list.find((s) => s?._id);
       }
-    };
 
-    const parsePossible = (json) => {
-      if (!json) return null;
-      if (Array.isArray(json)) return json;
-      if (json.data && Array.isArray(json.data)) return json.data;
-      if (json.items && Array.isArray(json.items)) return json.items;
-      if (json.payload && Array.isArray(json.payload)) return json.payload;
-      if (json.stockists && Array.isArray(json.stockists))
-        return json.stockists;
-      if (json._id || json.id || json.name) return [json];
-      return null;
-    };
+      if (!target && list.length > 0) target = list[0];
+
+      if (!target) {
+        throw new Error("Stockist not found");
+      }
+
+      setStockist(target);
+
+      // Fetch related data
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const staffUrl = apiUrl(`/api/staff?stockist=${target._id}`);
+      const staffOpts = token
+        ? { headers: { Authorization: `Bearer ${token}` } }
+        : {};
+
+      const [cRes, mRes, sRes] = await Promise.all([
+        fetch(apiUrl("/api/company")),
+        fetch(apiUrl("/api/medicine")),
+        fetch(staffUrl, staffOpts),
+      ]);
+
+      const [cJson, mJson, sJson] = await Promise.all([
+        cRes.json().catch(() => ({})),
+        mRes.json().catch(() => ({})),
+        sRes.json().catch(() => ({})),
+      ]);
+
+      const allCompanies = cJson?.data || [];
+      const allMeds = mJson?.data || [];
+      const staffList = sJson?.data || [];
+
+      // Filter companies associated with this stockist
+      const filteredCompanies = allCompanies.filter((company) => {
+        try {
+          if (Array.isArray(company.stockists) && company.stockists.length) {
+            return company.stockists.some(
+              (s) => String(s?._id || s) === String(target._id)
+            );
+          }
+
+          const keys = [
+            company.stockist,
+            company.stockistId,
+            company.seller,
+            company.sellerId,
+            company.vendor,
+            company.vendorId,
+            company.supplier,
+            company.supplierId,
+          ];
+
+          return keys.some(
+            (key) =>
+              key && String(key._id || key.id || key) === String(target._id)
+          );
+        } catch {
+          return false;
+        }
+      });
+
+      // Filter medicines associated with this stockist
+      const filteredMeds = allMeds.filter((med) =>
+        medicineReferencesStockist(med, target._id)
+      );
+
+      setCompaniesList(filteredCompanies);
+      setMedicinesList(filteredMeds);
+      setStaffs(staffList);
+    } catch (err) {
+      console.error("Error loading stockist data:", err);
+      setError(err.message || "Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  }, [routeId]);
+
+  // Generate QR code
+  useEffect(() => {
+    const idToUse = routeId || stockist?._id;
+    if (!idToUse) return setQrDataUrl(null);
 
     (async () => {
-      setLoading(true);
-      setError("");
       try {
-        let token = null;
-        try {
-          token = localStorage.getItem("token");
-        } catch (e) {
-          // ignore
-        }
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-        // First try to get the authenticated user (if any). This ensures the
-        // UI shows the currently-logged-in stockist instead of the first DB
-        // item.
-        let meJson = null;
-        if (token) {
-          const rMe = await fetch(apiUrl("/api/auth/me"), {
-            headers,
-            cache: "no-store",
-          });
-          meJson = await safeJson(rMe);
-        }
-
-        // Parallel fetch for list data (companies/medicines/staff/stockists)
-        const [rStockist, rCompanies, rMedicines, rStaff] = await Promise.all([
-          fetch(apiUrl("/api/stockist"), { headers, cache: "no-store" }),
-          fetch(apiUrl("/api/company"), { headers, cache: "no-store" }),
-          fetch(apiUrl("/api/medicine"), { headers, cache: "no-store" }),
-          fetch(apiUrl("/api/staff"), { headers, cache: "no-store" }),
-        ]);
-
-        const [jStockist, jCompanies, jMedicines, jStaff] = await Promise.all([
-          safeJson(rStockist),
-          safeJson(rCompanies),
-          safeJson(rMedicines),
-          safeJson(rStaff),
-        ]);
-
-        if (!mounted) return;
-
-        setRawResponses({
-          me: meJson,
-          jStockist,
-          jCompanies,
-          jMedicines,
-          jStaff,
-        });
-
-        if (
-          [rStockist, rCompanies, rMedicines, rStaff].some(
-            (r) => r && r.status === 401
-          )
-        ) {
-          setError(
-            "Some data requires authentication. Please login to see protected content."
-          );
-        }
-
-        // If /api/auth/me returned an authenticated user, prefer that as the
-        // stockist to display. Otherwise fallback to the first result from
-        // /api/stockist (existing behavior).
-        if (meJson && meJson.success && meJson.user) {
-          setStockist(meJson.user);
-        } else {
-          const parsedStockists = parsePossible(jStockist) || [];
-          setStockist(parsedStockists[0] || null);
-        }
-
-        setCompaniesList(parsePossible(jCompanies) || []);
-        setMedicinesList(parsePossible(jMedicines) || []);
-        setStaffs(parsePossible(jStaff) || []);
-      } catch (err) {
-        console.error("Stockist fetch error:", err);
-        if (mounted)
-          setError("Failed to load data. Check your API or network.");
-      } finally {
-        if (mounted) setLoading(false);
+        const mod = await import("qrcode");
+        const QR = mod?.default || mod;
+        const dataUrl = await QR.toDataURL(
+          `${window.location.origin}/stockist-card?id=${idToUse}`
+        );
+        setQrDataUrl(dataUrl);
+      } catch {
+        setQrDataUrl(null);
       }
     })();
 
@@ -361,6 +369,35 @@ export default function PharmacyStockist() {
       return null;
     }
   })();
+
+  // Helper to detect whether a medicine references a stockist id in common fields
+  const medicineReferencesStockist = (med, stockistId) => {
+    if (!med) return false;
+    const candidates = [];
+    try {
+      if (Array.isArray(med.stockists)) candidates.push(...med.stockists);
+      if (med.stockist) candidates.push(med.stockist);
+      if (med.stockistId) candidates.push(med.stockistId);
+      if (med.seller) candidates.push(med.seller);
+      if (med.sellerId) candidates.push(med.sellerId);
+      if (med.vendor) candidates.push(med.vendor);
+      if (med.vendorId) candidates.push(med.vendorId);
+      if (med.supplier) candidates.push(med.supplier);
+      if (med.supplierId) candidates.push(med.supplierId);
+    } catch (e) {
+      // ignore
+    }
+
+    return candidates.some((c) => {
+      try {
+        if (!c) return false;
+        const id = c._id || c.id || c;
+        return String(id) === String(stockistId);
+      } catch (e) {
+        return false;
+      }
+    });
+  };
 
   const TAB_CONFIG = [
     {
