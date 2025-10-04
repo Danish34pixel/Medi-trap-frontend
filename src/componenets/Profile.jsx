@@ -32,19 +32,36 @@ const Profile = () => {
     let mounted = true;
     (async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
+        const tokenAtRequest = localStorage.getItem("token");
+        if (!tokenAtRequest) return;
 
         setLoading(true);
         const res = await fetch(apiUrl("/api/auth/me"), {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${tokenAtRequest}` },
         });
         const json = await res.json().catch(() => ({}));
         if (!mounted) return;
         if (res.ok && json && json.success && json.user) {
           setUser(json.user);
           try {
-            localStorage.setItem("user", JSON.stringify(json.user));
+            // Only persist the fetched user if the token used to fetch
+            // matches the current stored token. This avoids overwriting the
+            // freshly-logged-in user when a background /me call was made with
+            // an older token.
+            const currentToken = localStorage.getItem("token");
+            if (currentToken && tokenAtRequest === currentToken) {
+              localStorage.setItem("user", JSON.stringify(json.user));
+            } else {
+              console.debug(
+                "Profile: skipped writing user because token changed",
+                {
+                  tokenAtRequest:
+                    tokenAtRequest && tokenAtRequest.slice(0, 12) + "...",
+                  currentToken:
+                    currentToken && currentToken.slice(0, 12) + "...",
+                }
+              );
+            }
           } catch (e) {}
         } else {
           // If server returned an error, fall back to stored value

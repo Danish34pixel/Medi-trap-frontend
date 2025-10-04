@@ -266,11 +266,24 @@ export default function PharmacyStockist() {
         }
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+        // First try to get the authenticated user (if any). This ensures the
+        // UI shows the currently-logged-in stockist instead of the first DB
+        // item.
+        let meJson = null;
+        if (token) {
+          const rMe = await fetch(apiUrl("/api/auth/me"), {
+            headers,
+            cache: "no-store",
+          });
+          meJson = await safeJson(rMe);
+        }
+
+        // Parallel fetch for list data (companies/medicines/staff/stockists)
         const [rStockist, rCompanies, rMedicines, rStaff] = await Promise.all([
-          fetch(apiUrl("/api/stockist"), { headers }),
-          fetch(apiUrl("/api/company"), { headers }),
-          fetch(apiUrl("/api/medicine"), { headers }),
-          fetch(apiUrl("/api/staff"), { headers }),
+          fetch(apiUrl("/api/stockist"), { headers, cache: "no-store" }),
+          fetch(apiUrl("/api/company"), { headers, cache: "no-store" }),
+          fetch(apiUrl("/api/medicine"), { headers, cache: "no-store" }),
+          fetch(apiUrl("/api/staff"), { headers, cache: "no-store" }),
         ]);
 
         const [jStockist, jCompanies, jMedicines, jStaff] = await Promise.all([
@@ -282,7 +295,13 @@ export default function PharmacyStockist() {
 
         if (!mounted) return;
 
-        setRawResponses({ jStockist, jCompanies, jMedicines, jStaff });
+        setRawResponses({
+          me: meJson,
+          jStockist,
+          jCompanies,
+          jMedicines,
+          jStaff,
+        });
 
         if (
           [rStockist, rCompanies, rMedicines, rStaff].some(
@@ -294,8 +313,15 @@ export default function PharmacyStockist() {
           );
         }
 
-        const parsedStockists = parsePossible(jStockist) || [];
-        setStockist(parsedStockists[0] || null);
+        // If /api/auth/me returned an authenticated user, prefer that as the
+        // stockist to display. Otherwise fallback to the first result from
+        // /api/stockist (existing behavior).
+        if (meJson && meJson.success && meJson.user) {
+          setStockist(meJson.user);
+        } else {
+          const parsedStockists = parsePossible(jStockist) || [];
+          setStockist(parsedStockists[0] || null);
+        }
 
         setCompaniesList(parsePossible(jCompanies) || []);
         setMedicinesList(parsePossible(jMedicines) || []);

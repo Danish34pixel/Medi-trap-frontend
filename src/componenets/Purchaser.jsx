@@ -4,6 +4,22 @@ import { apiUrl } from "./config/api";
 import API_BASE from "./config/api";
 import { QRCodeSVG } from "qrcode.react";
 
+// Helper to safely render address objects or strings
+const formatAddress = (addr) => {
+  if (!addr) return "";
+  if (typeof addr === "string") return addr;
+  try {
+    const parts = [];
+    if (addr.street) parts.push(addr.street);
+    if (addr.city) parts.push(addr.city);
+    if (addr.state) parts.push(addr.state);
+    if (addr.pincode) parts.push(addr.pincode);
+    return parts.filter(Boolean).join(", ");
+  } catch (e) {
+    return "";
+  }
+};
+
 // Small helper that tries multiple candidate URLs and falls back to a placeholder
 const SmartImage = ({ srcCandidates = [], alt = "", className = "" }) => {
   const [index, setIndex] = React.useState(0);
@@ -52,23 +68,16 @@ const SmartImage = ({ srcCandidates = [], alt = "", className = "" }) => {
 
 const Purchaser = () => {
   const [purchasers, setPurchasers] = useState([]);
-  // Fetch purchasers from backend
-  useEffect(() => {
-    const fetchPurchasers = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await axios.get(apiUrl("/api/purchaser"));
-        setPurchasers(res.data.data || []);
-      } catch (err) {
-        setError("Failed to fetch purchasers");
-      }
-      setLoading(false);
-    };
-    fetchPurchasers();
-  }, []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [meLoading, setMeLoading] = useState(true);
+  const [requestingCard, setRequestingCard] = useState(false);
+  const [requestMessage, setRequestMessage] = useState("");
+  const [stockistsList, setStockistsList] = useState([]);
+  const [showStockistPicker, setShowStockistPicker] = useState(false);
+  const [selectedStockists, setSelectedStockists] = useState([]);
+
   const [form, setForm] = useState({
     fullName: "",
     address: "",
@@ -79,8 +88,116 @@ const Purchaser = () => {
   const [aadharPreview, setAadharPreview] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [formVisible, setFormVisible] = useState(true);
+  const [formVisible, setFormVisible] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    const fetchPurchasers = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        let t = null;
+        try {
+          t = localStorage.getItem("token");
+        } catch (e) {}
+        if (!t) {
+          setPurchasers([]);
+          setError("Login required to view purchasers.");
+          setLoading(false);
+          return;
+        }
+        try {
+          const res = await axios.get(apiUrl("/api/purchaser"), {
+            headers: { Authorization: `Bearer ${t}` },
+          });
+          setPurchasers(res.data.data || []);
+        } catch (errInner) {
+          if (
+            errInner &&
+            errInner.response &&
+            errInner.response.status === 401
+          ) {
+            try {
+              localStorage.removeItem("token");
+            } catch (e) {}
+            setPurchasers([]);
+            setError("Unauthorized. Please login to view purchasers.");
+            setLoading(false);
+            return;
+          }
+          throw errInner;
+        }
+      } catch (err) {
+        setError("Failed to fetch purchasers");
+      }
+      setLoading(false);
+    };
+
+    fetchPurchasers();
+
+    (async () => {
+      try {
+        setMeLoading(true);
+        let token = null;
+        try {
+          token = localStorage.getItem("token");
+        } catch (e) {}
+        if (!token) {
+          setCurrentUser(null);
+          setMeLoading(false);
+          return;
+        }
+        const r = await axios.get(apiUrl("/api/auth/me"), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (r.data && r.data.user) setCurrentUser(r.data.user);
+      } catch (e) {
+        // ignore
+      } finally {
+        setMeLoading(false);
+      }
+    })();
+  }, []);
+
+  // When user has requested a purchasing card, poll their /me endpoint
+  // so the UI updates automatically when stockists approve (grants hasPurchasingCard).
+  useEffect(() => {
+    let timer = null;
+    const startPolling = () => {
+      timer = setInterval(async () => {
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) return;
+          const r = await axios.get(apiUrl("/api/auth/me"), {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (r.data && r.data.user) {
+            setCurrentUser(r.data.user);
+            if (r.data.user.hasPurchasingCard) {
+              setFormVisible(true);
+              clearInterval(timer);
+            }
+          }
+        } catch (e) {
+          // ignore transient errors
+        }
+      }, 10000); // poll every 10s
+    };
+
+    if (
+      currentUser &&
+      currentUser.purchasingCardRequested &&
+      !currentUser.hasPurchasingCard
+    ) {
+      startPolling();
+    } else if (currentUser && currentUser.hasPurchasingCard) {
+      setFormVisible(true);
+    }
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [currentUser]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -126,20 +243,29 @@ const Purchaser = () => {
       formData.append("aadharImage", form.aadharImage);
       formData.append("photo", form.photo);
 
+      let t = null;
+      try {
+        t = localStorage.getItem("token");
+      } catch (e) {}
+      if (!t) {
+        setError("Login required to add purchaser.");
+        setSubmitting(false);
+        return;
+      }
       const res = await axios.post(apiUrl("/api/purchaser"), formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${t}`,
+        },
       });
 
       if (res.data && res.data.success) {
-        // Add new purchaser to list (prepend for latest first)
         setPurchasers([res.data.data, ...purchasers]);
         resetForm();
         setFormVisible(false);
         setSuccessMessage("Purchaser added successfully!");
         setSubmitting(false);
-        setTimeout(() => {
-          setSuccessMessage("");
-        }, 3000);
+        setTimeout(() => setSuccessMessage(""), 3000);
       } else {
         throw new Error(res.data.message || "Failed to add purchaser");
       }
@@ -151,12 +277,95 @@ const Purchaser = () => {
   };
 
   const showForm = () => {
-    setFormVisible(true);
-    setSuccessMessage("");
-    setError(null);
+    if (currentUser && currentUser.hasPurchasingCard) {
+      setFormVisible(true);
+      setSuccessMessage("");
+      setError(null);
+      return;
+    }
+    if (!currentUser && !meLoading) {
+      setRequestMessage("Please login to request a purchasing card.");
+      return;
+    }
+    if (currentUser && currentUser.purchasingCardRequested) {
+      setRequestMessage("Your purchasing card request is pending approval.");
+      return;
+    }
+    setRequestMessage("");
   };
 
-  // Real QR Code component using qrcode.react
+  const openStockistPicker = async () => {
+    setRequestingCard(true);
+    setRequestMessage("");
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setRequestMessage("Login required to request a purchasing card.");
+        setRequestingCard(false);
+        return;
+      }
+      const r = await axios.get(apiUrl("/api/stockist"), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setStockistsList(r.data && r.data.data ? r.data.data : []);
+      setSelectedStockists([]);
+      setShowStockistPicker(true);
+    } catch (e) {
+      console.warn("Failed to fetch stockists", e && e.message);
+      setRequestMessage("Failed to load stockists. Try again later.");
+    } finally {
+      setRequestingCard(false);
+    }
+  };
+
+  const requestPurchasingCard = () => {
+    openStockistPicker();
+  };
+
+  const toggleStockistSelection = (id) => {
+    setSelectedStockists((s) =>
+      s.includes(id) ? s.filter((x) => x !== id) : [...s, id]
+    );
+  };
+
+  const submitSelectedStockists = async () => {
+    setRequestingCard(true);
+    setRequestMessage("");
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setRequestMessage("Login required to request a purchasing card.");
+        setRequestingCard(false);
+        return;
+      }
+      if (!Array.isArray(selectedStockists) || selectedStockists.length < 3) {
+        setRequestMessage("Please select at least 3 stockists to notify");
+        setRequestingCard(false);
+        return;
+      }
+      const res = await axios.post(
+        apiUrl("/api/purchasing-card/request"),
+        { stockistIds: selectedStockists },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data && res.data.success) {
+        setRequestMessage(res.data.message || "Requested");
+        setCurrentUser((u) =>
+          u ? { ...u, purchasingCardRequested: true } : u
+        );
+        setShowStockistPicker(false);
+      } else {
+        setRequestMessage(res.data.message || "Request failed");
+      }
+    } catch (err) {
+      setRequestMessage(
+        err.response?.data?.message || err.message || "Request failed"
+      );
+    } finally {
+      setRequestingCard(false);
+    }
+  };
+
   const QRCode = ({ value, size = 120 }) => (
     <div className="flex flex-col items-center">
       <QRCodeSVG value={value} size={size} />
@@ -200,21 +409,6 @@ const Purchaser = () => {
                   Total: {purchasers.length}
                 </span>
               </div>
-              <button className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                <svg
-                  className="w-4 h-4 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 17h5l-5 5-5-5h5V3h5v14z"
-                  />
-                </svg>
-              </button>
             </div>
           </div>
         </div>
@@ -268,89 +462,6 @@ const Purchaser = () => {
           </div>
         )}
 
-        {/* Enhanced Quick Actions with micro-animations */}
-        <div className="grid grid-cols-2 gap-6">
-          <button
-            onClick={showForm}
-            className="group relative bg-gradient-to-br from-teal-400 via-teal-500 to-teal-600 text-white rounded-3xl p-7 text-left hover:shadow-2xl hover:scale-105 transition-all duration-300 overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
-                  <svg
-                    className="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
-                </div>
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-white/30 rounded-full animate-pulse"></div>
-                  <div className="w-2 h-2 bg-white/20 rounded-full animate-pulse delay-75"></div>
-                  <div className="w-2 h-2 bg-white/10 rounded-full animate-pulse delay-150"></div>
-                </div>
-              </div>
-              <h3 className="font-bold text-xl mb-2 group-hover:text-white transition-colors duration-300">
-                Add New Purchaser
-              </h3>
-              <p className="text-white/90 text-sm leading-relaxed">
-                Register new purchaser profiles with QR generation
-              </p>
-              <div className="mt-4 flex items-center gap-2 text-white/70 text-xs font-medium">
-                <div className="w-1.5 h-1.5 bg-white/70 rounded-full"></div>
-                Quick Setup
-              </div>
-            </div>
-          </button>
-
-          <button className="group relative bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 text-white rounded-3xl p-7 text-left hover:shadow-2xl hover:scale-105 transition-all duration-300 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
-                  <svg
-                    className="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v1m6 11a9 9 0 11-18 0 9 9 0 0118 0zm-9 8a1 1 0 01-1-1v-4a1 1 0 011-1 1 1 0 011 1v4a1 1 0 01-1 1z"
-                    />
-                  </svg>
-                </div>
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-white/30 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-white/20 rounded-full animate-bounce delay-75"></div>
-                  <div className="w-2 h-2 bg-white/10 rounded-full animate-bounce delay-150"></div>
-                </div>
-              </div>
-              <h3 className="font-bold text-xl mb-2 group-hover:text-white transition-colors duration-300">
-                Bulk QR Generator
-              </h3>
-              <p className="text-white/90 text-sm leading-relaxed">
-                Generate multiple QR codes for existing purchasers
-              </p>
-              <div className="mt-4 flex items-center gap-2 text-white/70 text-xs font-medium">
-                <div className="w-1.5 h-1.5 bg-white/70 rounded-full"></div>
-                Mass Export
-              </div>
-            </div>
-          </button>
-        </div>
-
-        {/* Enhanced Purchasers List with glassmorphism */}
         <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20">
           <div className="p-8 border-b border-gray-100/50">
             <div className="flex items-center justify-between">
@@ -382,34 +493,6 @@ const Purchaser = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="bg-gradient-to-r from-teal-50 to-teal-100 px-6 py-3 rounded-2xl border border-teal-200/50 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
-                    <span className="text-teal-700 font-bold text-lg">
-                      {purchasers.length}
-                    </span>
-                    <span className="text-teal-600 text-sm font-medium">
-                      Total
-                    </span>
-                  </div>
-                </div>
-                <button className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-2xl flex items-center justify-center transition-all duration-200 hover:scale-105">
-                  <svg
-                    className="w-5 h-5 text-gray-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                    />
-                  </svg>
-                </button>
-              </div>
             </div>
           </div>
 
@@ -422,19 +505,6 @@ const Purchaser = () => {
             </div>
           ) : error ? (
             <div className="text-red-600 py-8 text-center bg-red-50 rounded-xl border border-red-200 m-4">
-              <svg
-                className="w-12 h-12 text-red-500 mx-auto mb-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
               <p className="font-medium">{error}</p>
             </div>
           ) : purchasers.length === 0 ? (
@@ -468,60 +538,28 @@ const Purchaser = () => {
                   key={p._id}
                   className="flex flex-col items-center space-y-6"
                 >
-                  {/* Enhanced Purchaser Card with 3D effects */}
                   <div className="group bg-gradient-to-br from-white via-white to-teal-50/30 border border-teal-100/50 rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 w-full transform hover:-translate-y-2 backdrop-blur-sm">
-                    {/* Profile Section */}
                     <div className="flex flex-col items-center gap-6">
                       <div className="relative">
                         <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-teal-200 bg-teal-50 flex items-center justify-center shadow-2xl group-hover:border-teal-300 transition-all duration-300">
                           {(() => {
-                            const img = p.photo;
-                            if (!img) {
-                              return (
-                                <svg
-                                  className="w-14 h-14 text-teal-400 group-hover:text-teal-500 transition-colors duration-300"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                  />
-                                </svg>
-                              );
-                            }
-
-                            // Create better candidate URLs that might actually work
+                            const img =
+                              p.photo || p.image || p.aadharImage || "";
                             const candidates = [];
-
-                            // If it's already a data URL (from uploaded files), use it directly
-                            if (img.startsWith("data:")) {
-                              candidates.push(img);
+                            if (img && typeof img === "string") {
+                              if (img.startsWith("data:")) candidates.push(img);
+                              if (img.startsWith("http")) candidates.push(img);
+                              if (API_BASE)
+                                candidates.push(
+                                  `${API_BASE}${
+                                    img.startsWith("/") ? img : `/${img}`
+                                  }`
+                                );
                             }
-
-                            // If it's an absolute HTTP URL, use it
-                            if (img.startsWith("http")) {
-                              candidates.push(img);
-                            }
-
-                            // Try API_BASE prefixed URLs if we have API_BASE
-                            if (typeof API_BASE !== "undefined" && API_BASE) {
-                              candidates.push(
-                                `${API_BASE}${
-                                  img.startsWith("/") ? img : `/${img}`
-                                }`
-                              );
-                            }
-
-                            // For demo purposes, add some sample images
                             candidates.push(
                               "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
                               "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
                             );
-
                             return (
                               <SmartImage
                                 srcCandidates={candidates}
@@ -543,7 +581,7 @@ const Purchaser = () => {
                             {p.fullName}
                           </h3>
                           <p className="text-gray-600 text-sm leading-relaxed px-4">
-                            {p.address}
+                            {formatAddress(p.address)}
                           </p>
                         </div>
 
@@ -570,7 +608,6 @@ const Purchaser = () => {
                       </div>
                     </div>
 
-                    {/* Enhanced ID Badge */}
                     <div className="mt-6">
                       <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-2xl px-4 py-3 text-center shadow-inner">
                         <div className="flex items-center justify-center gap-2 mb-1">
@@ -587,7 +624,6 @@ const Purchaser = () => {
                     </div>
                   </div>
 
-                  {/* Enhanced QR Code with premium styling */}
                   <div className="group bg-white/90 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border border-white/30 flex flex-col items-center space-y-4 hover:shadow-3xl transition-all duration-500 hover:scale-105">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
@@ -640,12 +676,34 @@ const Purchaser = () => {
               Add New Purchaser
             </h3>
             {!formVisible && (
-              <button
-                onClick={showForm}
-                className="px-6 py-3 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition-colors duration-200 font-semibold shadow-md"
-              >
-                Add Another
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={showForm}
+                  className="px-6 py-3 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition-colors duration-200 font-semibold shadow-md"
+                >
+                  Add Another
+                </button>
+                {meLoading ? null : currentUser &&
+                  !currentUser.hasPurchasingCard ? (
+                  <div className="flex items-center gap-2">
+                    {currentUser.purchasingCardRequested ? (
+                      <span className="text-sm text-gray-600">
+                        Request pending
+                      </span>
+                    ) : (
+                      <button
+                        onClick={requestPurchasingCard}
+                        disabled={requestingCard}
+                        className="px-4 py-2 bg-yellow-400 text-gray-900 rounded-xl text-sm font-semibold hover:brightness-95"
+                      >
+                        {requestingCard
+                          ? "Requesting..."
+                          : "Request Purchasing Card"}
+                      </button>
+                    )}
+                  </div>
+                ) : null}
+              </div>
             )}
           </div>
 
@@ -829,31 +887,148 @@ const Purchaser = () => {
             </div>
           ) : (
             <div className="text-center py-16">
-              <div className="w-20 h-20 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <svg
-                  className="w-10 h-10 text-green-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h4 className="text-2xl font-bold text-green-700 mb-3">
-                Purchaser Added Successfully!
-              </h4>
-              <p className="text-green-600 text-lg mb-6">
-                QR code has been generated and the purchaser is now listed
-                above.
-              </p>
+              {currentUser && !currentUser.hasPurchasingCard ? (
+                <div className="space-y-4">
+                  <div className="w-20 h-20 bg-yellow-50 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                    <svg
+                      className="w-10 h-10 text-yellow-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3"
+                      />
+                    </svg>
+                  </div>
+                  <h4 className="text-xl font-bold text-gray-800">
+                    Purchasing Card Required
+                  </h4>
+                  <p className="text-gray-600">
+                    You need a purchasing card to add or modify purchasers.
+                  </p>
+                  {currentUser.purchasingCardRequested ? (
+                    <p className="text-sm text-gray-500">
+                      Your request is pending approval.
+                    </p>
+                  ) : (
+                    <button
+                      onClick={requestPurchasingCard}
+                      disabled={requestingCard}
+                      className="px-6 py-3 bg-yellow-400 text-gray-900 rounded-xl font-semibold"
+                    >
+                      {requestingCard
+                        ? "Requesting..."
+                        : "Request Purchasing Card"}
+                    </button>
+                  )}
+                  {requestMessage && (
+                    <div className="text-sm text-gray-600 mt-2">
+                      {requestMessage}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <div className="w-20 h-20 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <svg
+                      className="w-10 h-10 text-green-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <h4 className="text-2xl font-bold text-green-700 mb-3">
+                    Purchaser Added Successfully!
+                  </h4>
+                  <p className="text-green-600 text-lg mb-6">
+                    QR code has been generated and the purchaser is now listed
+                    above.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
+
+        {/* Stockist Picker Modal */}
+        {showStockistPicker && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-bold">Select Stockists (min 3)</h4>
+                <button
+                  onClick={() => setShowStockistPicker(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-auto mb-4">
+                {stockistsList && stockistsList.length > 0 ? (
+                  stockistsList.map((s) => (
+                    <label
+                      key={s._id}
+                      className={`flex items-center gap-3 p-3 rounded-lg border ${
+                        selectedStockists.includes(s._id)
+                          ? "border-teal-400 bg-teal-50"
+                          : "border-gray-100"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedStockists.includes(s._id)}
+                        onChange={() => toggleStockistSelection(s._id)}
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium">
+                          {s.name || s.email || s._id}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {formatAddress(s.address)}
+                        </div>
+                      </div>
+                    </label>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 p-6">
+                    No stockists available
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setShowStockistPicker(false)}
+                  className="px-4 py-2 rounded-lg border"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitSelectedStockists}
+                  disabled={requestingCard}
+                  className="px-4 py-2 rounded-lg bg-teal-500 text-white"
+                >
+                  {requestingCard ? "Requesting..." : "Notify Selected"}
+                </button>
+              </div>
+              {requestMessage && (
+                <div className="mt-3 text-sm text-gray-700">
+                  {requestMessage}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

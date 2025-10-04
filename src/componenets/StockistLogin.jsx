@@ -29,23 +29,63 @@ export default function StockistLogin() {
         return;
       }
 
-      if (data.token) localStorage.setItem("token", data.token);
-      if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
+      // Clear any previous auth state first to avoid races where another
+      // component reads an old token and overwrites the stored user/profile.
+      try {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      } catch (e) {}
 
-      // Optionally respect "remember me"
-      if (!rememberMe) {
-        // If not remembering, we could store session-only. Browsers don't provide
-        // an easy session-only localStorage — keeping token in localStorage for
-        // simplicity. For a real app, consider httpOnly cookies.
+      // Store the new auth values once
+      if (data.token) {
+        console.debug(
+          "Login: storing token ->",
+          data.token && data.token.slice(0, 16) + "..."
+        );
+        localStorage.setItem("token", data.token);
+      }
+      if (data.user) {
+        console.debug("Login: storing user ->", data.user && data.user.email);
+        localStorage.setItem("user", JSON.stringify(data.user));
       }
 
+      // Log for debugging: show which user is stored and token snippet
+      try {
+        console.log(
+          "Login: stored user ->",
+          JSON.parse(localStorage.getItem("user"))
+        );
+        console.log(
+          "Login: current token ->",
+          (localStorage.getItem("token") || "(none)").slice(0, 16) + "..."
+        );
+      } catch (e) {
+        console.warn("Login: could not parse stored user", e);
+      }
+
+      // Force a reload so all components re-read localStorage and show the new account
       navigate("/stockist-outcode");
+      setTimeout(() => window.location.reload(), 120);
     } catch (err) {
       setError("Network error");
     } finally {
       setLoading(false);
     }
   }
+
+  // Diagnostic: log resolved API base & call runtime debug endpoint
+  React.useEffect(() => {
+    try {
+      const loginUrl = apiUrl("/api/auth/login");
+      console.log("Resolved login URL:", loginUrl);
+      fetch(apiUrl("/debug/runtime"))
+        .then((r) => r.json())
+        .then((d) => console.log("/debug/runtime ->", d))
+        .catch((e) => console.warn("/debug/runtime failed", e));
+    } catch (e) {
+      console.warn("apiUrl diagnostic failed", e);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
