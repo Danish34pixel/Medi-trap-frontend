@@ -82,6 +82,9 @@ const Purchaser = () => {
     fullName: "",
     address: "",
     contactNo: "",
+    email: "",
+    aadharNo: "",
+    password: "",
     aadharImage: null,
     photo: null,
   });
@@ -90,49 +93,12 @@ const Purchaser = () => {
   const [submitting, setSubmitting] = useState(false);
   const [formVisible, setFormVisible] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  // Flag that indicates the user has filled the purchaser form and intends
+  // to submit it together with stockist selections (multipart request).
+  const [pendingPurchaserRequest, setPendingPurchaserRequest] = useState(false);
 
   useEffect(() => {
-    const fetchPurchasers = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        let t = null;
-        try {
-          t = localStorage.getItem("token");
-        } catch (e) {}
-        if (!t) {
-          setPurchasers([]);
-          setError("Login required to view purchasers.");
-          setLoading(false);
-          return;
-        }
-        try {
-          const res = await axios.get(apiUrl("/api/purchaser"), {
-            headers: { Authorization: `Bearer ${t}` },
-          });
-          setPurchasers(res.data.data || []);
-        } catch (errInner) {
-          if (
-            errInner &&
-            errInner.response &&
-            errInner.response.status === 401
-          ) {
-            try {
-              localStorage.removeItem("token");
-            } catch (e) {}
-            setPurchasers([]);
-            setError("Unauthorized. Please login to view purchasers.");
-            setLoading(false);
-            return;
-          }
-          throw errInner;
-        }
-      } catch (err) {
-        setError("Failed to fetch purchasers");
-      }
-      setLoading(false);
-    };
-
+    // fetchPurchasers is defined below and reused by polling
     fetchPurchasers();
 
     (async () => {
@@ -159,6 +125,44 @@ const Purchaser = () => {
     })();
   }, []);
 
+  // Extracted so it can be called from polling or after approvals
+  const fetchPurchasers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      let t = null;
+      try {
+        t = localStorage.getItem("token");
+      } catch (e) {}
+      if (!t) {
+        setPurchasers([]);
+        setError("Login required to view purchasers.");
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await axios.get(apiUrl("/api/purchaser"), {
+          headers: { Authorization: `Bearer ${t}` },
+        });
+        setPurchasers(res.data.data || []);
+      } catch (errInner) {
+        if (errInner && errInner.response && errInner.response.status === 401) {
+          try {
+            localStorage.removeItem("token");
+          } catch (e) {}
+          setPurchasers([]);
+          setError("Unauthorized. Please login to view purchasers.");
+          setLoading(false);
+          return;
+        }
+        throw errInner;
+      }
+    } catch (err) {
+      setError("Failed to fetch purchasers");
+    }
+    setLoading(false);
+  };
+
   // When user has requested a purchasing card, poll their /me endpoint
   // so the UI updates automatically when stockists approve (grants hasPurchasingCard).
   useEffect(() => {
@@ -175,6 +179,10 @@ const Purchaser = () => {
             setCurrentUser(r.data.user);
             if (r.data.user.hasPurchasingCard) {
               setFormVisible(true);
+              // refresh purchasers list so the new card and QR appear
+              try {
+                fetchPurchasers();
+              } catch (e) {}
               clearInterval(timer);
             }
           }
@@ -236,53 +244,61 @@ const Purchaser = () => {
         return;
       }
 
-      const formData = new FormData();
-      formData.append("fullName", form.fullName);
-      formData.append("address", form.address);
-      formData.append("contactNo", form.contactNo);
-      formData.append("aadharImage", form.aadharImage);
-      formData.append("photo", form.photo);
+      // If user already has a purchasing card, create purchaser immediately
+      if (currentUser && currentUser.hasPurchasingCard) {
+        const formData = new FormData();
+        formData.append("fullName", form.fullName);
+        formData.append("address", form.address);
+        formData.append("contactNo", form.contactNo);
+        formData.append("aadharImage", form.aadharImage);
+        formData.append("photo", form.photo);
 
-      let t = null;
-      try {
-        t = localStorage.getItem("token");
-      } catch (e) {}
-      if (!t) {
-        setError("Login required to add purchaser.");
-        setSubmitting(false);
-        return;
-      }
-      const res = await axios.post(apiUrl("/api/purchaser"), formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${t}`,
-        },
-      });
+        let t = null;
+        try {
+          t = localStorage.getItem("token");
+        } catch (e) {}
+        if (!t) {
+          setError("Login required to add purchaser.");
+          setSubmitting(false);
+          return;
+        }
+        const res = await axios.post(apiUrl("/api/purchaser"), formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${t}`,
+          },
+        });
 
-      if (res.data && res.data.success) {
-        setPurchasers([res.data.data, ...purchasers]);
-        resetForm();
-        setFormVisible(false);
-        setSuccessMessage("Purchaser added successfully!");
-        setSubmitting(false);
-        setTimeout(() => setSuccessMessage(""), 3000);
+        if (res.data && res.data.success) {
+          setPurchasers([res.data.data, ...purchasers]);
+          resetForm();
+          setFormVisible(false);
+          setSuccessMessage("Purchaser added successfully!");
+          setSubmitting(false);
+          setTimeout(() => setSuccessMessage(""), 3000);
+        } else {
+          throw new Error(res.data.message || "Failed to add purchaser");
+        }
       } else {
-        throw new Error(res.data.message || "Failed to add purchaser");
+        // No purchasing card yet: mark pending and open stockist picker so the
+        // user can select at least 3 stockists and submit a combined request.
+        setPendingPurchaserRequest(true);
+        await openStockistPicker();
+        setSubmitting(false);
       }
     } catch (err) {
       setError(
         err.response?.data?.message || err.message || "Failed to add purchaser"
       );
+      setSubmitting(false);
     }
   };
 
   const showForm = () => {
-    if (currentUser && currentUser.hasPurchasingCard) {
-      setFormVisible(true);
-      setSuccessMessage("");
-      setError(null);
-      return;
-    }
+    // Allow logged-in users to open the purchaser form even if they don't
+    // yet have a purchasing card. On submit they'll be asked to select
+    // at least 3 stockists and the form + selections will be submitted
+    // together as a pending purchasing-card request.
     if (!currentUser && !meLoading) {
       setRequestMessage("Please login to request a purchasing card.");
       return;
@@ -292,6 +308,7 @@ const Purchaser = () => {
       return;
     }
     setRequestMessage("");
+    setFormVisible(true);
   };
 
   const openStockistPicker = async () => {
@@ -343,17 +360,84 @@ const Purchaser = () => {
         setRequestingCard(false);
         return;
       }
-      const res = await axios.post(
-        apiUrl("/api/purchasing-card/request"),
-        { stockistIds: selectedStockists },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      let res;
+      if (pendingPurchaserRequest) {
+        // Backend expects JSON stockistIds; it doesn't accept multipart here.
+        // First create a purchaser account (multipart) via purchaser-signup endpoint,
+        // then call the purchasing-card request endpoint with JSON stockistIds.
+        // Client-side validation to avoid server 400s and provide clear user feedback
+        const missing = [];
+        if (!form.fullName || !form.fullName.trim()) missing.push("Full name");
+        if (!form.email || !form.email.trim()) missing.push("Email");
+        // aadharNo removed from flow; backend no longer requires it
+        if (!form.aadharImage) missing.push("Aadhar image file");
+        if (!form.photo) missing.push("Personal photo file");
+        if (missing.length) {
+          setRequestMessage(
+            `Missing fields for account creation: ${missing.join(", ")}`
+          );
+          setRequestingCard(false);
+          return;
+        }
+
+        const fd = new FormData();
+        // send purchaser fields to create account (backend requires fullName, email, password)
+        fd.append("fullName", form.fullName || "");
+        fd.append("email", form.email || "");
+
+        // ensure a password exists - generate a short random password if user didn't provide one
+        const makeRandom = () => Math.random().toString(36).slice(-8) + "A1";
+        const pwd =
+          form.password && form.password.length >= 6
+            ? form.password
+            : makeRandom();
+        fd.append("password", pwd);
+
+        fd.append("aadharImage", form.aadharImage);
+        fd.append("personalPhoto", form.photo);
+
+        // create purchaser account first
+        const signupResp = await axios.post(
+          apiUrl("/api/auth/purchaser-signup"),
+          fd,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
+        if (!signupResp.data || !signupResp.data.token) {
+          throw new Error(
+            signupResp.data?.message || "Failed to create purchaser account"
+          );
+        }
+        const newToken = signupResp.data.token;
+        try {
+          localStorage.setItem("token", newToken);
+        } catch (e) {}
+
+        // now call purchasing-card/request with JSON body using the new token
+        res = await axios.post(
+          apiUrl("/api/purchasing-card/request"),
+          { stockistIds: selectedStockists },
+          { headers: { Authorization: `Bearer ${newToken}` } }
+        );
+      } else {
+        res = await axios.post(
+          apiUrl("/api/purchasing-card/request"),
+          { stockistIds: selectedStockists },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
       if (res.data && res.data.success) {
         setRequestMessage(res.data.message || "Requested");
         setCurrentUser((u) =>
           u ? { ...u, purchasingCardRequested: true } : u
         );
         setShowStockistPicker(false);
+        setPendingPurchaserRequest(false);
+        setForm((f) => ({ ...f, aadharImage: null, photo: null }));
+        setAadharPreview(null);
+        setPhotoPreview(null);
       } else {
         setRequestMessage(res.data.message || "Request failed");
       }
@@ -736,6 +820,34 @@ const Purchaser = () => {
                     value={form.contactNo}
                     onChange={handleChange}
                     required
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-gray-700 font-medium text-sm">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Enter purchaser email"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-gray-700 font-medium text-sm">
+                    Password (will be emailed)
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    placeholder="Create password (optional)"
+                    value={form.password}
+                    onChange={handleChange}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
                   />
                 </div>
