@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API_BASE, { apiUrl } from "./config/api";
+import { getCookie, removeCookie } from "./utils/cookies";
 
 const Profile = () => {
   const storedUser = (() => {
@@ -32,7 +33,7 @@ const Profile = () => {
     let mounted = true;
     (async () => {
       try {
-        const tokenAtRequest = localStorage.getItem("token");
+        const tokenAtRequest = getCookie("token");
         if (!tokenAtRequest) return;
 
         setLoading(true);
@@ -48,7 +49,7 @@ const Profile = () => {
             // matches the current stored token. This avoids overwriting the
             // freshly-logged-in user when a background /me call was made with
             // an older token.
-            const currentToken = localStorage.getItem("token");
+            const currentToken = getCookie("token");
             if (currentToken && tokenAtRequest === currentToken) {
               localStorage.setItem("user", JSON.stringify(json.user));
             } else {
@@ -82,7 +83,7 @@ const Profile = () => {
   const handleLogout = () => {
     // Clear stored auth and redirect to login
     try {
-      localStorage.removeItem("token");
+      removeCookie("token");
       localStorage.removeItem("user");
     } catch (e) {
       // ignore

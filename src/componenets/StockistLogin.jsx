@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, Shield } from "lucide-react";
 import { apiUrl } from "./config/api";
+import { setCookie, removeCookie, getCookie } from "./utils/cookies";
 
 export default function StockistLogin() {
   const navigate = useNavigate();
@@ -32,17 +33,17 @@ export default function StockistLogin() {
       // Clear any previous auth state first to avoid races where another
       // component reads an old token and overwrites the stored user/profile.
       try {
-        localStorage.removeItem("token");
+        removeCookie("token");
         localStorage.removeItem("user");
       } catch (e) {}
 
-      // Store the new auth values once
+      // Store the new auth values once. Token stored in cookie (client-side).
       if (data.token) {
         console.debug(
-          "Login: storing token ->",
+          "Login: storing token (cookie) ->",
           data.token && data.token.slice(0, 16) + "..."
         );
-        localStorage.setItem("token", data.token);
+        setCookie("token", data.token, 7);
       }
       if (data.user) {
         console.debug("Login: storing user ->", data.user && data.user.email);
@@ -56,8 +57,8 @@ export default function StockistLogin() {
           JSON.parse(localStorage.getItem("user"))
         );
         console.log(
-          "Login: current token ->",
-          (localStorage.getItem("token") || "(none)").slice(0, 16) + "..."
+          "Login: current token (cookie) ->",
+          (getCookie("token") || "(none)").slice(0, 16) + "..."
         );
       } catch (e) {
         console.warn("Login: could not parse stored user", e);
@@ -75,13 +76,13 @@ export default function StockistLogin() {
 
   // Diagnostic: log resolved API base & call runtime debug endpoint
   React.useEffect(() => {
+    // Only run diagnostics in development to avoid noisy 404s in other envs
+    if (!import.meta.env.DEV) return;
     try {
       const loginUrl = apiUrl("/api/auth/login");
       console.log("Resolved login URL:", loginUrl);
-      fetch(apiUrl("/debug/runtime"))
-        .then((r) => r.json())
-        .then((d) => console.log("/debug/runtime ->", d))
-        .catch((e) => console.warn("/debug/runtime failed", e));
+      // Removed /debug/runtime fetch to avoid noisy 404s when that endpoint
+      // is not present on the backend.
     } catch (e) {
       console.warn("apiUrl diagnostic failed", e);
     }

@@ -12,6 +12,7 @@ import {
   Plus,
 } from "lucide-react";
 import { apiUrl } from "./config/api";
+import { getCookie } from "./utils/cookies";
 
 export default function AdminCreateMedicine() {
   const [form, setForm] = useState({ name: "", company: "", stockists: [] });
@@ -68,7 +69,7 @@ export default function AdminCreateMedicine() {
     e && e.preventDefault();
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = getCookie("token");
       const res = await fetch(apiUrl("/api/medicine/quick"), {
         method: "POST",
         headers: {

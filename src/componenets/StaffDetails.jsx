@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiUrl } from "./config/api";
+import { getCookie } from "./utils/cookies";
 import { QRCodeCanvas } from "qrcode.react";
 
 export default function StaffDetails() {
@@ -20,7 +21,7 @@ export default function StaffDetails() {
   useEffect(() => {
     (async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = getCookie("token");
         const res = await fetch(apiUrl(`/api/staff/${id}`), {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });

@@ -209,7 +209,7 @@ export default function StaffList() {
     let mounted = true;
     (async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = getCookie("token");
         const isStockist = user && user.role === "stockist";
         const url = isStockist
           ? apiUrl("/api/staff?stockist=me")

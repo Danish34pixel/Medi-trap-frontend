@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { apiUrl } from "./config/api";
+import { getCookie } from "./utils/cookies";
 import API_BASE from "./config/api";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -106,7 +107,7 @@ const Purchaser = () => {
         setMeLoading(true);
         let token = null;
         try {
-          token = localStorage.getItem("token");
+          token = getCookie("token");
         } catch (e) {}
         if (!token) {
           setCurrentUser(null);
@@ -132,7 +133,7 @@ const Purchaser = () => {
     try {
       let t = null;
       try {
-        t = localStorage.getItem("token");
+        t = getCookie("token");
       } catch (e) {}
       if (!t) {
         setPurchasers([]);
@@ -170,7 +171,7 @@ const Purchaser = () => {
     const startPolling = () => {
       timer = setInterval(async () => {
         try {
-          const token = localStorage.getItem("token");
+          const token = getCookie("token");
           if (!token) return;
           const r = await axios.get(apiUrl("/api/auth/me"), {
             headers: { Authorization: `Bearer ${token}` },
@@ -255,7 +256,7 @@ const Purchaser = () => {
 
         let t = null;
         try {
-          t = localStorage.getItem("token");
+          t = getCookie("token");
         } catch (e) {}
         if (!t) {
           setError("Login required to add purchaser.");
@@ -315,7 +316,7 @@ const Purchaser = () => {
     setRequestingCard(true);
     setRequestMessage("");
     try {
-      const token = localStorage.getItem("token");
+      const token = getCookie("token");
       if (!token) {
         setRequestMessage("Login required to request a purchasing card.");
         setRequestingCard(false);
@@ -349,7 +350,7 @@ const Purchaser = () => {
     setRequestingCard(true);
     setRequestMessage("");
     try {
-      const token = localStorage.getItem("token");
+      const token = getCookie("token");
       if (!token) {
         setRequestMessage("Login required to request a purchasing card.");
         setRequestingCard(false);

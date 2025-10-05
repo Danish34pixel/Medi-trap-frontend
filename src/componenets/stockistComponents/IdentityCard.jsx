@@ -15,30 +15,32 @@ export default function IdentityCard({ stockist = {}, qrDataUrl, onPrint }) {
   };
 
   return (
-    // Landscape/Horizontal ID Card Size (3.375in x 2.125in aspect ratio)
-    <div className="w-96 h-60 bg-white rounded-xl shadow-2xl border border-gray-300 overflow-hidden mx-auto print:shadow-none print:border-0">
+    // Responsive ID Card — stacks vertically on small screens and lays out
+    // horizontally from `sm` and above. Avoid fixed heights so the card can
+    // scale naturally across breakpoints.
+    <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-gray-300 overflow-hidden mx-auto print:shadow-none print:border-0">
       {/* --- Top Header / Company Strip --- */}
-      <div className="flex items-center justify-between px-4 py-2 bg-blue-800 text-white h-12">
+      <div className="flex items-center justify-between px-4 py-2 bg-blue-800 text-white">
         <Logo className="h-6 w-auto filter invert" />{" "}
         {/* Inverting logo for dark background */}
         <div className="text-right"></div>
       </div>
 
       {/* --- Main Content Area (Photo, Details, QR) --- */}
-      <div className="flex p-4 h-[calc(100%-3rem)]">
+      <div className="flex flex-col sm:flex-row p-4">
         {/* --- Left Column: Photo & Role --- */}
-        <div className="flex flex-col items-center w-1/3 pr-3 border-r border-gray-100">
+        <div className="flex flex-col items-center sm:w-1/3 w-full sm:pr-3 sm:border-r border-gray-100 pb-4 sm:pb-0">
           {/* Profile Photo */}
           <div className="flex-shrink-0 mb-2">
             {stockist?.profileImageUrl ? (
               <img
                 src={stockist?.profileImageUrl}
                 alt={`${stockist?.name || "profile"} profile`}
-                className="w-24 h-24 rounded-full object-cover border-4 border-gray-200 shadow-md"
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-gray-200 shadow-md"
               />
             ) : (
-              <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center border-4 border-gray-200">
-                <Avatar name={stockist?.name || ""} size={60} />
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-300 rounded-full flex items-center justify-center border-4 border-gray-200">
+                <Avatar name={stockist?.name || ""} size={56} />
               </div>
             )}
           </div>
@@ -52,9 +54,9 @@ export default function IdentityCard({ stockist = {}, qrDataUrl, onPrint }) {
         </div>
 
         {/* --- Right Column: Details & QR/Signature --- */}
-        <div className="flex flex-col w-2/3 pl-4">
+        <div className="flex flex-col sm:w-2/3 w-full sm:pl-4">
           {/* Main Name/ID */}
-          <h2 className="text-xl font-extrabold text-gray-900 truncate leading-tight">
+          <h2 className="text-lg md:text-xl font-extrabold text-gray-900 truncate leading-tight">
             {stockist?.contactPerson || stockist?.name || "Employee Name"}
           </h2>
           <p className="text-xs text-gray-500 mb-3">
@@ -63,7 +65,7 @@ export default function IdentityCard({ stockist = {}, qrDataUrl, onPrint }) {
           </p>
 
           {/* Information Grid (Two columns, small gap) */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs flex-grow">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs flex-grow">
             {/* Row 1 */}
             <div>
               <div className="font-medium text-gray-500">Joined</div>
@@ -94,9 +96,9 @@ export default function IdentityCard({ stockist = {}, qrDataUrl, onPrint }) {
           </div>
 
           {/* Bottom Row: QR Code and Signature */}
-          <div className="flex justify-between items-end mt-2 pt-2 border-t border-gray-100">
+          <div className="flex items-end justify-between mt-2 pt-2 border-t border-gray-100">
             {/* QR Code */}
-            <div className="w-14 h-14 border border-gray-300 rounded-sm p-0.5">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 border border-gray-300 rounded-sm p-0.5">
               {qrDataUrl ? (
                 <img
                   src={qrDataUrl}

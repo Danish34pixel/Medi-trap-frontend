@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiUrl } from "../config/api";
+import { getCookie } from "../utils/cookies";
 import { Pill, ArrowLeft } from "lucide-react";
 
 export default function CompanyProducts() {
@@ -17,7 +18,7 @@ export default function CompanyProducts() {
       setLoading(true);
       setError("");
       try {
-        const token = localStorage.getItem("token");
+        const token = getCookie("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
         // fetch company (if available) and medicines, then filter client-side

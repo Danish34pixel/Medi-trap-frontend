@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Logo from "../Logo";
 import { apiUrl } from "../config/api";
+import { setCookie, getCookie } from "../utils/cookies";
 import { useNavigate } from "react-router-dom";
 
 const Signup = () => {
@@ -115,10 +116,10 @@ const Signup = () => {
         const data = await resp.json();
         if (!resp.ok) throw new Error(data.message || "Signup failed");
 
-        // Save token for subsequent requests
+        // Save token for subsequent requests (store token in cookie)
         if (data.token) {
           try {
-            localStorage.setItem("token", data.token);
+            setCookie("token", data.token, 7);
           } catch (e) {}
         }
 
@@ -127,7 +128,7 @@ const Signup = () => {
         );
         // fetch stockists and open picker
         try {
-          const token = data.token || localStorage.getItem("token");
+          const token = data.token || getCookie("token");
           const sres = await fetch(apiUrl(`/api/stockist`), {
             headers: { Authorization: `Bearer ${token}` },
           });

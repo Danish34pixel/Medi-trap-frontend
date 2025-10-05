@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { apiUrl } from "./config/api";
+import { getCookie } from "./utils/cookies";
 import {
   ArrowLeft,
   Search,
@@ -111,38 +112,33 @@ const CompanyCard = ({ company }) => {
   );
 };
 
-const MedicineCard = ({ medicine }) => {
-  // Add-to-cart removed (non-working) — medicine cards now show details only
-
-  return (
-    <div className="bg-white rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
-            <Pill className="w-6 h-6 text-white" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 text-sm">
-              {medicine.name}
-            </h3>
-            <p className="text-xs text-gray-500">{medicine.company || ""}</p>
-          </div>
+const MedicineCard = ({ medicine }) => (
+  <div className="bg-white rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
+    <div className="flex items-start justify-between mb-3">
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
+          <Pill className="w-6 h-6 text-white" />
+        </div>
+        <div className="flex-1">
+          <h3 className="font-semibold text-gray-900 text-sm">
+            {medicine.name}
+          </h3>
+          <p className="text-xs text-gray-500">{medicine.company || ""}</p>
         </div>
       </div>
-      <div className="flex items-center justify-between mb-3">
-        <div className="px-3 py-1.5 bg-orange-50 rounded-full">
-          <span className="text-orange-600 font-bold text-sm">
-            {medicine.price || ""}
-          </span>
-        </div>
-        <span className="text-xs text-gray-500">
-          Stock: {medicine.stock ?? 0}
+    </div>
+    <div className="flex items-center justify-between mb-3">
+      <div className="px-3 py-1.5 bg-orange-50 rounded-full">
+        <span className="text-orange-600 font-bold text-sm">
+          {medicine.price || ""}
         </span>
       </div>
-      {/* Add-to-cart removed. */}
+      <span className="text-xs text-gray-500">
+        Stock: {medicine.stock ?? 0}
+      </span>
     </div>
-  );
-};
+  </div>
+);
 
 const StaffCard = ({ staff }) => {
   const goToStaff = () => {
@@ -207,6 +203,21 @@ export default function PharmacyStockist() {
     [companiesList.length, medicinesList.length, staffs.length]
   );
 
+  const displayName = useMemo(() => {
+    if (!stockist) return "Unnamed Stockist";
+    return (
+      stockist.medicalName ||
+      stockist.contactPerson ||
+      stockist.name ||
+      stockist.companyName ||
+      stockist.ownerName ||
+      stockist.fullName ||
+      stockist.email ||
+      stockist.phone ||
+      "Unnamed Stockist"
+    );
+  }, [stockist]);
+
   const filterByQuery = useCallback(
     (items, keys = ["name"]) => {
       if (!query) return items || [];
@@ -231,43 +242,108 @@ export default function PharmacyStockist() {
     [companiesList, medicinesList, staffs, filterByQuery]
   );
 
-  // Load stockist data
+  const medicineReferencesStockist = (med, stockistId) => {
+    if (!med) return false;
+    const candidates = [];
+    try {
+      if (Array.isArray(med.stockists)) candidates.push(...med.stockists);
+      if (med.stockist) candidates.push(med.stockist);
+      if (med.stockistId) candidates.push(med.stockistId);
+      if (med.seller) candidates.push(med.seller);
+      if (med.sellerId) candidates.push(med.sellerId);
+      if (med.vendor) candidates.push(med.vendor);
+      if (med.vendorId) candidates.push(med.vendorId);
+      if (med.supplier) candidates.push(med.supplier);
+      if (med.supplierId) candidates.push(med.supplierId);
+    } catch {}
+    return candidates.some((c) => {
+      const id = c?._id || c?.id || c;
+      return String(id) === String(stockistId);
+    });
+  };
+
   const loadStockistData = useCallback(async () => {
     setLoading(true);
     setError("");
 
     try {
-      const res = await fetch(apiUrl("/api/stockist"));
+      const token = getCookie("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const res = await fetch(apiUrl("/api/stockist"), { headers });
       const json = await res.json().catch(() => ({}));
       const list = json?.data || [];
 
       let target = null;
+      let storedUser = null;
+      try {
+        storedUser =
+          typeof window !== "undefined"
+            ? JSON.parse(localStorage.getItem("user") || "null")
+            : null;
+      } catch {}
+
+      if (storedUser && storedUser.user) storedUser = storedUser.user;
+
+      const userIds = new Set();
+      const userEmails = new Set();
+      const userPhones = new Set();
+      if (storedUser) {
+        [storedUser._id, storedUser.id, storedUser?.userId]
+          .filter(Boolean)
+          .forEach((v) => userIds.add(String(v)));
+        (storedUser.email ? [storedUser.email] : [])
+          .filter(Boolean)
+          .forEach((e) => userEmails.add(String(e).toLowerCase()));
+        (storedUser.phone ? [storedUser.phone] : [])
+          .filter(Boolean)
+          .forEach((p) => userPhones.add(String(p)));
+      }
+
+      const matchStockistWithUser = (s) => {
+        if (s._id && userIds.has(String(s._id))) return true;
+        if (s.id && userIds.has(String(s.id))) return true;
+        const emailsToCheck = [s.email, s.ownerEmail, s.user?.email];
+        for (const e of emailsToCheck.filter(Boolean)) {
+          if (userEmails.has(String(e).toLowerCase())) return true;
+        }
+        const phonesToCheck = [s.phone, s.contactPhone, s.mobile];
+        for (const p of phonesToCheck.filter(Boolean)) {
+          if (userPhones.has(String(p))) return true;
+        }
+        return false;
+      };
+
       if (routeId && routeId !== "me") {
-        target = list.find((s) => String(s._id) === String(routeId));
-      } else if (routeId === "me") {
-        target = list.find((s) => s?._id);
+        target = list.find(
+          (s) =>
+            String(s._id) === String(routeId) ||
+            String(s.id) === String(routeId)
+        );
+      } else {
+        if (storedUser) target = list.find((s) => matchStockistWithUser(s));
+        if (!target && list.length > 0) target = list[0];
       }
 
-      if (!target && list.length > 0) target = list[0];
-
-      if (!target) {
-        throw new Error("Stockist not found");
+      if (
+        !target &&
+        storedUser &&
+        (storedUser.medicalName ||
+          storedUser.druglicenseNo ||
+          storedUser.ownerName ||
+          storedUser.companyName)
+      ) {
+        target = storedUser;
       }
+
+      if (!target) throw new Error("Stockist not found");
 
       setStockist(target);
 
-      // Fetch related data
-      const token =
-        typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      const staffUrl = apiUrl(`/api/staff?stockist=${target._id}`);
-      const staffOpts = token
-        ? { headers: { Authorization: `Bearer ${token}` } }
-        : {};
-
       const [cRes, mRes, sRes] = await Promise.all([
-        fetch(apiUrl("/api/company")),
-        fetch(apiUrl("/api/medicine")),
-        fetch(staffUrl, staffOpts),
+        fetch(apiUrl("/api/company"), { headers }),
+        fetch(apiUrl("/api/medicine"), { headers }),
+        fetch(apiUrl(`/api/staff?stockist=${target._id}`), { headers }),
       ]);
 
       const [cJson, mJson, sJson] = await Promise.all([
@@ -280,15 +356,12 @@ export default function PharmacyStockist() {
       const allMeds = mJson?.data || [];
       const staffList = sJson?.data || [];
 
-      // Filter companies associated with this stockist
       const filteredCompanies = allCompanies.filter((company) => {
         try {
-          if (Array.isArray(company.stockists) && company.stockists.length) {
+          if (Array.isArray(company.stockists))
             return company.stockists.some(
               (s) => String(s?._id || s) === String(target._id)
             );
-          }
-
           const keys = [
             company.stockist,
             company.stockistId,
@@ -299,7 +372,6 @@ export default function PharmacyStockist() {
             company.supplier,
             company.supplierId,
           ];
-
           return keys.some(
             (key) =>
               key && String(key._id || key.id || key) === String(target._id)
@@ -309,7 +381,6 @@ export default function PharmacyStockist() {
         }
       });
 
-      // Filter medicines associated with this stockist
       const filteredMeds = allMeds.filter((med) =>
         medicineReferencesStockist(med, target._id)
       );
@@ -325,79 +396,23 @@ export default function PharmacyStockist() {
     }
   }, [routeId]);
 
-  // Generate QR code
   useEffect(() => {
-    const idToUse = routeId || stockist?._id;
-    if (!idToUse) return setQrDataUrl(null);
+    loadStockistData();
+  }, [loadStockistData]);
 
-    (async () => {
-      try {
-        const mod = await import("qrcode");
-        const QR = mod?.default || mod;
-        const dataUrl = await QR.toDataURL(
-          `${window.location.origin}/stockist-card?id=${idToUse}`
-        );
-        setQrDataUrl(dataUrl);
-      } catch {
-        setQrDataUrl(null);
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
     window.location.reload();
   };
 
-  // Generate QR image URL for the current stockist (if available).
-  // Uses the Google Chart API to create a QR image URL without extra dependencies.
-  const qrDataUrl = (() => {
-    try {
-      if (!stockist || !stockist._id) return null;
-      const shareUrl = `${window.location.origin}/stockist/${stockist._id}`;
-      // Use api.qrserver.com which reliably returns an image for the given data
-      // Example: https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=HELLO
-      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-        shareUrl
-      )}`;
-    } catch (e) {
-      return null;
-    }
-  })();
-
-  // Helper to detect whether a medicine references a stockist id in common fields
-  const medicineReferencesStockist = (med, stockistId) => {
-    if (!med) return false;
-    const candidates = [];
-    try {
-      if (Array.isArray(med.stockists)) candidates.push(...med.stockists);
-      if (med.stockist) candidates.push(med.stockist);
-      if (med.stockistId) candidates.push(med.stockistId);
-      if (med.seller) candidates.push(med.seller);
-      if (med.sellerId) candidates.push(med.sellerId);
-      if (med.vendor) candidates.push(med.vendor);
-      if (med.vendorId) candidates.push(med.vendorId);
-      if (med.supplier) candidates.push(med.supplier);
-      if (med.supplierId) candidates.push(med.supplierId);
-    } catch (e) {
-      // ignore
-    }
-
-    return candidates.some((c) => {
-      try {
-        if (!c) return false;
-        const id = c._id || c.id || c;
-        return String(id) === String(stockistId);
-      } catch (e) {
-        return false;
-      }
-    });
-  };
+  const qrDataUrl = useMemo(() => {
+    if (!stockist?._id) return null;
+    const shareUrl = `${window.location.origin}/stockist/${stockist._id}`;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+      shareUrl
+    )}`;
+  }, [stockist]);
 
   const TAB_CONFIG = [
     {
@@ -500,16 +515,14 @@ export default function PharmacyStockist() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Avatar
-              name={stockist?.name || "Stockist"}
-              size={64}
-              className="shadow-md"
-            />
+            <Avatar name={displayName} size={64} className="shadow-md" />
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900 mb-1">
-                {stockist?.name || "Unnamed Stockist"}
+                {displayName}
               </h1>
-              <p className="text-sm text-gray-500">{stockist?.email || "—"}</p>
+              <p className="text-sm text-gray-500">
+                {stockist?.email || stockist?.contactPerson || "—"}
+              </p>
               {stockist?.location && (
                 <p className="text-xs text-gray-400 mt-1">
                   {stockist.location}
@@ -542,8 +555,19 @@ export default function PharmacyStockist() {
             </div>
           </div>
         </div> */}
+        {/* Ensure the ID card sees the derived display name as contactPerson */}
         <IdentityCard
-          stockist={stockist}
+          stockist={
+            stockist
+              ? {
+                  ...stockist,
+                  contactPerson:
+                    stockist.contactPerson ||
+                    stockist.medicalName ||
+                    displayName,
+                }
+              : stockist
+          }
           qrDataUrl={qrDataUrl}
           onPrint={() => window.print()}
         />

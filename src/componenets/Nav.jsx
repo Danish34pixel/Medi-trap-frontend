@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import API_BASE from "./config/api";
+import { getCookie } from "./utils/cookies";
 import {
   medicineReferencesStockist,
   medicineDisplayName,
@@ -268,7 +269,7 @@ export default function Nav({ navigation: navProp }) {
 
   // read token
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = getCookie("token");
     setUserToken(token);
   }, []);
 
@@ -517,38 +518,38 @@ export default function Nav({ navigation: navProp }) {
   // get health-themed icon for items
   const getHealthIcon = (item) => {
     const healthIcons = {
-      "cardiovascular": "❤️",
-      "diabetes": "🩺", 
-      "pain": "💊",
-      "mental": "🧠",
-      "pediatric": "👶",
-      "emergency": "🚨",
-      "chronic": "⚕️",
-      "preventive": "🛡️",
-      "oncology": "🎗️",
-      "respiratory": "🫁",
-      "dermatology": "🧴",
-      "orthopedic": "🦴",
-      "pharmacy": "💊",
-      "hospital": "🏥",
-      "clinic": "🏥",
-      "medical": "⚕️",
-      "health": "🩺",
-      "care": "💊",
-      "medicine": "💉",
-      "drug": "💊",
-      "pharma": "💊",
-      "therapeutic": "🩹",
-      "surgical": "🔬",
-      "diagnostic": "🔬",
-      "laboratory": "🧪",
-      "radiology": "📷",
-      "nutrition": "🍎",
-      "wellness": "🌱",
-      "fitness": "💪",
-      "rehabilitation": "🏃‍♂️"
+      cardiovascular: "❤️",
+      diabetes: "🩺",
+      pain: "💊",
+      mental: "🧠",
+      pediatric: "👶",
+      emergency: "🚨",
+      chronic: "⚕️",
+      preventive: "🛡️",
+      oncology: "🎗️",
+      respiratory: "🫁",
+      dermatology: "🧴",
+      orthopedic: "🦴",
+      pharmacy: "💊",
+      hospital: "🏥",
+      clinic: "🏥",
+      medical: "⚕️",
+      health: "🩺",
+      care: "💊",
+      medicine: "💉",
+      drug: "💊",
+      pharma: "💊",
+      therapeutic: "🩹",
+      surgical: "🔬",
+      diagnostic: "🔬",
+      laboratory: "🧪",
+      radiology: "📷",
+      nutrition: "🍎",
+      wellness: "🌱",
+      fitness: "💪",
+      rehabilitation: "🏃‍♂️",
     };
-    
+
     const itemLower = String(item).toLowerCase();
     for (const [key, icon] of Object.entries(healthIcons)) {
       if (itemLower.includes(key)) {
@@ -566,7 +567,7 @@ export default function Nav({ navigation: navProp }) {
     >
       {/* Animated background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-cyan-50/50 via-blue-50/30 to-purple-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-      
+
       {/* Content */}
       <div className="relative z-10">
         <div className="flex items-start justify-between mb-5">
@@ -583,11 +584,13 @@ export default function Nav({ navigation: navProp }) {
                 </h3>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-emerald-600 font-semibold">VERIFIED</span>
+                  <span className="text-xs text-emerald-600 font-semibold">
+                    VERIFIED
+                  </span>
                 </div>
               </div>
             </div>
-            
+
             <div className="space-y-3 mb-4">
               <div className="flex items-center gap-3 group/contact hover:bg-cyan-50 rounded-xl p-2 transition-all duration-200">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center shadow-md">
@@ -607,7 +610,7 @@ export default function Nav({ navigation: navProp }) {
               </div>
             </div>
           </div>
-          
+
           {/* Pulse indicator */}
           <div className="relative">
             <div className="w-4 h-4 bg-emerald-400 rounded-full shadow-lg"></div>
@@ -621,7 +624,9 @@ export default function Nav({ navigation: navProp }) {
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 flex items-center justify-center mr-3 shadow-lg">
                 <span className="text-white">🏥</span>
               </div>
-              <span className="font-bold text-slate-800">Healthcare Partners:</span>
+              <span className="font-bold text-slate-800">
+                Healthcare Partners:
+              </span>
             </div>
             <div className="flex flex-wrap gap-2">
               {item.items.map((company, i) => {
@@ -652,7 +657,9 @@ export default function Nav({ navigation: navProp }) {
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-emerald-400 to-green-500 flex items-center justify-center mr-3 shadow-lg">
                 <span className="text-white">💊</span>
               </div>
-              <span className="font-bold text-slate-800">Available Medicines:</span>
+              <span className="font-bold text-slate-800">
+                Available Medicines:
+              </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {item.Medicines.map((med, i) => {
@@ -692,7 +699,9 @@ export default function Nav({ navigation: navProp }) {
                   <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 flex items-center justify-center mr-3 shadow-lg">
                     <span className="text-white">🏥</span>
                   </div>
-                  <span className="font-bold text-slate-800">Healthcare Partners:</span>
+                  <span className="font-bold text-slate-800">
+                    Healthcare Partners:
+                  </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {item.items.map((company, i) => (
@@ -714,7 +723,9 @@ export default function Nav({ navigation: navProp }) {
                   <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-emerald-400 to-green-500 flex items-center justify-center mr-3 shadow-lg">
                     <span className="text-white">💊</span>
                   </div>
-                  <span className="font-bold text-slate-800">Medicine Catalog:</span>
+                  <span className="font-bold text-slate-800">
+                    Medicine Catalog:
+                  </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {item.Medicines.map((med, i) => (
@@ -733,7 +744,7 @@ export default function Nav({ navigation: navProp }) {
             )}
           </div>
         )}
-        
+
         {/* Interactive bottom bar */}
         <div className="mt-6 pt-4 border-t border-slate-200/50">
           <div className="flex items-center justify-between">
@@ -759,9 +770,8 @@ export default function Nav({ navigation: navProp }) {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <div className="w-24 h-10 flex items-center justify-center shadow-xl">
-                  <Logo/>
+                  <Logo />
                 </div>
-                
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-cyan-600 bg-clip-text text-transparent">
@@ -769,7 +779,7 @@ export default function Nav({ navigation: navProp }) {
                 </h1>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                  
+
                   <div className="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full font-semibold">
                     LIVE
                   </div>
@@ -788,7 +798,7 @@ export default function Nav({ navigation: navProp }) {
             </button>
           </div>
         </div>
-            
+
         {/* Mobile menu modal */}
         {isMenuOpen && (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50">
@@ -875,7 +885,10 @@ export default function Nav({ navigation: navProp }) {
                   placeholder={`Search for ${filterType}...`}
                 />
                 {searchQuery && (
-                  <button onClick={clearResults} className="p-1 rounded-lg hover:bg-slate-200">
+                  <button
+                    onClick={clearResults}
+                    className="p-1 rounded-lg hover:bg-slate-200"
+                  >
                     <Icon>✖</Icon>
                   </button>
                 )}
@@ -1110,9 +1123,7 @@ export default function Nav({ navigation: navProp }) {
         )}
 
         {/* Quick stats */}
-        <div className="px-6 mt-8 pb-12">
-          
-        </div>
+        <div className="px-6 mt-8 pb-12"></div>
       </div>
     </div>
   );

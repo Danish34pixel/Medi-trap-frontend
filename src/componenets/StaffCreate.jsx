@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiUrl } from "./config/api";
+import { getCookie } from "./utils/cookies";
 
 export default function StaffCreate() {
   const [form, setForm] = useState({
@@ -45,7 +46,7 @@ export default function StaffCreate() {
     if (!image || !aadhar) return alert("Please attach image and aadhar card.");
     setLoading(true);
     try {
-      const token = localStorage?.getItem("token");
+      const token = getCookie("token");
       const fd = new FormData();
       fd.append("fullName", form.fullName);
       fd.append("contact", form.contact);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { apiUrl } from "./config/api";
+import { getCookie } from "./utils/cookies";
 
 export default function StockistApprovals() {
   const [requests, setRequests] = useState([]);
@@ -14,7 +15,7 @@ export default function StockistApprovals() {
       setLoading(true);
       setError(null);
       try {
-        const token = localStorage.getItem("token");
+        const token = getCookie("token");
         const res = await axios.get(apiUrl("/api/purchasing-card/requests"), {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
@@ -36,7 +37,7 @@ export default function StockistApprovals() {
   const approve = async (id) => {
     try {
       setProcessing((p) => ({ ...p, [id]: true }));
-      const token = localStorage.getItem("token");
+      const token = getCookie("token");
       const res = await axios.post(
         apiUrl(`/api/purchasing-card/approve/${id}`),
         {},
