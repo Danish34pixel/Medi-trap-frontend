@@ -19,12 +19,46 @@ const DEV_FALLBACK =
 
 const IS_DEV = import.meta.env.MODE === "development";
 
-export const API_BASE = IS_DEV ? DEV_FALLBACK : REMOTE_API;
+// Ensure API base has no trailing slash.
+const normalizeBase = (url) =>
+  url && url.endsWith("/") ? url.slice(0, -1) : url;
 
-// Helper to build full API URLs.
-export const apiUrl = (path) => {
+// Prefer an explicit VITE_API_URL if present (applies to both dev and prod).
+const SELECTED_API =
+  import.meta.env.VITE_API_URL || (IS_DEV ? DEV_FALLBACK : REMOTE_API);
+export const API_BASE = normalizeBase(SELECTED_API);
+
+// Helper to build full API URLs. Ensures a single leading slash between base and path.
+export const apiUrl = (path = "") => {
   const p = path.startsWith("/") ? path : `/${path}`;
   return `${API_BASE}${p}`;
+};
+
+// Small helper around fetch that sends/receives JSON and throws on non-2xx.
+export const fetchJson = async (path, options = {}) => {
+  const url = apiUrl(path);
+  const opts = {
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+    ...options,
+  };
+
+  const res = await fetch(url, opts);
+
+  const text = await res.text();
+  const isJson = res.headers.get("content-type")?.includes("application/json");
+  const body = text && isJson ? JSON.parse(text) : text;
+
+  if (!res.ok) {
+    const err = new Error(body?.message || `Request failed ${res.status}`);
+    err.status = res.status;
+    err.body = body;
+    throw err;
+  }
+
+  return body;
 };
 
 export default API_BASE;

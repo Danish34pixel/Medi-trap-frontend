@@ -203,7 +203,7 @@ export default function PurchaserSignup() {
     const fetchStockists = async () => {
       setLoadingStockists(true);
       try {
-        const res = await fetch("/api/stockist");
+        const res = await fetch(apiUrl("/api/stockist"));
         const json = await res.json();
         setStockists(json.data || []);
       } catch (e) {
