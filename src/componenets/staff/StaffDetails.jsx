@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { User, Edit, Trash2 } from "lucide-react";
-import { apiUrl } from "./config/api";
-import { getCookie } from "./utils/cookies";
+import { apiUrl } from "../config/api";
+import { getCookie } from "../utils/cookies";
 
 export default function StaffIDCard() {
   const { id } = useParams();

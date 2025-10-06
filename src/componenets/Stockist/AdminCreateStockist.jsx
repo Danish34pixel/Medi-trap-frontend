@@ -15,8 +15,8 @@ import {
   Heart,
 } from "lucide-react";
 import axios from "axios";
-import { apiUrl } from "./config/api";
-import { uploadToCloudinary } from "../utils/cloudinaryUpload";
+import { apiUrl } from "../config/api";
+import { uploadToCloudinary } from "../../utils/cloudinaryUpload";
 import { useNavigate } from "react-router-dom";
 
 const InputField = memo(

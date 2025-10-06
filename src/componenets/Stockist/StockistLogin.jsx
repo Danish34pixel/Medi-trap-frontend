@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, Shield } from "lucide-react";
-import { apiUrl } from "./config/api";
-import { setCookie, removeCookie, getCookie } from "./utils/cookies";
+import { apiUrl } from "../config/api";
+import { setCookie, removeCookie, getCookie } from "../utils/cookies";
 
 export default function StockistLogin() {
   const navigate = useNavigate();

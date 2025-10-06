@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiUrl } from "./config/api";
-import { getCookie } from "./utils/cookies";
+import { apiUrl } from "../config/api";
+import { getCookie } from "../utils/cookies";
 
 export default function StaffCreate() {
   const [form, setForm] = useState({

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { apiUrl } from "./config/api";
-import { getCookie } from "./utils/cookies";
+import { apiUrl } from "../config/api";
+import { getCookie } from "../utils/cookies";
 
 export default function StockistApprovals() {
   const [requests, setRequests] = useState([]);

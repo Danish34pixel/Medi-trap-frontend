@@ -1,7 +1,7 @@
 import React from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { useNavigate } from "react-router-dom";
-import API_BASE from "./config/api";
+import API_BASE from "../config/api";
 
 export default function StaffCard({ staff, onOpen }) {
   const frontendBase = window.location.origin.replace(/\/+$/, "");

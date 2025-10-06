@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { apiUrl } from "./config/api";
-import { getCookie } from "./utils/cookies";
+import { apiUrl } from "../config/api";
+import { getCookie } from "../utils/cookies";
 import {
   ArrowLeft,
   Search,
@@ -12,7 +12,7 @@ import {
   AlertCircle,
   Package,
 } from "lucide-react";
-import IdentityCard from "./stockistComponents/IdentityCard";
+import IdentityCard from "../stockistComponents/IdentityCard";
 
 // Small Avatar helper
 const Avatar = ({ name, size = 48, className = "" }) => {

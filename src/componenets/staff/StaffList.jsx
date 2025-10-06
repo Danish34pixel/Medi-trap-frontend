@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { apiUrl } from "./config/api";
-import API_BASE from "./config/api";
+import { apiUrl } from "../config/api";
+import API_BASE from "../config/api";
 
 // Mock StaffCard component
 const StaffCard = ({ staff, onOpen }) => {

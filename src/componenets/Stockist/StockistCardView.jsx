@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { apiUrl } from "./config/api";
+import { apiUrl } from "../config/api";
 
 export default function StockistCardView() {
   const [params] = useSearchParams();
