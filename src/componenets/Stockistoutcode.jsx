@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { apiUrl } from "./config/api";
 import { getCookie } from "./utils/cookies";
 import {
@@ -180,6 +180,7 @@ const StatsCard = ({ icon: Icon, label, value, gradient }) => (
 );
 
 export default function PharmacyStockist() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const routeId = searchParams.get("id") || null;
   const [stockist, setStockist] = useState(null);
@@ -636,6 +637,23 @@ export default function PharmacyStockist() {
                 </div>
 
                 {/* Add Staff action removed (not implemented) */}
+
+                {/* Add Staff button (desktop: text + icon, mobile: icon only) */}
+                <button
+                  onClick={() => navigate("/adminCreateStaff")}
+                  className="hidden md:inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-400 to-yellow-500 text-white rounded-full text-sm font-medium hover:shadow-md transition-all"
+                >
+                  <Users className="w-4 h-4" />
+                  Add Staff
+                </button>
+
+                <button
+                  onClick={() => navigate("/adminCreateStaff")}
+                  className="md:hidden w-10 h-10 rounded-full bg-orange-400 flex items-center justify-center text-white hover:shadow-md transition-colors"
+                  aria-label="Add staff"
+                >
+                  <Users className="w-4 h-4" />
+                </button>
 
                 <button
                   onClick={handleRefresh}

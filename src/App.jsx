@@ -2,7 +2,7 @@ import React from "react";
 import Nav from "./componenets/Nav";
 import Dashboard from "./componenets/Dashboard";
 import RoleSelector from "./componenets/Role";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import Login from "./componenets/Routes/Login";
 import Signup from "./componenets/Routes/Signup";
 import CompanyResult from "./componenets/Routes/CompanyResult";
@@ -49,6 +49,11 @@ const App = () => {
         <Route path="/adminCreateStaff" element={<StaffCreate />} />
         <Route path="/staffs" element={<StaffList />} />
         <Route path="/staff/:id" element={<StaffDetails />} />
+        {/* Redirect legacy or accidental /staff/create to the admin create form */}
+        <Route
+          path="/staff/create"
+          element={<Navigate to="/adminCreateStaff" replace />}
+        />
         <Route path="/purchaser" element={<Purchaser />} />
         <Route path="/purchaser/:id" element={<PurchaserDetails />} />
         <Route path="/demand" element={<Demand />} />
