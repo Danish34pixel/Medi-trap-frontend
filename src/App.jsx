@@ -13,7 +13,6 @@ import AdminPanel from "./componenets/AdminPanel";
 import AdminCreateStockist from "./componenets/Stockist/AdminCreateStockist";
 import AdminCreateCompany from "./componenets/AdminCreateCompany";
 import AdminCreateMedicine from "./componenets/AdminCreateMedicine";
-import Purchaser from "./componenets/Purchaser";
 import PurchaserDetails from "./componenets/PurchaserDetails";
 import StaffList from "./componenets/staff/StaffList";
 import StaffCreate from "./componenets/staff/StaffCreate";
@@ -24,6 +23,7 @@ import Stockistoutcode from "./componenets/Stockist/Stockistoutcode";
 import StockistCardView from "./componenets/Stockist/StockistCardView";
 import ForgotPassword from "./componenets/Routes/ForgotPassword";
 import ResetPassword from "./componenets/Routes/ResetPassword";
+import PurchaserSignup from "./componenets/purchaser/PurchaserSignup";
 
 const App = () => {
   return (
@@ -54,7 +54,7 @@ const App = () => {
           path="/staff/create"
           element={<Navigate to="/adminCreateStaff" replace />}
         />
-        <Route path="/purchaser" element={<Purchaser />} />
+        <Route path="/purchaser" element={<PurchaserSignup />} />
         <Route path="/purchaser/:id" element={<PurchaserDetails />} />
         <Route path="/demand" element={<Demand />} />
       </Routes>
