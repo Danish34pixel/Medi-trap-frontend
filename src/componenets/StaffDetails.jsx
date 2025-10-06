@@ -34,17 +34,40 @@ export default function StaffIDCard() {
           setStockistName(s.name || s.companyName || s.title || null);
           return;
         }
-        // if staff.stockist is a string id, fetch the stockist
+        // if staff.stockist is a string id, try per-id endpoint first. If the
+        // remote backend hasn't been updated and returns 404, fall back to
+        // fetching the stockist list and matching by id (safer for older deploys).
         if (s && typeof s === "string") {
           try {
             const token = getCookie("token") || localStorage.getItem("token");
-            const res = await fetch(apiUrl(`/api/stockist/${s}`), {
+            // Try single-stockist endpoint first
+            const singleRes = await fetch(apiUrl(`/api/stockist/${s}`), {
               headers: token ? { Authorization: `Bearer ${token}` } : {},
             });
-            const j = await res.json().catch(() => ({}));
-            if (res.ok && j && j.data) {
+            if (singleRes.ok) {
+              const singleJson = await singleRes.json().catch(() => ({}));
+              if (singleJson && singleJson.data) {
+                setStockistName(
+                  singleJson.data.name ||
+                    singleJson.data.companyName ||
+                    singleJson.data.title ||
+                    null
+                );
+                return;
+              }
+            }
+            // If singleRes returned 404 or didn't provide data, fall back to list
+            const listRes = await fetch(apiUrl(`/api/stockist`), {
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            const lj = await listRes.json().catch(() => ({}));
+            const list = (lj && lj.data) || [];
+            const found = Array.isArray(list)
+              ? list.find((it) => String(it._id) === String(s))
+              : null;
+            if (found) {
               setStockistName(
-                j.data.name || j.data.companyName || j.data.title || null
+                found.name || found.companyName || found.title || null
               );
               return;
             }
