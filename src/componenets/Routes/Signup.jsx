@@ -175,49 +175,8 @@ const Signup = () => {
       setIsLoading(false);
     }
   };
-
-  const InputField = ({
-    icon: Icon,
-    label,
-    name,
-    type = "text",
-    placeholder,
-    required = false,
-    accept,
-  }) => (
-    <div className="relative">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Icon className="h-5 w-5 text-gray-400" />
-        </div>
-        {type === "file" ? (
-          <input
-            name={name}
-            type={type}
-            placeholder={placeholder}
-            onChange={handleChange}
-            required={required}
-            accept={accept}
-            className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-          />
-        ) : (
-          <input
-            name={name}
-            type={type}
-            placeholder={placeholder}
-            value={form[name] || ""}
-            onChange={handleChange}
-            required={required}
-            autoComplete={name === "password" ? "new-password" : "on"}
-            className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-          />
-        )}
-      </div>
-    </div>
-  );
+  // Move InputField and icons to module scope (below) so they don't get re-created
+  // on every Signup render. This prevents remounting which can cause inputs to lose focus.
 
   // Icon components
   const Building2 = (props) => (
@@ -367,6 +326,8 @@ const Signup = () => {
               name="medicalName"
               placeholder="Enter your medical store name"
               required
+              value={form.medicalName}
+              onChange={handleChange}
             />
             <div className="flex items-center gap-3 mb-4">
               <label className="flex items-center gap-2 text-sm">
@@ -475,6 +436,8 @@ const Signup = () => {
                   name="ownerName"
                   placeholder="Enter owner's full name"
                   required
+                  value={form.ownerName}
+                  onChange={handleChange}
                 />
                 <InputField
                   icon={MapPin}
@@ -482,6 +445,8 @@ const Signup = () => {
                   name="address"
                   placeholder="Enter complete address"
                   required
+                  value={form.address}
+                  onChange={handleChange}
                 />
                 <InputField
                   icon={Mail}
@@ -490,6 +455,8 @@ const Signup = () => {
                   type="email"
                   placeholder="Enter your email"
                   required
+                  value={form.email}
+                  onChange={handleChange}
                 />
                 <InputField
                   icon={Phone}
@@ -498,6 +465,8 @@ const Signup = () => {
                   type="tel"
                   placeholder="Enter contact number"
                   required
+                  value={form.contactNo}
+                  onChange={handleChange}
                 />
                 <InputField
                   icon={Shield}
@@ -505,6 +474,8 @@ const Signup = () => {
                   name="drugLicenseNo"
                   placeholder="Enter drug license number"
                   required
+                  value={form.drugLicenseNo}
+                  onChange={handleChange}
                 />
 
                 {/* File Upload */}
@@ -645,3 +616,49 @@ const Signup = () => {
 };
 
 export default Signup;
+
+// Stateless InputField placed at module scope so it doesn't get recreated on every render.
+// Accepts value and onChange to avoid closing over parent state which can cause
+// remounts and focus loss when Signup re-renders.
+export const InputField = ({
+  icon: Icon,
+  label,
+  name,
+  type = "text",
+  placeholder,
+  required = false,
+  accept,
+  value,
+  onChange,
+}) => (
+  <div className="relative">
+    <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <Icon className="h-5 w-5 text-gray-400" />
+      </div>
+      {type === "file" ? (
+        <input
+          name={name}
+          type={type}
+          placeholder={placeholder}
+          onChange={onChange}
+          required={required}
+          accept={accept}
+          className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+        />
+      ) : (
+        <input
+          name={name}
+          type={type}
+          placeholder={placeholder}
+          value={value || ""}
+          onChange={onChange}
+          required={required}
+          autoComplete={name === "password" ? "new-password" : "on"}
+          className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+        />
+      )}
+    </div>
+  </div>
+);
