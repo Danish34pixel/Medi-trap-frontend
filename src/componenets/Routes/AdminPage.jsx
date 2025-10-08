@@ -9,6 +9,7 @@ const AdminPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [approving, setApproving] = useState({});
+  const [declining, setDeclining] = useState({}); // State for tracking decline actions
 
   // Fetch all stockists
   const fetchStockists = async () => {
@@ -89,6 +90,38 @@ const AdminPage = () => {
     }
   };
 
+  // Decline stockist (admin action)
+  const decline = async (id) => {
+    setDeclining((p) => ({ ...p, [id]: true }));
+    try {
+      const token = getCookie("token");
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const useProxy = import.meta.env.MODE === "development";
+      const build = (path) => (useProxy ? path : apiUrl(path));
+      const url = build(`/api/stockist/${id}/decline`);
+
+      const extraHeaders = {};
+      if (import.meta.env.MODE === "development")
+        extraHeaders["x-dev-admin"] = "1";
+
+      const res = await fetch(url, {
+        method: "PATCH",
+        headers: { ...headers, ...extraHeaders },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || "Decline failed");
+
+      // Remove declined stockist locally
+      setStockists((s) => s.filter((st) => st._id !== id));
+    } catch (e) {
+      alert(e.message || String(e));
+    } finally {
+      setDeclining((p) => ({ ...p, [id]: false }));
+    }
+  };
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Stockists (Admin)</h1>
@@ -155,16 +188,26 @@ const AdminPage = () => {
                 </div>
               </div>
 
-              <div>
-                {!s.approved ? (
-                  <button
-                    className="px-4 py-2 bg-blue-600 text-white rounded"
-                    onClick={() => approve(s._id)}
-                    disabled={approving[s._id]}
-                  >
-                    {approving[s._id] ? "Approving..." : "Approve"}
-                  </button>
-                ) : (
+              <div className="flex gap-2">
+                {!s.approved && (
+                  <>
+                    <button
+                      className="px-4 py-2 bg-blue-600 text-white rounded"
+                      onClick={() => approve(s._id)}
+                      disabled={approving[s._id]}
+                    >
+                      {approving[s._id] ? "Approving..." : "Approve"}
+                    </button>
+                    <button
+                      className="px-4 py-2 bg-red-600 text-white rounded"
+                      onClick={() => decline(s._id)}
+                      disabled={declining[s._id]}
+                    >
+                      {declining[s._id] ? "Declining..." : "Decline"}
+                    </button>
+                  </>
+                )}
+                {s.approved && (
                   <button
                     className="px-4 py-2 bg-gray-200 text-gray-700 rounded"
                     disabled

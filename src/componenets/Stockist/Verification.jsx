@@ -37,6 +37,11 @@ const Verification = () => {
             } catch (e) {}
             navigate("/stockist-login");
             return;
+          } else if (json.data.declined) {
+            // declined: update message and stop polling
+            setMessage("Document verification failed");
+            setChecking(false);
+            return;
           }
         }
       } catch (e) {
@@ -56,12 +61,16 @@ const Verification = () => {
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="max-w-md w-full bg-white p-6 rounded-xl shadow-lg text-center">
         <h1 className="text-2xl font-bold mb-4">
-          Documents under verification
+          {message === "Document verification failed"
+            ? "Verification Failed"
+            : "Documents under verification"}
         </h1>
         <p className="text-gray-600 mb-4">{message}</p>
-        <p className="text-sm text-gray-400">
-          You can close this page and wait for an email or login later.
-        </p>
+        {message !== "Document verification failed" && (
+          <p className="text-sm text-gray-400">
+            You can close this page and wait for an email or login later.
+          </p>
+        )}
       </div>
     </div>
   );
