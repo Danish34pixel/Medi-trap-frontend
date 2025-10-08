@@ -74,7 +74,7 @@ export default function StockistLogin() {
             storedUser.roleType === "stockist");
         const isApproved = storedUser && storedUser.approved;
         if (isStockist && !isApproved) {
-          navigate("/stockist/verification");
+          navigate("/stockist-outcode");
           setTimeout(() => window.location.reload(), 120);
         } else {
           // Force a reload so all components re-read localStorage and show the new account
