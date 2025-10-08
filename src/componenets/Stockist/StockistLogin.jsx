@@ -64,9 +64,27 @@ export default function StockistLogin() {
         console.warn("Login: could not parse stored user", e);
       }
 
-      // Force a reload so all components re-read localStorage and show the new account
-      navigate("/stockist-outcode");
-      setTimeout(() => window.location.reload(), 120);
+      // If the authenticated user is a stockist and not yet approved, send them to verification
+      try {
+        const storedUser =
+          data.user || JSON.parse(localStorage.getItem("user") || "null");
+        const isStockist =
+          storedUser &&
+          (storedUser.role === "stockist" ||
+            storedUser.roleType === "stockist");
+        const isApproved = storedUser && storedUser.approved;
+        if (isStockist && !isApproved) {
+          navigate("/stockist/verification");
+          setTimeout(() => window.location.reload(), 120);
+        } else {
+          // Force a reload so all components re-read localStorage and show the new account
+          navigate("/stockist-outcode");
+          setTimeout(() => window.location.reload(), 120);
+        }
+      } catch (e) {
+        navigate("/stockist-outcode");
+        setTimeout(() => window.location.reload(), 120);
+      }
     } catch (err) {
       setError("Network error");
     } finally {

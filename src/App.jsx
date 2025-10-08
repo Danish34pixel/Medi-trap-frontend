@@ -21,9 +21,11 @@ import Demand from "./componenets/Demand";
 import StockistLogin from "./componenets/Stockist/StockistLogin";
 import Stockistoutcode from "./componenets/Stockist/Stockistoutcode";
 import StockistCardView from "./componenets/Stockist/StockistCardView";
+import Verification from "./componenets/Stockist/Verification";
 import ForgotPassword from "./componenets/Routes/ForgotPassword";
 import ResetPassword from "./componenets/Routes/ResetPassword";
 import PurchaserSignup from "./componenets/purchaser/PurchaserSignup";
+import AdminPage from "./componenets/Routes/AdminPage";
 
 const App = () => {
   return (
@@ -44,6 +46,7 @@ const App = () => {
         <Route path="/stockist-login" element={<StockistLogin />} />
         <Route path="/stockist-outcode" element={<Stockistoutcode />} />
         <Route path="/stockist-card" element={<StockistCardView />} />
+        <Route path="/stockist/verification" element={<Verification />} />
         <Route path="/adminCreateCompany" element={<AdminCreateCompany />} />
         <Route path="/adminCreateMedicine" element={<AdminCreateMedicine />} />
         <Route path="/adminCreateStaff" element={<StaffCreate />} />
@@ -57,6 +60,7 @@ const App = () => {
         <Route path="/purchaser" element={<PurchaserSignup />} />
         <Route path="/purchaser/:id" element={<PurchaserDetails />} />
         <Route path="/demand" element={<Demand />} />
+        <Route path="/admin/stockists" element={<AdminPage />} />
       </Routes>
     </div>
   );

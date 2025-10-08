@@ -6,7 +6,7 @@ import {
   AlertTriangle,
   CheckCircle2,
 } from "lucide-react";
-import API_BASE from "./config/api";
+import API_BASE, { apiUrl } from "./config/api";
 import {
   medicineReferencesStockist,
   medicineDisplayName,
@@ -29,8 +29,8 @@ export default function Demand() {
     const fetchData = async () => {
       try {
         const [mRes, sRes] = await Promise.all([
-          fetch(`${API_BASE}/api/medicine`),
-          fetch(`${API_BASE}/api/stockist`),
+          fetch(apiUrl(`/api/medicine`)),
+          fetch(apiUrl(`/api/stockist`)),
         ]);
 
         if (mRes && mRes.ok) {

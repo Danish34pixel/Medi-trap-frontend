@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import API_BASE from "./config/api";
+import API_BASE, { apiUrl } from "./config/api";
 import {
   medicineReferencesStockist,
   medicineDisplayName,
@@ -50,9 +50,9 @@ const Screen = ({ navigation: navProp }) => {
     (async () => {
       try {
         const [resStockist, resMedicine, resCompany] = await Promise.all([
-          fetch(`${API_BASE}/api/stockist`),
-          fetch(`${API_BASE}/api/medicine`),
-          fetch(`${API_BASE}/api/company`),
+          fetch(apiUrl(`/api/stockist`)),
+          fetch(apiUrl(`/api/medicine`)),
+          fetch(apiUrl(`/api/company`)),
         ]);
 
         const [jsonStockist, jsonMedicine, jsonCompany] = await Promise.all([
@@ -399,40 +399,40 @@ const Screen = ({ navigation: navProp }) => {
     // Map common business categories to health-related icons
     const healthIcons = {
       // Medicine categories
-      "cardiovascular": "❤️",
-      "diabetes": "🩺", 
-      "pain": "💊",
-      "mental": "🧠",
-      "pediatric": "👶",
-      "emergency": "🚨",
-      "chronic": "⚕️",
-      "preventive": "🛡️",
-      "oncology": "🎗️",
-      "respiratory": "🫁",
-      "dermatology": "🧴",
-      "orthopedic": "🦴",
-      "gastro": "🫄",
-      "neurological": "🧠",
-      "pharmacy": "💊",
-      "hospital": "🏥",
-      "clinic": "🏥",
-      "medical": "⚕️",
-      "health": "🩺",
-      "care": "💊",
-      "medicine": "💉",
-      "drug": "💊",
-      "pharma": "💊",
-      "therapeutic": "🩹",
-      "surgical": "🔬",
-      "diagnostic": "🔬",
-      "laboratory": "🧪",
-      "radiology": "📷",
-      "nutrition": "🍎",
-      "wellness": "🌱",
-      "fitness": "💪",
-      "rehabilitation": "🏃‍♂️"
+      cardiovascular: "❤️",
+      diabetes: "🩺",
+      pain: "💊",
+      mental: "🧠",
+      pediatric: "👶",
+      emergency: "🚨",
+      chronic: "⚕️",
+      preventive: "🛡️",
+      oncology: "🎗️",
+      respiratory: "🫁",
+      dermatology: "🧴",
+      orthopedic: "🦴",
+      gastro: "🫄",
+      neurological: "🧠",
+      pharmacy: "💊",
+      hospital: "🏥",
+      clinic: "🏥",
+      medical: "⚕️",
+      health: "🩺",
+      care: "💊",
+      medicine: "💉",
+      drug: "💊",
+      pharma: "💊",
+      therapeutic: "🩹",
+      surgical: "🔬",
+      diagnostic: "🔬",
+      laboratory: "🧪",
+      radiology: "📷",
+      nutrition: "🍎",
+      wellness: "🌱",
+      fitness: "💪",
+      rehabilitation: "🏃‍♂️",
     };
-    
+
     const itemLower = String(item).toLowerCase();
     for (const [key, icon] of Object.entries(healthIcons)) {
       if (itemLower.includes(key)) {
@@ -451,8 +451,12 @@ const Screen = ({ navigation: navProp }) => {
             <span className="text-2xl">🏥</span>
           </div>
           <div>
-            <span className="text-slate-700 text-lg font-semibold">Your Health Hub</span>
-            <div className="text-sm text-slate-500">Trusted Healthcare Network</div>
+            <span className="text-slate-700 text-lg font-semibold">
+              Your Health Hub
+            </span>
+            <div className="text-sm text-slate-500">
+              Trusted Healthcare Network
+            </div>
           </div>
         </div>
         <div className="flex gap-3">
@@ -471,7 +475,9 @@ const Screen = ({ navigation: navProp }) => {
         <div className="absolute bottom-4 left-4 w-16 h-16 bg-white/10 rounded-full blur-lg"></div>
         <div className="relative flex items-center justify-between">
           <div>
-            <h1 className="text-white text-2xl font-bold mb-3">Find Your Medical Partners</h1>
+            <h1 className="text-white text-2xl font-bold mb-3">
+              Find Your Medical Partners
+            </h1>
             <p className="text-cyan-100 text-base leading-relaxed">
               Connect with trusted healthcare suppliers & stockists
             </p>
@@ -510,8 +516,12 @@ const Screen = ({ navigation: navProp }) => {
                 <span className="text-3xl">📋</span>
               </div>
               <div>
-                <div className="text-white font-bold text-base">Order Refills</div>
-                <div className="text-cyan-100 text-sm">Quick reorder system</div>
+                <div className="text-white font-bold text-base">
+                  Order Refills
+                </div>
+                <div className="text-cyan-100 text-sm">
+                  Quick reorder system
+                </div>
               </div>
             </div>
           </div>
@@ -531,16 +541,21 @@ const Screen = ({ navigation: navProp }) => {
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="text-2xl font-bold text-slate-800">Medical Suppliers</div>
+          <div className="text-2xl font-bold text-slate-800">
+            Medical Suppliers
+          </div>
           <div className="text-base text-slate-600 mt-1">
-            {sectionData.length} trusted stockist{sectionData.length !== 1 ? "s" : ""} available
+            {sectionData.length} trusted stockist
+            {sectionData.length !== 1 ? "s" : ""} available
           </div>
           <div className="text-sm text-slate-400 mt-2">
             Debug: loaded stockists = {sectionData.length}
           </div>
         </div>
         <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl px-5 py-3 shadow-lg">
-          <span className="text-white text-lg font-bold">{sectionData.length}</span>
+          <span className="text-white text-lg font-bold">
+            {sectionData.length}
+          </span>
         </div>
       </div>
     </div>
@@ -597,17 +612,26 @@ const Screen = ({ navigation: navProp }) => {
           </div>
 
           <div className="mb-6">
-            <div className="text-base text-slate-700 font-semibold mb-4">Company</div>
+            <div className="text-base text-slate-700 font-semibold mb-4">
+              Company
+            </div>
             <div className="flex flex-wrap gap-3">
               {section.items.slice(0, 2).map((it, idx) => (
-                <div key={idx} className="flex items-center gap-3 bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl px-4 py-3 border border-blue-100">
+                <div
+                  key={idx}
+                  className="flex items-center gap-3 bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl px-4 py-3 border border-blue-100"
+                >
                   <span className="text-lg">{getHealthIcon(it)}</span>
-                  <span className="text-slate-700 text-sm font-semibold">{it}</span>
+                  <span className="text-slate-700 text-sm font-semibold">
+                    {it}
+                  </span>
                 </div>
               ))}
               {section.items.length > 2 && (
                 <div className="bg-gradient-to-r from-slate-100 to-slate-200 rounded-2xl px-4 py-3">
-                  <span className="text-slate-600 text-sm font-semibold">+{section.items.length - 2} more</span>
+                  <span className="text-slate-600 text-sm font-semibold">
+                    +{section.items.length - 2} more
+                  </span>
                 </div>
               )}
             </div>
@@ -616,7 +640,9 @@ const Screen = ({ navigation: navProp }) => {
           <div className="flex items-center justify-between text-base pt-4 border-t border-slate-100">
             <div className="bg-gradient-to-r from-emerald-100 to-green-100 rounded-2xl px-4 py-2 border border-emerald-200">
               <span className="text-emerald-700 font-bold">
-                {section.Medicines ? `${section.Medicines.length} medicines` : "0 medicines"}
+                {section.Medicines
+                  ? `${section.Medicines.length} medicines`
+                  : "0 medicines"}
               </span>
             </div>
             <div className="flex items-center gap-3 text-cyan-600">
@@ -634,7 +660,7 @@ const Screen = ({ navigation: navProp }) => {
   const renderMainView = () => (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/30">
       <ListHeader />
-      
+
       {/* Debug toggle */}
       <div className="px-6 mb-6">
         <button
@@ -644,7 +670,7 @@ const Screen = ({ navigation: navProp }) => {
           {showDebug ? "Hide" : "Show"} debug responses
         </button>
       </div>
-      
+
       {/* Debug panel */}
       {showDebug && (
         <div className="px-6 mb-8">
@@ -653,7 +679,9 @@ const Screen = ({ navigation: navProp }) => {
               Raw API Responses (trimmed)
             </div>
             <div className="mb-4">
-              <div className="font-semibold text-slate-800 mb-2">Stockists:</div>
+              <div className="font-semibold text-slate-800 mb-2">
+                Stockists:
+              </div>
               <pre className="whitespace-pre-wrap max-h-48 overflow-auto text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
                 {JSON.stringify(
                   rawResponses.stockists && rawResponses.stockists.data
@@ -665,7 +693,9 @@ const Screen = ({ navigation: navProp }) => {
               </pre>
             </div>
             <div className="mb-4">
-              <div className="font-semibold text-slate-800 mb-2">Medicines:</div>
+              <div className="font-semibold text-slate-800 mb-2">
+                Medicines:
+              </div>
               <pre className="whitespace-pre-wrap max-h-48 overflow-auto text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
                 {JSON.stringify(
                   rawResponses.medicines && rawResponses.medicines.data
@@ -677,13 +707,17 @@ const Screen = ({ navigation: navProp }) => {
               </pre>
             </div>
             <div className="mb-4">
-              <div className="font-semibold text-slate-800 mb-2">Unmatched medicines (first 50):</div>
+              <div className="font-semibold text-slate-800 mb-2">
+                Unmatched medicines (first 50):
+              </div>
               <pre className="whitespace-pre-wrap max-h-48 overflow-auto text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
                 {JSON.stringify(unmatchedMedicines, null, 2)}
               </pre>
             </div>
             <div>
-              <div className="font-semibold text-slate-800 mb-2">Companies:</div>
+              <div className="font-semibold text-slate-800 mb-2">
+                Companies:
+              </div>
               <pre className="whitespace-pre-wrap max-h-48 overflow-auto text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
                 {JSON.stringify(
                   rawResponses.companies && rawResponses.companies.data
@@ -697,10 +731,8 @@ const Screen = ({ navigation: navProp }) => {
           </div>
         </div>
       )}
-      
-      <div className="pb-32">
-        {sectionData.map((s, i) => renderCard(s, i))}
-      </div>
+
+      <div className="pb-32">{sectionData.map((s, i) => renderCard(s, i))}</div>
     </div>
   );
 
@@ -719,13 +751,27 @@ const Screen = ({ navigation: navProp }) => {
                 onClick={() => setSelectedSection(null)}
                 className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
               >
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" className="text-slate-700">
-                  <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="text-slate-700"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </button>
               <div className="text-center">
-                <div className="text-lg font-bold text-slate-800">{currentSection.title}</div>
-                <div className="text-sm text-slate-500">Medical Supplier Details</div>
+                <div className="text-lg font-bold text-slate-800">
+                  {currentSection.title}
+                </div>
+                <div className="text-sm text-slate-500">
+                  Medical Supplier Details
+                </div>
               </div>
               <div className="flex gap-2">
                 <button className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-100 to-pink-100 flex items-center justify-center shadow-md">
@@ -752,15 +798,17 @@ const Screen = ({ navigation: navProp }) => {
               ) : (
                 <div
                   className="w-full h-full"
-                  style={{ background: `linear-gradient(135deg, ${color1}, ${color2})` }}
+                  style={{
+                    background: `linear-gradient(135deg, ${color1}, ${color2})`,
+                  }}
                 />
               )}
-              
+
               {/* Overlay and floating elements */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
               <div className="absolute top-6 right-6 w-32 h-32 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
               <div className="absolute bottom-20 left-8 w-24 h-24 bg-white/10 rounded-full blur-2xl animate-pulse delay-1000"></div>
-              
+
               {/* Profile Info Overlay */}
               <div className="absolute bottom-0 left-0 right-0 p-8">
                 <div className="flex items-end gap-6">
@@ -770,20 +818,28 @@ const Screen = ({ navigation: navProp }) => {
                     </span>
                   </div>
                   <div className="flex-1">
-                    <h1 className="text-white text-3xl font-bold mb-2">{currentSection.title}</h1>
+                    <h1 className="text-white text-3xl font-bold mb-2">
+                      {currentSection.title}
+                    </h1>
                     <div className="flex items-center gap-4 mb-3">
                       <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
                         <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                        <span className="text-white text-sm font-medium">Verified</span>
+                        <span className="text-white text-sm font-medium">
+                          Verified
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
                         <span className="text-yellow-400 text-sm">⭐</span>
-                        <span className="text-white text-sm font-medium">4.8 Rating</span>
+                        <span className="text-white text-sm font-medium">
+                          4.8 Rating
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-white/90">
                       <span className="text-lg">📍</span>
-                      <span className="text-base">{currentSection.address}</span>
+                      <span className="text-base">
+                        {currentSection.address}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -806,20 +862,22 @@ const Screen = ({ navigation: navProp }) => {
                 <span>Message</span>
               </button>
             </div>
-            
-            
           </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-3xl p-6 text-center shadow-xl">
               <div className="text-3xl mb-2">💊</div>
-              <div className="text-white text-2xl font-bold">{currentSection.Medicines ? currentSection.Medicines.length : 0}</div>
+              <div className="text-white text-2xl font-bold">
+                {currentSection.Medicines ? currentSection.Medicines.length : 0}
+              </div>
               <div className="text-cyan-100 text-sm">Medicines</div>
             </div>
             <div className="bg-gradient-to-br from-orange-500 to-blue-600 rounded-3xl p-6 text-center shadow-xl">
               <div className="text-3xl mb-2">🏥</div>
-              <div className="text-white text-2xl font-bold">{currentSection.items ? currentSection.items.length : 0}</div>
+              <div className="text-white text-2xl font-bold">
+                {currentSection.items ? currentSection.items.length : 0}
+              </div>
               <div className="text-orange-100 text-sm">Companies</div>
             </div>
           </div>
@@ -839,11 +897,15 @@ const Screen = ({ navigation: navProp }) => {
                     <span className="text-white text-2xl">📞</span>
                   </div>
                   <div>
-                    <div className="text-blue-700 font-bold text-lg">Phone Number</div>
+                    <div className="text-blue-700 font-bold text-lg">
+                      Phone Number
+                    </div>
                     <div className="text-slate-800 text-xl font-bold mt-1">
                       {currentSection.phone}
                     </div>
-                    <div className="text-blue-600 text-sm mt-1">Tap to call directly</div>
+                    <div className="text-blue-600 text-sm mt-1">
+                      Tap to call directly
+                    </div>
                   </div>
                 </div>
               )}
@@ -853,11 +915,15 @@ const Screen = ({ navigation: navProp }) => {
                     <span className="text-white text-2xl">📍</span>
                   </div>
                   <div>
-                    <div className="text-green-700 font-bold text-lg">Address</div>
+                    <div className="text-green-700 font-bold text-lg">
+                      Address
+                    </div>
                     <div className="text-slate-800 text-xl font-bold mt-1">
                       {currentSection.address}
                     </div>
-                    <div className="text-green-600 text-sm mt-1">View on map</div>
+                    <div className="text-green-600 text-sm mt-1">
+                      View on map
+                    </div>
                   </div>
                 </div>
               )}
@@ -878,15 +944,21 @@ const Screen = ({ navigation: navProp }) => {
                   <div className="flex items-center gap-6 p-6 bg-gradient-to-r from-slate-50 via-blue-50 to-cyan-50 rounded-3xl border border-blue-100 shadow-md hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
                     <div className="relative">
                       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
-                        <span className="text-white text-2xl">{getHealthIcon(item)}</span>
+                        <span className="text-white text-2xl">
+                          {getHealthIcon(item)}
+                        </span>
                       </div>
                       <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
                         <span className="text-white text-xs">✓</span>
                       </div>
                     </div>
                     <div className="flex-1">
-                      <div className="text-slate-800 text-xl font-bold">{item}</div>
-                      <div className="text-slate-600 text-sm mt-1">Specialized medical services available</div>
+                      <div className="text-slate-800 text-xl font-bold">
+                        {item}
+                      </div>
+                      <div className="text-slate-600 text-sm mt-1">
+                        Specialized medical services available
+                      </div>
                     </div>
                     <div className="text-cyan-600 text-2xl opacity-0 group-hover:opacity-100 transition-all duration-300">
                       →
@@ -921,10 +993,13 @@ const Screen = ({ navigation: navProp }) => {
                         <span className="text-white text-lg">💊</span>
                       </div>
                       <div className="flex-1">
-                        <div className="text-emerald-800 font-bold text-lg">{medicine}</div>
-                        <div className="text-emerald-600 text-sm">In stock • Available now</div>
+                        <div className="text-emerald-800 font-bold text-lg">
+                          {medicine}
+                        </div>
+                        <div className="text-emerald-600 text-sm">
+                          In stock • Available now
+                        </div>
                       </div>
-                      
                     </div>
                   </div>
                 ))}

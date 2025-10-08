@@ -188,14 +188,23 @@ export default function ModernStockistForm() {
         cntxNumber: form.cntxNumber || null,
       };
 
-      const res = await axios.post(apiUrl("/api/stockist/register"), payload, {
+      const useProxy = import.meta.env.MODE === "development";
+      const build = (path) => (useProxy ? path : apiUrl(path));
+      const res = await axios.post(build("/api/stockist/register"), payload, {
         headers: { "Content-Type": "application/json" },
       });
 
       if (res?.data?.success) {
         // Optionally store token for immediate use: res.data.token
-        // Redirect to stockist login page
-        navigate("/stockist-login");
+        // Save the new stockist id so the verification page can poll for approval
+        try {
+          const created = res.data.data || null;
+          if (created && created._id) {
+            localStorage.setItem("pendingStockistId", String(created._id));
+          }
+        } catch (e) {}
+        // Redirect to verification page where we tell the user docs are under review
+        navigate("/stockist/verification");
       } else {
         alert(res?.data?.message || "Failed to create stockist");
       }

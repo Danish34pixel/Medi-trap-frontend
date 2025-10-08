@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import API_BASE from "./config/api";
+import API_BASE, { apiUrl } from "./config/api";
 import { getCookie } from "./utils/cookies";
 import {
   medicineReferencesStockist,
@@ -47,9 +47,9 @@ export default function Nav({ navigation: navProp }) {
     (async () => {
       try {
         const [resStockist, resMedicine, resCompany] = await Promise.all([
-          fetch(`${API_BASE}/api/stockist`),
-          fetch(`${API_BASE}/api/medicine`),
-          fetch(`${API_BASE}/api/company`),
+          fetch(apiUrl(`/api/stockist`)),
+          fetch(apiUrl(`/api/medicine`)),
+          fetch(apiUrl(`/api/company`)),
         ]);
         const [jsonStockist, jsonMedicine, jsonCompany] = await Promise.all([
           resStockist.json(),

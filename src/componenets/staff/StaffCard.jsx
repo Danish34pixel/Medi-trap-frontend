@@ -1,7 +1,7 @@
 import React from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { useNavigate } from "react-router-dom";
-import API_BASE from "../config/api";
+import API_BASE, { apiUrl } from "../config/api";
 
 export default function StaffCard({ staff, onOpen }) {
   const frontendBase = window.location.origin.replace(/\/+$/, "");
@@ -9,7 +9,7 @@ export default function StaffCard({ staff, onOpen }) {
 
   const imgSrc = staff.image?.startsWith("http")
     ? staff.image
-    : `${API_BASE}${staff.image}`;
+    : apiUrl(staff.image);
 
   const go = () => {
     if (onOpen) return onOpen(staff);

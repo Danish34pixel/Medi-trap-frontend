@@ -226,7 +226,7 @@ const Profile = () => {
     if (url.startsWith("//")) return `https:${url}`;
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
     // relative paths: prefix with API base
-    return `${API_BASE}${url.startsWith("/") ? "" : "/"}${url}`;
+    return apiUrl(url.startsWith("/") ? url : `/${url}`);
   };
 
   const [licenseImageBroken, setLicenseImageBroken] = useState(false);

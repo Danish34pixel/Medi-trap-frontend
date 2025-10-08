@@ -1,10 +1,13 @@
 export const uploadToCloudinary = async (file) => {
   const cloudinaryUrl =
+    import.meta.env.VITE_CLOUDINARY_URL ||
     "https://api.cloudinary.com/v1_1/dspnmgzwh/image/upload";
+  const uploadPreset =
+    import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "project1";
   const formData = new FormData();
 
   formData.append("file", file);
-  formData.append("upload_preset", "project1"); // Replace with your actual upload preset
+  formData.append("upload_preset", uploadPreset);
 
   try {
     const response = await fetch(cloudinaryUrl, {
