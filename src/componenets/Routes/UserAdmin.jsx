@@ -3,25 +3,25 @@ import { useNavigate } from "react-router-dom";
 import { apiUrl } from "../config/api";
 import { getCookie, setCookie } from "../utils/cookies";
 
-const AdminPage = () => {
+const UserAdmin = () => {
   const navigate = useNavigate();
-  const [stockists, setStockists] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [approving, setApproving] = useState({});
-  const [declining, setDeclining] = useState({}); // State for tracking decline actions
-  const APPROVED_STORAGE_KEY = "admin_approved_stockists";
+  const [declining, setDeclining] = useState({});
+  const APPROVED_STORAGE_KEY = "admin_approved_users";
 
-  // Fetch all stockists
-  const fetchStockists = async () => {
+  // Fetch all users
+  const fetchUsers = async () => {
     setLoading(true);
     setError(null);
     try {
       const useProxy = import.meta.env.MODE === "development";
       const build = (path) => (useProxy ? path : apiUrl(path));
-      const res = await fetch(build("/api/stockist"));
+      const res = await fetch(build("/api/user"));
       const json = await res.json();
-      if (!res.ok) throw new Error(json.message || "Failed to load stockists");
+      if (!res.ok) throw new Error(json.message || "Failed to load users");
       let fetched = json.data || [];
 
       // Apply local overrides so approved state persists across refresh
@@ -30,10 +30,10 @@ const AdminPage = () => {
         if (raw) {
           const approvedIds = JSON.parse(raw);
           if (Array.isArray(approvedIds) && approvedIds.length) {
-            fetched = fetched.map((st) =>
-              approvedIds.includes(st._id)
-                ? { ...st, approved: true, status: "approved" }
-                : st
+            fetched = fetched.map((user) =>
+              approvedIds.includes(user._id)
+                ? { ...user, approved: true, status: "approved" }
+                : user
             );
           }
         }
@@ -42,7 +42,7 @@ const AdminPage = () => {
         console.warn("Failed to read approved IDs from localStorage", e);
       }
 
-      setStockists(fetched);
+      setUsers(fetched);
     } catch (e) {
       setError(e.message || String(e));
     } finally {
@@ -51,7 +51,7 @@ const AdminPage = () => {
   };
 
   useEffect(() => {
-    fetchStockists();
+    fetchUsers();
   }, []);
 
   // Development helper for saving token
@@ -70,7 +70,7 @@ const AdminPage = () => {
     alert("Token saved to cookie for dev testing");
   };
 
-  // Approve stockist (admin action)
+  // Approve user (admin action)
   const approve = async (id) => {
     setApproving((p) => ({ ...p, [id]: true }));
     try {
@@ -84,7 +84,7 @@ const AdminPage = () => {
 
       const useProxy = import.meta.env.MODE === "development";
       const build = (path) => (useProxy ? path : apiUrl(path));
-      const url = build(`/api/stockist/${id}/approve`);
+      const url = build(`/api/user/${id}/approve`);
 
       const extraHeaders = {};
       if (import.meta.env.MODE === "development")
@@ -104,11 +104,11 @@ const AdminPage = () => {
       }
 
       // Update approved status locally
-      setStockists((s) =>
-        s.map((st) =>
-          st._id === id
-            ? { ...st, approved: true, approvedAt: json.data?.approvedAt }
-            : st
+      setUsers((s) =>
+        s.map((user) =>
+          user._id === id
+            ? { ...user, approved: true, approvedAt: json.data?.approvedAt }
+            : user
         )
       );
 
@@ -125,7 +125,7 @@ const AdminPage = () => {
       }
 
       // Refresh the list from server to get latest data, but overrides will keep approval visible
-      await fetchStockists();
+      await fetchUsers();
     } catch (e) {
       alert(e.message || String(e));
     } finally {
@@ -133,7 +133,7 @@ const AdminPage = () => {
     }
   };
 
-  // Decline stockist (admin action)
+  // Decline user (admin action)
   const decline = async (id) => {
     setDeclining((p) => ({ ...p, [id]: true }));
     try {
@@ -147,7 +147,7 @@ const AdminPage = () => {
 
       const useProxy = import.meta.env.MODE === "development";
       const build = (path) => (useProxy ? path : apiUrl(path));
-      const url = build(`/api/stockist/${id}/decline`);
+      const url = build(`/api/user/${id}/decline`);
 
       const extraHeaders = {};
       if (import.meta.env.MODE === "development")
@@ -164,8 +164,8 @@ const AdminPage = () => {
         throw new Error(msg);
       }
 
-      // Remove declined stockist locally
-      setStockists((s) => s.filter((st) => st._id !== id));
+      // Remove declined user locally
+      setUsers((s) => s.filter((user) => user._id !== id));
 
       // Ensure it's not kept in approved list in localStorage
       try {
@@ -185,7 +185,7 @@ const AdminPage = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Stockists (Admin)</h1>
+      <h1 className="text-2xl font-bold mb-4">Users (Admin)</h1>
 
       {isDev && (
         <div className="mb-4">
@@ -210,26 +210,26 @@ const AdminPage = () => {
       {error && <div className="text-red-600">{error}</div>}
 
       <div className="space-y-3">
-        {stockists.map((s) => {
-          const imgSrc = s.profileImageUrl || s.licenseImageUrl || null;
+        {users.map((user) => {
+          const imgSrc = user.profileImageUrl || user.licenseImageUrl || null;
           return (
             <div
-              key={s._id}
+              key={user._id}
               className="p-4 border rounded flex items-center justify-between"
             >
               <div className="flex items-center gap-4">
                 {imgSrc ? (
                   <img
                     src={imgSrc}
-                    alt={s.name || "stockist"}
+                    alt={user.name || "user"}
                     className={`w-16 h-16 rounded-md object-cover border ${
-                      s.approved ? "opacity-50 pointer-events-none" : ""
+                      user.approved ? "opacity-50 pointer-events-none" : ""
                     }`}
                   />
                 ) : (
                   <div
                     className={`w-16 h-16 rounded-md bg-gray-100 flex items-center justify-center text-sm text-gray-500 border ${
-                      s.approved ? "opacity-50 pointer-events-none" : ""
+                      user.approved ? "opacity-50 pointer-events-none" : ""
                     }`}
                   >
                     No image
@@ -238,37 +238,37 @@ const AdminPage = () => {
 
                 <div>
                   <div className="font-semibold">
-                    {s.title || s.name || s.companyName}
+                    {user.title || user.name || user.companyName}
                   </div>
                   <div className="text-sm text-gray-600">
-                    {s.email || s.phone}
+                    {user.email || user.phone}
                   </div>
-                  {s.status === "approved" && (
+                  {user.status === "approved" && (
                     <div className="text-green-600 text-sm">Approved</div>
                   )}
                 </div>
               </div>
 
               <div className="flex gap-2">
-                {s.status === "processing" && (
+                {!user.approved && !user.declined && (
                   <>
                     <button
                       className="px-4 py-2 bg-blue-600 text-white rounded"
-                      onClick={() => approve(s._id)}
-                      disabled={approving[s._id]}
+                      onClick={() => approve(user._id)}
+                      disabled={approving[user._id]}
                     >
-                      {approving[s._id] ? "Approving..." : "Approve"}
+                      {approving[user._id] ? "Approving..." : "Approve"}
                     </button>
                     <button
                       className="px-4 py-2 bg-red-600 text-white rounded"
-                      onClick={() => decline(s._id)}
-                      disabled={declining[s._id]}
+                      onClick={() => decline(user._id)}
+                      disabled={declining[user._id]}
                     >
-                      {declining[s._id] ? "Declining..." : "Decline"}
+                      {declining[user._id] ? "Declining..." : "Decline"}
                     </button>
                   </>
                 )}
-                {s.approved && (
+                {user.approved && (
                   <button
                     className="px-4 py-2 bg-gray-200 text-gray-700 rounded"
                     disabled
@@ -285,4 +285,4 @@ const AdminPage = () => {
   );
 };
 
-export default AdminPage;
+export default UserAdmin;

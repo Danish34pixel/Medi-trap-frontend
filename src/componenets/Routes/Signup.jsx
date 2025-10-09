@@ -164,8 +164,19 @@ const Signup = () => {
         throw new Error(data.message || "Registration failed");
       }
       if (data.success) {
-        setMessage("Registration successful! You can now log in.");
-        setTimeout(() => navigate("/signup-login-middle"), 2000);
+        // Save the pending user id so the verification waiting page can poll for approval
+        try {
+          if (data.user && data.user._id) {
+            localStorage.setItem("pendingUserId", data.user._id);
+          }
+        } catch (e) {
+          console.warn("Failed to save pendingUserId", e && e.message);
+        }
+
+        setMessage(
+          "Registration successful! You will be redirected to verification."
+        );
+        setTimeout(() => navigate("/medical-middle"), 800);
       } else {
         throw new Error("Invalid response format from server");
       }
@@ -584,7 +595,7 @@ const Signup = () => {
               Already have an account?{" "}
               <button
                 type="button"
-                onClick={() => navigate("/signup-login-middle")}
+                onClick={() => navigate("/medical-middle")}
                 className="font-semibold text-blue-600 hover:text-blue-500 transition-colors"
               >
                 Sign in

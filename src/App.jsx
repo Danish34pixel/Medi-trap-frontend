@@ -26,6 +26,8 @@ import ForgotPassword from "./componenets/Routes/ForgotPassword";
 import ResetPassword from "./componenets/Routes/ResetPassword";
 import PurchaserSignup from "./componenets/purchaser/PurchaserSignup";
 import AdminPage from "./componenets/Routes/AdminPage";
+import MedicalMiddle from "./componenets/Routes/medicalmiddle";
+import UserAdmin from "./componenets/Routes/UserAdmin";
 
 const App = () => {
   return (
@@ -61,6 +63,8 @@ const App = () => {
         <Route path="/purchaser/:id" element={<PurchaserDetails />} />
         <Route path="/demand" element={<Demand />} />
         <Route path="/admin/stockists" element={<AdminPage />} />
+        <Route path="/medical-middle" element={<MedicalMiddle />} />
+        <Route path="/user-admin" element={<UserAdmin />} />
       </Routes>
     </div>
   );
