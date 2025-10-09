@@ -53,7 +53,11 @@ const AdminPage = () => {
   const approve = async (id) => {
     setApproving((p) => ({ ...p, [id]: true }));
     try {
-      const token = getCookie("token");
+      // Try cookie first, then fallback to localStorage (some flows store token there)
+      let token = getCookie("token");
+      if (!token && typeof localStorage !== "undefined") {
+        token = localStorage.getItem("token");
+      }
       const headers = { "Content-Type": "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -68,9 +72,15 @@ const AdminPage = () => {
       const res = await fetch(url, {
         method: "PATCH",
         headers: { ...headers, ...extraHeaders },
+        // ensure cookies are sent when using cookie-based auth on same origin / proxy
+        credentials: "include",
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.message || "Approval failed");
+      if (!res.ok) {
+        // Provide more helpful error feedback when 401 occurs
+        const msg = json?.message || `Approval failed (${res.status})`;
+        throw new Error(msg);
+      }
 
       // Update approved status locally
       setStockists((s) =>
@@ -94,7 +104,11 @@ const AdminPage = () => {
   const decline = async (id) => {
     setDeclining((p) => ({ ...p, [id]: true }));
     try {
-      const token = getCookie("token");
+      // Try cookie first, then fallback to localStorage
+      let token = getCookie("token");
+      if (!token && typeof localStorage !== "undefined") {
+        token = localStorage.getItem("token");
+      }
       const headers = { "Content-Type": "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -109,9 +123,13 @@ const AdminPage = () => {
       const res = await fetch(url, {
         method: "PATCH",
         headers: { ...headers, ...extraHeaders },
+        credentials: "include",
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.message || "Decline failed");
+      if (!res.ok) {
+        const msg = json?.message || `Decline failed (${res.status})`;
+        throw new Error(msg);
+      }
 
       // Remove declined stockist locally
       setStockists((s) => s.filter((st) => st._id !== id));
@@ -182,14 +200,14 @@ const AdminPage = () => {
                   <div className="text-sm text-gray-600">
                     {s.email || s.phone}
                   </div>
-                  {s.approved && (
+                  {s.status === "approved" && (
                     <div className="text-green-600 text-sm">Approved</div>
                   )}
                 </div>
               </div>
 
               <div className="flex gap-2">
-                {!s.approved && (
+                {s.status === "processing" && (
                   <>
                     <button
                       className="px-4 py-2 bg-blue-600 text-white rounded"

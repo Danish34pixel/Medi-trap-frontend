@@ -195,15 +195,15 @@ export default function ModernStockistForm() {
       });
 
       if (res?.data?.success) {
-        // Optionally store token for immediate use: res.data.token
-        // Save the new stockist id so the verification page can poll for approval
         try {
           const created = res.data.data || null;
           if (created && created._id) {
             localStorage.setItem("pendingStockistId", String(created._id));
           }
         } catch (e) {}
-        // Redirect to verification page where we tell the user docs are under review
+
+        // Inform user that registration is under review and navigate to verification
+        alert("Your registration is under review. You’ll be notified once approved.");
         navigate("/stockist/verification");
       } else {
         alert(res?.data?.message || "Failed to create stockist");
