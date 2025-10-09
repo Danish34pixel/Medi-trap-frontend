@@ -165,7 +165,7 @@ const Signup = () => {
       }
       if (data.success) {
         setMessage("Registration successful! You can now log in.");
-        setTimeout(() => navigate("/login"), 2000);
+        setTimeout(() => navigate("/signup-login-middle"), 2000);
       } else {
         throw new Error("Invalid response format from server");
       }
@@ -532,6 +532,8 @@ const Signup = () => {
                   type="password"
                   placeholder="Create a strong password"
                   required
+                  value={form.password}
+                  onChange={handleChange}
                 />
 
                 <button
@@ -582,7 +584,7 @@ const Signup = () => {
               Already have an account?{" "}
               <button
                 type="button"
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/signup-login-middle")}
                 className="font-semibold text-blue-600 hover:text-blue-500 transition-colors"
               >
                 Sign in
@@ -632,7 +634,9 @@ export const InputField = ({
   onChange,
 }) => (
   <div className="relative">
-    <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      {label}
+    </label>
     <div className="relative">
       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
         <Icon className="h-5 w-5 text-gray-400" />
@@ -653,7 +657,13 @@ export const InputField = ({
           type={type}
           placeholder={placeholder}
           value={value || ""}
-          onChange={onChange}
+          onChange={(e) => {
+            if (onChange) {
+              onChange(e);
+            } else {
+              console.warn(`No onChange handler provided for input: ${name}`);
+            }
+          }}
           required={required}
           autoComplete={name === "password" ? "new-password" : "on"}
           className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
