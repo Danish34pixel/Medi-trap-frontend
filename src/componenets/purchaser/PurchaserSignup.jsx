@@ -160,6 +160,7 @@ export default function PurchaserSignup() {
       });
       const created = await postForm("/api/purchaser", submitData, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: "omit",
       });
 
       // Persist pending purchaser id so verification page can poll purchaser approval
@@ -191,7 +192,10 @@ export default function PurchaserSignup() {
             photo: created.data?.photo,
           },
         },
-        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          credentials: "omit",
+        }
       );
       // Persist pending purchasing request id so verification page can poll status
       try {
@@ -239,6 +243,14 @@ export default function PurchaserSignup() {
       try {
         const status = error && error.status;
         const bodyMsg = error && error.body && error.body.message;
+        // Handle AbortError from fetch timeouts
+        if (error && error.name === "AbortError") {
+          setErrorMessage(
+            "The request timed out. The server may be slow or unreachable — try again in a moment."
+          );
+          setSubmitStatus("timeout");
+          return;
+        }
         if (
           status === 501 ||
           (typeof bodyMsg === "string" &&

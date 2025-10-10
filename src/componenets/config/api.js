@@ -65,7 +65,7 @@ export const fetchJson = async (path, options = {}) => {
 export const postForm = async (path, formData, options = {}) => {
   const url = apiUrl(path);
   const controller = new AbortController();
-  const timeout = options.timeout || 20000; // 20s default
+  const timeout = options.timeout || 60000; // 60s default
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
     const res = await fetch(url, {
@@ -99,7 +99,7 @@ export const postForm = async (path, formData, options = {}) => {
 export const postJson = async (path, data, options = {}) => {
   const url = apiUrl(path);
   const controller = new AbortController();
-  const timeout = options.timeout || 20000;
+  const timeout = options.timeout || 60000;
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
     const res = await fetch(url, {
