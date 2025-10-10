@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { apiUrl } from "../config/api";
+import { useNavigate } from "react-router-dom";
+import { apiUrl, postForm, postJson } from "../config/api";
 import {
   Camera,
   Upload,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 
 export default function PurchaserSignup() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: "",
     address: "",
@@ -141,28 +143,43 @@ export default function PurchaserSignup() {
       submitData.append("aadharImage", formData.aadharImage);
       submitData.append("photo", formData.photo);
 
+      // attach token if available so backend authenticate middleware accepts the multipart request
+      const token = localStorage.getItem("token");
+
       // First create purchaser record (will store aadhar/photo to cloud via backend)
-      const response = await fetch(apiUrl("/api/purchaser"), {
-        method: "POST",
-        body: submitData,
+      const createUrl = apiUrl("/api/purchaser");
+      const tokenPreview = token ? `${String(token).slice(0, 8)}...` : null;
+      console.debug("Purchaser create request ->", {
+        url: createUrl,
+        token: !!token,
+        tokenPreview,
+        pageProtocol:
+          typeof window !== "undefined" ? window.location.protocol : null,
+        online: typeof navigator !== "undefined" ? navigator.onLine : null,
+      });
+      const created = await postForm("/api/purchaser", submitData, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to create purchaser: ${response.status}`);
-      }
-
-      const created = await response.json();
+      // Persist pending purchaser id so verification page can poll purchaser approval
+      try {
+        if (created && created.data && created.data._id) {
+          localStorage.setItem("pendingPurchaserId", created.data._id);
+        }
+      } catch (e) {}
 
       // Then send purchasing-card request to notify selected stockists
-      const token = localStorage.getItem("token");
-      const reqRes = await fetch(apiUrl("/api/purchasing-card/request"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
+      const reqUrl = apiUrl("/api/purchasing-card/request");
+      console.debug("Purchasing-card request ->", {
+        url: reqUrl,
+        token: !!token,
+        tokenPreview,
+      });
+      const reqJson = await postJson(
+        "/api/purchasing-card/request",
+        {
           stockistIds: selectedStockists,
+          purchaserId: created.data?._id,
           requester: { fullName: formData.fullName, email: formData.email },
           purchaserData: {
             fullName: formData.fullName,
@@ -172,11 +189,20 @@ export default function PurchaserSignup() {
             aadharImage: created.data?.aadharImage,
             photo: created.data?.photo,
           },
-        }),
-      });
+        },
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+      // Persist pending purchasing request id so verification page can poll status
+      try {
+        if (reqJson && reqJson.requestId) {
+          localStorage.setItem("pendingPurchasingRequestId", reqJson.requestId);
+        }
+      } catch (e) {}
 
-      if (!reqRes.ok)
-        throw new Error("Failed to request purchasing card approvals");
+      // navigate to purchaser verification flow
+      try {
+        navigate("/purchasermiddle");
+      } catch (e) {}
 
       setSubmitStatus("success");
       setFormData({
@@ -192,7 +218,22 @@ export default function PurchaserSignup() {
       });
       setSelectedStockists([]);
     } catch (error) {
-      console.error("Error submitting:", error);
+      // Add contextual debugging info to help diagnose network issues
+      try {
+        const debugCtx = {
+          createUrl: apiUrl("/api/purchaser"),
+          reqUrl: apiUrl("/api/purchasing-card/request"),
+          tokenPreview: localStorage.getItem("token")
+            ? `${String(localStorage.getItem("token")).slice(0, 8)}...`
+            : null,
+          pageProtocol:
+            typeof window !== "undefined" ? window.location.protocol : null,
+          online: typeof navigator !== "undefined" ? navigator.onLine : null,
+        };
+        console.error("Error submitting:", error, debugCtx);
+      } catch (e) {
+        console.error("Error submitting (failed to build debug ctx):", error);
+      }
       setSubmitStatus("error");
     } finally {
       setIsSubmitting(false);
@@ -200,6 +241,10 @@ export default function PurchaserSignup() {
   };
 
   useEffect(() => {
+    // Debug: print resolved API base for diagnosing network issues
+    try {
+      console.debug("Resolved API base:", apiUrl("/"));
+    } catch (e) {}
     const fetchStockists = async () => {
       setLoadingStockists(true);
       try {

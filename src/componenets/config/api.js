@@ -61,4 +61,75 @@ export const fetchJson = async (path, options = {}) => {
   return body;
 };
 
+// POST a FormData payload. Do not set Content-Type (browser will set boundary).
+export const postForm = async (path, formData, options = {}) => {
+  const url = apiUrl(path);
+  const controller = new AbortController();
+  const timeout = options.timeout || 20000; // 20s default
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      body: formData,
+      mode: "cors",
+      credentials: options.credentials || "include",
+      headers: options.headers || {},
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    const text = await res.text();
+    const isJson = res.headers
+      .get("content-type")
+      ?.includes("application/json");
+    const body = text && isJson ? JSON.parse(text) : text;
+    if (!res.ok) {
+      const err = new Error(body?.message || `Request failed ${res.status}`);
+      err.status = res.status;
+      err.body = body;
+      throw err;
+    }
+    return body;
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
+  }
+};
+
+// POST JSON helper with timeout and CORS enabled
+export const postJson = async (path, data, options = {}) => {
+  const url = apiUrl(path);
+  const controller = new AbortController();
+  const timeout = options.timeout || 20000;
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+      mode: "cors",
+      credentials: options.credentials || "include",
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    const text = await res.text();
+    const isJson = res.headers
+      .get("content-type")
+      ?.includes("application/json");
+    const body = text && isJson ? JSON.parse(text) : text;
+    if (!res.ok) {
+      const err = new Error(body?.message || `Request failed ${res.status}`);
+      err.status = res.status;
+      err.body = body;
+      throw err;
+    }
+    return body;
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
+  }
+};
+
 export default API_BASE;

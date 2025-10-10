@@ -13,6 +13,7 @@ import {
   Package,
 } from "lucide-react";
 import IdentityCard from "../stockistComponents/IdentityCard";
+import StockistApprovals from "./StockistApprovals";
 
 // Small Avatar helper
 const Avatar = ({ name, size = 48, className = "" }) => {
@@ -239,6 +240,7 @@ export default function PharmacyStockist() {
       companies: filterByQuery(companiesList, ["name"]),
       medicines: filterByQuery(medicinesList, ["name"]),
       staff: filterByQuery(staffs, ["fullName", "name"]),
+      approvals: [],
     }),
     [companiesList, medicinesList, staffs, filterByQuery]
   );
@@ -434,9 +436,22 @@ export default function PharmacyStockist() {
       icon: Users,
       gradient: "from-purple-400 to-pink-400",
     },
+    {
+      key: "approvals",
+      label: "Approvals",
+      icon: Package,
+      gradient: "from-teal-400 to-cyan-400",
+    },
   ];
 
   const renderTabContent = () => {
+    if (activeTab === "approvals") {
+      return (
+        <div className="grid grid-cols-1 gap-4">
+          <StockistApprovals />
+        </div>
+      );
+    }
     const data = filteredData[activeTab];
     if (!data || data.length === 0) {
       return (

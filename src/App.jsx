@@ -28,6 +28,8 @@ import PurchaserSignup from "./componenets/purchaser/PurchaserSignup";
 import AdminPage from "./componenets/Routes/AdminPage";
 import MedicalMiddle from "./componenets/Routes/medicalmiddle";
 import UserAdmin from "./componenets/Routes/UserAdmin";
+import PurchaserLogin from "./componenets/purchaser/PurchaserLogin";
+import PurchserVerfifcation from "./componenets/purchaser/PurchserVerfifcation";
 
 const App = () => {
   return (
@@ -65,6 +67,8 @@ const App = () => {
         <Route path="/admin/stockists" element={<AdminPage />} />
         <Route path="/medical-middle" element={<MedicalMiddle />} />
         <Route path="/user-admin" element={<UserAdmin />} />
+        <Route path="/purchaserLogin" element={<PurchaserLogin />} />
+        <Route path="/purchasermiddle" element={<PurchserVerfifcation />} />
       </Routes>
     </div>
   );
