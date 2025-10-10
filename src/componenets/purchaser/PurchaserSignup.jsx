@@ -30,6 +30,7 @@ export default function PurchaserSignup() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
   const [stockists, setStockists] = useState([]);
   const [selectedStockists, setSelectedStockists] = useState([]);
   const [loadingStockists, setLoadingStockists] = useState(false);
@@ -234,7 +235,25 @@ export default function PurchaserSignup() {
       } catch (e) {
         console.error("Error submitting (failed to build debug ctx):", error);
       }
-      setSubmitStatus("error");
+      // Surface a clearer message when the backend indicates a missing route
+      try {
+        const status = error && error.status;
+        const bodyMsg = error && error.body && error.body.message;
+        if (
+          status === 501 ||
+          (typeof bodyMsg === "string" &&
+            bodyMsg.includes("Route not implemented on this deployment"))
+        ) {
+          setErrorMessage(
+            "The server deployment does not support purchaser registration at this time. Please try again later or contact support."
+          );
+          setSubmitStatus("route-missing");
+        } else {
+          setSubmitStatus("error");
+        }
+      } catch (e) {
+        setSubmitStatus("error");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -304,8 +323,18 @@ export default function PurchaserSignup() {
                     Registration Failed
                   </h3>
                   <p className="text-red-700 text-sm">
-                    There was an error submitting the form. Please try again.
+                    {errorMessage ||
+                      "There was an error submitting the form. Please try again."}
                   </p>
+                </div>
+              </div>
+            )}
+            {submitStatus === "route-missing" && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                <div>
+                  <h3 className="text-yellow-800 font-semibold">Unavailable</h3>
+                  <p className="text-yellow-700 text-sm">{errorMessage}</p>
                 </div>
               </div>
             )}
