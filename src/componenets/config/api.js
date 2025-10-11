@@ -140,7 +140,7 @@
 // 🔧 Base URLs
 // -------------------------
 
-// Remote backend (Render URL or override with env)
+// Remote backend (use the requested Render URL by default or override with env)
 const REMOTE_API =
   import.meta.env.VITE_REMOTE_API || "https://medi-trap-backend-2.onrender.com";
 
