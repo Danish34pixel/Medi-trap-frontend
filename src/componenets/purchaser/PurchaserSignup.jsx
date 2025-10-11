@@ -18,6 +18,9 @@ export default function PurchaserSignup() {
     fullName: "",
     address: "",
     contactNo: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
     aadharImage: null,
     photo: null,
   });
@@ -108,6 +111,25 @@ export default function PurchaserSignup() {
       newErrors.contactNo = "Please enter a valid 10-digit mobile number";
     }
 
+    if (!formData.email || !formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (
+      !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email.trim())
+    ) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    // Password validation
+    if (!formData.password || !formData.password.trim()) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
     if (!formData.aadharImage) {
       newErrors.aadharImage = "Aadhar card image is required";
     }
@@ -137,18 +159,38 @@ export default function PurchaserSignup() {
     setSubmitStatus(null);
 
     try {
+      // Extra client-side validation to avoid server-side multer errors
+      const aFile = formData.aadharImage;
+      const pFile = formData.photo;
+      if (!aFile || !aFile.type || !aFile.type.startsWith("image/")) {
+        setErrorMessage("Please upload a valid aadhar image (JPG/PNG)");
+        setSubmitStatus("error");
+        setIsSubmitting(false);
+        return;
+      }
+      if (!pFile || !pFile.type || !pFile.type.startsWith("image/")) {
+        setErrorMessage("Please upload a valid personal photo (JPG/PNG)");
+        setSubmitStatus("error");
+        setIsSubmitting(false);
+        return;
+      }
+
       const submitData = new FormData();
       submitData.append("fullName", formData.fullName.trim());
       submitData.append("address", formData.address.trim());
+      submitData.append("email", formData.email.trim());
+      // append password so backend can hash and store it
+      submitData.append("password", formData.password || "");
       submitData.append("contactNo", formData.contactNo.trim());
-      submitData.append("aadharImage", formData.aadharImage);
-      submitData.append("photo", formData.photo);
+      submitData.append("aadharImage", aFile);
+      // Auth route expects 'personalPhoto' for purchaser signup
+      submitData.append("personalPhoto", pFile);
 
       // attach token if available so backend authenticate middleware accepts the multipart request
       const token = localStorage.getItem("token");
 
-      // First create purchaser record (will store aadhar/photo to cloud via backend)
-      const createUrl = apiUrl("/api/purchaser");
+      // Use auth purchaser-signup so we also get back a token + user
+      const createUrl = apiUrl("/api/auth/purchaser-signup");
       const tokenPreview = token ? `${String(token).slice(0, 8)}...` : null;
       console.debug("Purchaser create request ->", {
         url: createUrl,
@@ -158,15 +200,22 @@ export default function PurchaserSignup() {
           typeof window !== "undefined" ? window.location.protocol : null,
         online: typeof navigator !== "undefined" ? navigator.onLine : null,
       });
-      const created = await postForm("/api/purchaser", submitData, {
+      const created = await postForm("/api/auth/purchaser-signup", submitData, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         credentials: "omit",
       });
 
+      // If signup returned a token, persist it so subsequent requests are authenticated
+      try {
+        if (created && created.token) {
+          localStorage.setItem("token", created.token);
+        }
+      } catch (e) {}
       // Persist pending purchaser id so verification page can poll purchaser approval
       try {
-        if (created && created.data && created.data._id) {
-          localStorage.setItem("pendingPurchaserId", created.data._id);
+        // auth route returns `purchaser` object when created
+        if (created && created.purchaser && created.purchaser._id) {
+          localStorage.setItem("pendingPurchaserId", created.purchaser._id);
         }
       } catch (e) {}
 
@@ -181,15 +230,20 @@ export default function PurchaserSignup() {
         "/api/purchasing-card/request",
         {
           stockistIds: selectedStockists,
-          purchaserId: created.data?._id,
+          purchaserId: created.purchaser?._id || created.data?._id,
           requester: { fullName: formData.fullName, email: formData.email },
           purchaserData: {
             fullName: formData.fullName,
             address: formData.address,
             contactNo: formData.contactNo,
+            email: formData.email,
             // we send the created purchaser's image URLs if backend returned them
-            aadharImage: created.data?.aadharImage,
-            photo: created.data?.photo,
+            aadharImage:
+              created.purchaser?.aadharImage || created.data?.aadharImage,
+            photo:
+              created.purchaser?.photo ||
+              created.data?.photo ||
+              created.purchaser?.personalPhoto,
           },
         },
         {
@@ -214,6 +268,9 @@ export default function PurchaserSignup() {
         fullName: "",
         address: "",
         contactNo: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
         aadharImage: null,
         photo: null,
       });
@@ -223,6 +280,103 @@ export default function PurchaserSignup() {
       });
       setSelectedStockists([]);
     } catch (error) {
+      // If signup failed due to existing email, attempt a best-effort fallback:
+      // create a Purchaser via the public /api/purchaser endpoint (it uses
+      // different file field names). This helps when a User already exists
+      // but a Purchaser record is missing.
+      try {
+        const errMsg = error && error.body && error.body.message;
+        if (errMsg === "Email already registered") {
+          const fallbackToken = localStorage.getItem("token");
+          const fallbackForm = new FormData();
+          fallbackForm.append("fullName", formData.fullName.trim());
+          fallbackForm.append("address", formData.address.trim());
+          fallbackForm.append("email", formData.email.trim());
+          fallbackForm.append("password", formData.password || "");
+          fallbackForm.append("contactNo", formData.contactNo.trim());
+          // /api/purchaser expects 'aadharImage' and 'photo'
+          fallbackForm.append("aadharImage", formData.aadharImage);
+          fallbackForm.append("photo", formData.photo);
+
+          const fallbackResp = await postForm("/api/purchaser", fallbackForm, {
+            headers: fallbackToken
+              ? { Authorization: `Bearer ${fallbackToken}` }
+              : {},
+            credentials: "omit",
+          });
+
+          // Persist pending purchaser id if available
+          try {
+            if (fallbackResp && fallbackResp.data && fallbackResp.data._id) {
+              localStorage.setItem("pendingPurchaserId", fallbackResp.data._id);
+            }
+          } catch (e) {}
+
+          // Notify stockists as before, using fallbackResp data where available
+          try {
+            const reqJson2 = await postJson(
+              "/api/purchasing-card/request",
+              {
+                stockistIds: selectedStockists,
+                purchaserId: fallbackResp.data?._id,
+                requester: {
+                  fullName: formData.fullName,
+                  email: formData.email,
+                },
+                purchaserData: {
+                  fullName: formData.fullName,
+                  address: formData.address,
+                  contactNo: formData.contactNo,
+                  email: formData.email,
+                  aadharImage: fallbackResp.data?.aadharImage,
+                  photo: fallbackResp.data?.photo,
+                },
+              },
+              {
+                headers: fallbackToken
+                  ? { Authorization: `Bearer ${fallbackToken}` }
+                  : {},
+                credentials: "omit",
+              }
+            );
+            try {
+              if (reqJson2 && reqJson2.requestId) {
+                localStorage.setItem(
+                  "pendingPurchasingRequestId",
+                  reqJson2.requestId
+                );
+              }
+            } catch (e) {}
+          } catch (e) {
+            // ignore purchasing-card errors for fallback path; we'll surface original error if needed
+          }
+
+          try {
+            navigate("/purchasermiddle");
+          } catch (e) {}
+
+          setSubmitStatus("success");
+          setFormData({
+            fullName: "",
+            address: "",
+            contactNo: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+            aadharImage: null,
+            photo: null,
+          });
+          setPreviews({ aadharImage: null, photo: null });
+          setSelectedStockists([]);
+          return;
+        }
+      } catch (fErr) {
+        console.warn(
+          "Purchaser fallback attempt failed:",
+          fErr && fErr.message
+        );
+        // continue to original error handling below
+      }
       // Add contextual debugging info to help diagnose network issues
       try {
         const debugCtx = {
@@ -236,6 +390,11 @@ export default function PurchaserSignup() {
           online: typeof navigator !== "undefined" ? navigator.onLine : null,
         };
         console.error("Error submitting:", error, debugCtx);
+
+        // Try to extract structured server error from fetch helper
+        const serverMsg =
+          (error && error.body && error.body.message) || error.message || null;
+        if (serverMsg) setErrorMessage(serverMsg);
       } catch (e) {
         console.error("Error submitting (failed to build debug ctx):", error);
       }
@@ -410,6 +569,70 @@ export default function PurchaserSignup() {
               {errors.contactNo && (
                 <p className="text-red-500 text-sm mt-1">{errors.contactNo}</p>
               )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <User className="w-4 h-4 inline mr-2" />
+                Email *
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                className={`w-full px-4 py-3 border ${
+                  errors.email ? "border-red-300" : "border-gray-300"
+                } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition`}
+                placeholder="Enter email address"
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Password *
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 border ${
+                    errors.password ? "border-red-300" : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition`}
+                  placeholder="Enter password"
+                />
+                {errors.password && (
+                  <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Confirm Password *
+                </label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 border ${
+                    errors.confirmPassword
+                      ? "border-red-300"
+                      : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition`}
+                  placeholder="Confirm password"
+                />
+                {errors.confirmPassword && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.confirmPassword}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

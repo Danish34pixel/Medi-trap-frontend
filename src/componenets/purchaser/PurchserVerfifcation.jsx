@@ -26,43 +26,151 @@ const PurchserVerfifcation = () => {
       return;
     }
 
+    // Helper: validate a possible Mongo ObjectId (24 hex chars)
+    const looksLikeObjectId = (id) =>
+      typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+
     let cancelled = false;
     const check = async () => {
       try {
-        const useProxy = import.meta.env.MODE === "development";
-        const build = (path) => (useProxy ? path : apiUrl(path));
+        // Always call backend via apiUrl so requests go to the configured API
         if (purchaserId) {
-          const res = await fetch(build(`/api/purchaser/${purchaserId}`));
-          const json = await res.json().catch(() => ({}));
-          if (res.ok && json && json.data) {
-            if (json.data.approved) {
-              try {
-                localStorage.removeItem("pendingPurchaserId");
-              } catch (e) {}
-              navigate("/purchaserLogin");
-              return;
-            } else if (json.data.declined) {
-              setMessage("Document verification failed");
-              setChecking(false);
-              return;
+          if (!looksLikeObjectId(purchaserId)) {
+            console.warn(
+              "Stored pendingPurchaserId does not look like an ObjectId:",
+              purchaserId
+            );
+            try {
+              localStorage.removeItem("pendingPurchaserId");
+            } catch (e) {}
+          } else {
+            const res = await fetch(apiUrl(`/api/purchaser/${purchaserId}`));
+            const text = await res.text().catch(() => "");
+            let json = {};
+            try {
+              json = text ? JSON.parse(text) : {};
+            } catch (e) {
+              console.warn("Failed parsing purchaser response text", text);
+            }
+            if (!res.ok) {
+              console.warn("Purchaser fetch returned non-OK", res.status, json);
+              if (res.status === 404) {
+                // If purchaser doc not found, remove the pending id and stop polling
+                try {
+                  localStorage.removeItem("pendingPurchaserId");
+                } catch (e) {}
+                setMessage(
+                  "Verification record not found. Please contact support."
+                );
+                setChecking(false);
+                return;
+              }
+            }
+
+            if (res.ok && json && json.data) {
+              if (json.data.approved) {
+                try {
+                  localStorage.removeItem("pendingPurchaserId");
+                } catch (e) {}
+                navigate("/purchaserLogin");
+                return;
+              } else if (json.data.declined) {
+                setMessage("Document verification failed");
+                setChecking(false);
+                return;
+              }
             }
           }
         }
 
         if (purchasingRequestId) {
-          const res2 = await fetch(
-            build(`/api/purchasing-card/status/${purchasingRequestId}`)
-          );
-          const json2 = await res2.json().catch(() => ({}));
-          if (res2.ok && json2 && json2.data) {
-            if (json2.data.status === "approved") {
-              try {
-                localStorage.removeItem("pendingPurchasingRequestId");
-              } catch (e) {}
-              navigate("/purchaserLogin");
-              return;
+          if (!looksLikeObjectId(purchasingRequestId)) {
+            console.warn(
+              "Stored pendingPurchasingRequestId does not look like an ObjectId:",
+              purchasingRequestId
+            );
+            try {
+              localStorage.removeItem("pendingPurchasingRequestId");
+            } catch (e) {}
+          } else {
+            const res2 = await fetch(
+              apiUrl(`/api/purchasing-card/status/${purchasingRequestId}`)
+            );
+            const text2 = await res2.text().catch(() => "");
+            let json2 = {};
+            try {
+              json2 = text2 ? JSON.parse(text2) : {};
+            } catch (e) {
+              console.warn("Failed parsing purchasing-card status text", text2);
             }
-            // keep polling while pending
+
+            if (!res2.ok) {
+              console.warn(
+                "Purchasing-card status returned non-OK",
+                res2.status,
+                json2
+              );
+              if (res2.status === 404) {
+                // The request doc may have been removed after approval; attempt a fallback:
+                // check the purchaser record (if we have one) and redirect if approved.
+                try {
+                  const fallbackPurchaserId =
+                    localStorage.getItem("pendingPurchaserId");
+                  if (
+                    fallbackPurchaserId &&
+                    looksLikeObjectId(fallbackPurchaserId)
+                  ) {
+                    const pres = await fetch(
+                      apiUrl(`/api/purchaser/${fallbackPurchaserId}`)
+                    );
+                    if (pres.ok) {
+                      const pText = await pres.text().catch(() => "");
+                      let pJson = {};
+                      try {
+                        pJson = pText ? JSON.parse(pText) : {};
+                      } catch (e) {}
+                      if (pJson && pJson.data && pJson.data.approved) {
+                        try {
+                          localStorage.removeItem("pendingPurchasingRequestId");
+                        } catch (e) {}
+                        try {
+                          localStorage.removeItem("pendingPurchaserId");
+                        } catch (e) {}
+                        setChecking(false);
+                        navigate("/purchaserLogin", { replace: true });
+                        return;
+                      }
+                    }
+                  }
+                } catch (e) {
+                  console.warn(
+                    "Fallback purchaser check failed:",
+                    e && e.message
+                  );
+                }
+
+                // Remove pending id and show not-found message if fallback didn't redirect
+                try {
+                  localStorage.removeItem("pendingPurchasingRequestId");
+                } catch (e) {}
+                setMessage(
+                  "Verification record not found. Please contact support."
+                );
+                setChecking(false);
+                return;
+              }
+            }
+
+            if (res2.ok && json2 && json2.data) {
+              if (json2.data.status === "approved") {
+                try {
+                  localStorage.removeItem("pendingPurchasingRequestId");
+                } catch (e) {}
+                navigate("/purchaserLogin");
+                return;
+              }
+              // keep polling while pending
+            }
           }
         }
       } catch (e) {
