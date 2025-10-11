@@ -137,17 +137,8 @@ const StockistLogin = () => {
         // Save token
         localStorage.setItem("token", res.token);
 
-        // Fetch purchasers for this user
-        const purchasersResp = await fetch(apiUrl("/api/purchaser"), {
-          headers: { Authorization: `Bearer ${res.token}` },
-        });
-        const purchasersData = await purchasersResp.json();
-
-        if (purchasersData?.data?.length > 0) {
-          navigate(`/purchaser/${purchasersData.data[0]._id}`);
-        } else {
-          setError("No purchaser assigned to this account");
-        }
+        // Stockist should be redirected to their stockist dashboard
+        navigate("/stockist-outcode");
       } else {
         setError("Login failed: invalid response");
       }
