@@ -1,4 +1,4 @@
-// // Central API base URL for fetches.
+// // // Central API base URL for fetches.
 // // In production use the deployed backend (REMOTE_API).
 // // In development, prefer an explicit VITE_API_URL env var or default to localhost:5000.
 // // This avoids the common issue where dev fetches hit the Vite dev server (localhost:5173)
@@ -30,8 +30,8 @@
 
 // // Helper to build full API URLs. Ensures a single leading slash between base and path.
 // export const apiUrl = (path = "") => {
-//   const p = path.startsWith("/") ? path : `/${path}`;
-//   return `${API_BASE}${p}`;
+//   const p = path.startsWith("/") ? path : /${path};
+//   return ${API_BASE}${p};
 // };
 
 // // Small helper around fetch that sends/receives JSON and throws on non-2xx.
@@ -52,7 +52,7 @@
 //   const body = text && isJson ? JSON.parse(text) : text;
 
 //   if (!res.ok) {
-//     const err = new Error(body?.message || `Request failed ${res.status}`);
+//     const err = new Error(body?.message || Request failed ${res.status});
 //     err.status = res.status;
 //     err.body = body;
 //     throw err;
@@ -83,7 +83,7 @@
 //       ?.includes("application/json");
 //     const body = text && isJson ? JSON.parse(text) : text;
 //     if (!res.ok) {
-//       const err = new Error(body?.message || `Request failed ${res.status}`);
+//       const err = new Error(body?.message || Request failed ${res.status});
 //       err.status = res.status;
 //       err.body = body;
 //       throw err;
@@ -120,7 +120,7 @@
 //       ?.includes("application/json");
 //     const body = text && isJson ? JSON.parse(text) : text;
 //     if (!res.ok) {
-//       const err = new Error(body?.message || `Request failed ${res.status}`);
+//       const err = new Error(body?.message || Request failed ${res.status});
 //       err.status = res.status;
 //       err.body = body;
 //       throw err;
@@ -177,19 +177,53 @@ export const API_BASE = normalizeBase(SELECTED_API);
 
 // Helper to safely build complete URLs
 export const apiUrl = (path = "") => {
+  // Defensive URL builder:
+  // - If caller already provides a path beginning with '/api', respect it.
+  // - Otherwise, ensure the request is sent under the '/api' namespace so
+  //   accidental calls like apiUrl('/purchaser') become API calls to
+  //   `${API_BASE}/api/purchaser` instead of `${API_BASE}/purchaser`.
+  if (!path) return `${API_BASE}/api`;
+  if (path.startsWith("/api")) return `${API_BASE}${path}`;
   const p = path.startsWith("/") ? path : `/${path}`;
-  return `${API_BASE}${p}`;
+  return `${API_BASE}/api${p}`;
 };
 
 // -------------------------
-// ⚙️ JSON Fetch Helper
+// ⚙ JSON Fetch Helper
 // -------------------------
+// export const fetchJson = async (path, options = {}) => {
+//   const url = apiUrl(path);
+//   const opts = {
+//     headers: {
+//       "Content-Type": "application/json",
+//       ...(options.headers || {}),
+//     },
+//     ...options,
+//   };
+
+//   const res = await fetch(url, opts);
+//   const text = await res.text();
+//   const isJson = res.headers.get("content-type")?.includes("application/json");
+//   const body = text && isJson ? JSON.parse(text) : text;
+
+//   if (!res.ok) {
+//     const err = new Error(body?.message || Request failed ${res.status});
+//     err.status = res.status;
+//     err.body = body;
+//     throw err;
+//   }
+
+//   return body;
+// };
 export const fetchJson = async (path, options = {}) => {
   const url = apiUrl(path);
+  const token = localStorage.getItem("token"); // grab token
+
   const opts = {
     headers: {
       "Content-Type": "application/json",
       ...(options.headers || {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     ...options,
   };
@@ -209,9 +243,9 @@ export const fetchJson = async (path, options = {}) => {
   return body;
 };
 
-// -------------------------
-// 📤 POST FormData Helper (Image Uploads)
-// -------------------------
+// // -------------------------
+// // 📤 POST FormData Helper (Image Uploads)
+// // -------------------------
 export const postForm = async (path, formData, options = {}) => {
   const url = apiUrl(path);
   const controller = new AbortController();
@@ -219,7 +253,7 @@ export const postForm = async (path, formData, options = {}) => {
   // Increased timeout to 120s for Cloudinary uploads
   const timeout = options.timeout || 120000;
   const timer = setTimeout(() => {
-    console.warn("⚠️ postForm timeout hit for:", url);
+    console.warn("⚠ postForm timeout hit for:", url);
     controller.abort("Request timeout");
   }, timeout);
 
@@ -260,12 +294,58 @@ export const postForm = async (path, formData, options = {}) => {
 // -------------------------
 // 💾 POST JSON Helper
 // -------------------------
+// export const postJson = async (path, data, options = {}) => {
+//   const url = apiUrl(path);
+//   const controller = new AbortController();
+//   const timeout = options.timeout || 60000;
+//   const timer = setTimeout(() => {
+//     console.warn("⚠ postJson timeout hit for:", url);
+//     controller.abort("Request timeout");
+//   }, timeout);
+
+//   try {
+//     const res = await fetch(url, {
+//       method: "POST",
+//       body: JSON.stringify(data),
+//       headers: {
+//         "Content-Type": "application/json",
+//         ...(options.headers || {}),
+//       },
+//       mode: "cors",
+//       credentials: options.credentials || "include",
+//       signal: controller.signal,
+//     });
+
+//     clearTimeout(timer);
+//     const text = await res.text();
+//     const isJson = res.headers
+//       .get("content-type")
+//       ?.includes("application/json");
+//     const body = text && isJson ? JSON.parse(text) : text;
+
+//     if (!res.ok) {
+//       const err = new Error(body?.message || Request failed ${res.status});
+//       err.status = res.status;
+//       err.body = body;
+//       throw err;
+//     }
+
+//     return body;
+//   } catch (err) {
+//     clearTimeout(timer);
+//     if (err.name === "AbortError") {
+//       console.error("🚨 Request aborted (timeout or SSL issue):", url);
+//     }
+//     throw err;
+//   }
+// };
 export const postJson = async (path, data, options = {}) => {
   const url = apiUrl(path);
+  const token = localStorage.getItem("token"); // grab token
   const controller = new AbortController();
   const timeout = options.timeout || 60000;
   const timer = setTimeout(() => {
-    console.warn("⚠️ postJson timeout hit for:", url);
+    console.warn("⚠ postJson timeout hit for:", url);
     controller.abort("Request timeout");
   }, timeout);
 
@@ -276,6 +356,7 @@ export const postJson = async (path, data, options = {}) => {
       headers: {
         "Content-Type": "application/json",
         ...(options.headers || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       mode: "cors",
       credentials: options.credentials || "include",
@@ -305,5 +386,4 @@ export const postJson = async (path, data, options = {}) => {
     throw err;
   }
 };
-
 export default API_BASE;

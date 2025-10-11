@@ -32,7 +32,7 @@ const PurchaserLogin = () => {
 
           // Try to fetch purchaser(s) for this user and redirect to purchaser page
           try {
-            const purchasersResp = await fetchJson("/purchaser", {
+            const purchasersResp = await fetchJson("/api/purchaser", {
               method: "GET",
               headers: { Authorization: `Bearer ${res.token}` },
             });
