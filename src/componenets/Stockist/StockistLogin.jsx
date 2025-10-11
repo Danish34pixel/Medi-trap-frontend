@@ -113,7 +113,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { postJson, apiUrl } from "../config/api";
 
-const PurchaserLogin = () => {
+const StockistLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -163,7 +163,7 @@ const PurchaserLogin = () => {
 
   return (
     <div style={{ maxWidth: 400, margin: "50px auto" }}>
-      <h2>Purchaser Login</h2>
+      <h2>Stockist Login</h2>
       <form onSubmit={handleSubmit}>
         <input
           type="email"
@@ -192,4 +192,4 @@ const PurchaserLogin = () => {
   );
 };
 
-export default PurchaserLogin;
+export default StockistLogin;
