@@ -360,7 +360,11 @@ const Profile = () => {
                         Store Address
                       </span>
                     </div>
-                    <p className="text-gray-900 font-bold">{user.address}</p>
+                    <p className="text-gray-900 font-bold">
+                      {typeof user.address === 'object' && user.address !== null
+                        ? [user.address.street, user.address.city, user.address.state, user.address.pincode].filter(Boolean).join(', ')
+                        : user.address}
+                    </p>
                   </div>
 
                   <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-5 rounded-2xl border-2 border-amber-200">

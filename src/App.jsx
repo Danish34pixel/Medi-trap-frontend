@@ -61,7 +61,7 @@ const App = () => {
           path="/staff/create"
           element={<Navigate to="/adminCreateStaff" replace />}
         />
-        <Route path="/purchaser" element={<PurchaserSignup />} />
+        <Route path="/purchaser-signup" element={<PurchaserSignup />} />
         <Route path="/purchaser/:id" element={<PurchaserDetails />} />
         <Route path="/demand" element={<Demand />} />
         <Route path="/admin/stockists" element={<AdminPage />} />

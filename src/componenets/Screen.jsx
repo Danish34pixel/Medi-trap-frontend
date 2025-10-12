@@ -35,6 +35,7 @@ const Screen = ({ navigation: navProp }) => {
   };
 
   const [selectedSection, setSelectedSection] = useState(null); // index
+  const [fullscreenStockist, setFullscreenStockist] = useState(null); // index for fullscreen modal
   const [isAdmin, setIsAdmin] = useState(false);
   const [sectionData, setSectionData] = useState([]);
   const [rawResponses, setRawResponses] = useState({
@@ -567,7 +568,7 @@ const Screen = ({ navigation: navProp }) => {
       <article
         key={section._id || index}
         className="bg-white rounded-3xl shadow-lg border-0 overflow-hidden mb-6 mx-6 transform hover:scale-105 hover:shadow-2xl transition-all duration-300"
-        onClick={() => setSelectedSection(index)}
+        onClick={() => setFullscreenStockist(index)}
         role="button"
       >
         {section.image ? (
@@ -736,10 +737,11 @@ const Screen = ({ navigation: navProp }) => {
     </div>
   );
 
-  const renderDetailView = () => {
-    const currentSection = sectionData[selectedSection];
+  // Accepts an optional section and index for reuse
+  const renderDetailView = (section = sectionData[selectedSection], idx = selectedSection) => {
+    const currentSection = section;
     if (!currentSection) return null;
-    const [color1, color2] = generateHealthColor(selectedSection || 0);
+    const [color1, color2] = generateHealthColor(idx || 0);
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/30">
@@ -1054,10 +1056,34 @@ const Screen = ({ navigation: navProp }) => {
 
   return (
     <div>
-      {selectedSection === null ? renderMainView() : renderDetailView()}
-      {selectedSection === null && renderBottomNavigation()}
+      {fullscreenStockist === null ? (
+        <>
+          {selectedSection === null ? renderMainView() : renderDetailView()}
+          {selectedSection === null && renderBottomNavigation()}
+        </>
+      ) : (
+        <div
+          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9999, background: 'white', overflowY: 'auto' }}
+        >
+          <button
+            onClick={() => setFullscreenStockist(null)}
+            style={{ position: 'absolute', top: 24, right: 24, zIndex: 10000 }}
+            className="bg-red-500 text-white rounded-full px-4 py-2 shadow-lg hover:bg-red-600"
+          >
+            Close
+          </button>
+          {fullscreenStockist !== null && renderDetailViewForFullscreen(fullscreenStockist)}
+        </div>
+      )}
     </div>
   );
+
+  // Helper for fullscreen modal detail view
+  function renderDetailViewForFullscreen(idx) {
+    const currentSection = sectionData[idx];
+    if (!currentSection) return null;
+    return renderDetailView(currentSection, idx);
+  }
 };
 
 export default Screen;

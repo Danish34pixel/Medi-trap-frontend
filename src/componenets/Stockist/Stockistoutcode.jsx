@@ -11,11 +11,12 @@ import {
   Loader2,
   AlertCircle,
   Package,
+  Sparkles,
 } from "lucide-react";
 import IdentityCard from "../stockistComponents/IdentityCard";
 import StockistApprovals from "./StockistApprovals";
 
-// Small Avatar helper
+// Enhanced Avatar with modern gradients
 const Avatar = ({ name, size = 48, className = "" }) => {
   const initials =
     name
@@ -26,16 +27,16 @@ const Avatar = ({ name, size = 48, className = "" }) => {
       .slice(0, 2) || "?";
 
   const colors = [
-    "from-orange-400 to-pink-400",
-    "from-cyan-400 to-blue-400",
-    "from-purple-400 to-pink-400",
-    "from-green-400 to-cyan-400",
+    "from-violet-500 via-purple-500 to-fuchsia-500",
+    "from-blue-500 via-cyan-500 to-teal-500",
+    "from-pink-500 via-rose-500 to-red-500",
+    "from-emerald-500 via-green-500 to-lime-500",
   ];
   const colorIndex = name?.charCodeAt(0) % colors.length || 0;
 
   return (
     <div
-      className={`rounded-full bg-gradient-to-br ${colors[colorIndex]} flex items-center justify-center text-white font-bold ${className}`}
+      className={`rounded-2xl bg-gradient-to-br ${colors[colorIndex]} flex items-center justify-center text-white font-bold shadow-xl ring-4 ring-white ${className}`}
       style={{ width: size, height: size, fontSize: size / 2.5 }}
     >
       {initials}
@@ -46,34 +47,34 @@ const Avatar = ({ name, size = 48, className = "" }) => {
 const LoadingSkeleton = () => (
   <div className="animate-pulse space-y-6 p-6">
     <div className="flex items-center space-x-4">
-      <div className="w-16 h-16 bg-gray-200 rounded-full" />
-      <div className="space-y-2 flex-1">
-        <div className="h-6 bg-gray-200 rounded-full w-48" />
-        <div className="h-4 bg-gray-200 rounded-full w-32" />
+      <div className="w-20 h-20 bg-gradient-to-br from-violet-200 to-purple-300 rounded-2xl" />
+      <div className="space-y-3 flex-1">
+        <div className="h-8 bg-gradient-to-r from-violet-200 to-purple-300 rounded-xl w-56" />
+        <div className="h-5 bg-gradient-to-r from-violet-200 to-purple-300 rounded-lg w-40" />
       </div>
     </div>
-    <div className="h-48 bg-gray-200 rounded-3xl" />
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="h-56 bg-gradient-to-br from-blue-200 via-cyan-200 to-teal-200 rounded-3xl" />
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {[...Array(3)].map((_, i) => (
-        <div key={i} className="h-32 bg-gray-200 rounded-3xl" />
+        <div key={i} className="h-40 bg-gradient-to-br from-pink-200 via-rose-200 to-red-200 rounded-3xl" />
       ))}
     </div>
   </div>
 );
 
 const ErrorMessage = ({ error, onRetry }) => (
-  <div className="flex flex-col items-center justify-center p-8 bg-white rounded-3xl shadow-sm">
-    <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4">
-      <AlertCircle className="w-8 h-8 text-red-500" />
+  <div className="flex flex-col items-center justify-center p-10 bg-gradient-to-br from-white to-red-50 rounded-3xl shadow-2xl border-2 border-red-200">
+    <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-red-400 to-rose-500 flex items-center justify-center mb-5 shadow-lg">
+      <AlertCircle className="w-10 h-10 text-white" />
     </div>
-    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-      Something went wrong
+    <h3 className="text-xl font-black text-gray-900 mb-2">
+      Oops! Something Went Wrong
     </h3>
-    <p className="text-gray-500 text-center mb-4 text-sm">{error}</p>
+    <p className="text-gray-600 text-center mb-5 text-sm max-w-sm">{error}</p>
     {onRetry && (
       <button
         onClick={onRetry}
-        className="px-6 py-2.5 bg-gradient-to-r from-cyan-400 to-blue-500 text-white rounded-full hover:shadow-lg transition-all text-sm font-medium"
+        className="px-8 py-3.5 bg-gradient-to-r from-red-500 via-rose-500 to-pink-500 text-white rounded-2xl hover:shadow-2xl transform hover:scale-105 transition-all text-sm font-bold"
       >
         Try Again
       </button>
@@ -87,17 +88,17 @@ const CompanyCard = ({ company }) => {
   };
 
   return (
-    <div className="bg-white rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-pink-400 flex items-center justify-center">
-            <Building2 className="w-6 h-6 text-white" />
+    <div className="bg-gradient-to-br from-white to-orange-50 rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-orange-100 group hover:scale-105 transform">
+      <div className="flex items-start justify-between mb-5">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 via-amber-500 to-yellow-500 flex items-center justify-center shadow-xl group-hover:rotate-6 transition-transform">
+            <Building2 className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900 text-sm">
+            <h3 className="font-black text-gray-900 text-lg mb-1">
               {company.name}
             </h3>
-            <p className="text-xs text-gray-500">
+            <p className="text-sm text-gray-600 font-semibold">
               {company.products ?? 0} products
             </p>
           </div>
@@ -105,36 +106,36 @@ const CompanyCard = ({ company }) => {
       </div>
       <button
         onClick={goToCompany}
-        className="w-full py-2.5 bg-gradient-to-r from-cyan-400 to-blue-500 text-white rounded-full text-sm font-medium hover:shadow-md transition-all"
+        className="w-full py-3.5 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white rounded-2xl text-sm font-bold hover:shadow-xl transform hover:scale-105 transition-all"
       >
-        {company?._id ? "View Details" : "No Details"}
+        {company?._id ? "View Details →" : "No Details"}
       </button>
     </div>
   );
 };
 
 const MedicineCard = ({ medicine }) => (
-  <div className="bg-white rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
-    <div className="flex items-start justify-between mb-3">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
-          <Pill className="w-6 h-6 text-white" />
+  <div className="bg-gradient-to-br from-white to-blue-50 rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-blue-100 group hover:scale-105 transform">
+    <div className="flex items-start justify-between mb-4">
+      <div className="flex items-center gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 flex items-center justify-center shadow-xl group-hover:rotate-6 transition-transform">
+          <Pill className="w-8 h-8 text-white" />
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 text-sm">
+          <h3 className="font-black text-gray-900 text-lg mb-1">
             {medicine.name}
           </h3>
-          <p className="text-xs text-gray-500">{medicine.company || ""}</p>
+          <p className="text-sm text-gray-600 font-semibold">{medicine.company || ""}</p>
         </div>
       </div>
     </div>
-    <div className="flex items-center justify-between mb-3">
-      <div className="px-3 py-1.5 bg-orange-50 rounded-full">
-        <span className="text-orange-600 font-bold text-sm">
-          {medicine.price || ""}
+    <div className="flex items-center justify-between">
+      <div className="px-5 py-2.5 bg-gradient-to-r from-emerald-400 to-green-500 rounded-xl shadow-md">
+        <span className="text-white font-black text-base">
+          {medicine.price || "N/A"}
         </span>
       </div>
-      <span className="text-xs text-gray-500">
+      <span className="text-sm text-gray-700 font-bold bg-white px-4 py-2 rounded-xl shadow-sm">
         Stock: {medicine.stock ?? 0}
       </span>
     </div>
@@ -147,36 +148,36 @@ const StaffCard = ({ staff }) => {
   };
 
   return (
-    <div className="bg-white rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
-      <div className="flex items-center gap-3 mb-4">
-        <Avatar name={staff.fullName || staff.name || "S"} size={48} />
+    <div className="bg-gradient-to-br from-white to-purple-50 rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-purple-100 group hover:scale-105 transform">
+      <div className="flex items-center gap-4 mb-5">
+        <Avatar name={staff.fullName || staff.name || "S"} size={64} className="group-hover:scale-110 transition-transform" />
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 text-sm">
+          <h3 className="font-black text-gray-900 text-lg mb-1">
             {staff.fullName || staff.name}
           </h3>
-          <p className="text-xs text-gray-500">{staff.role}</p>
+          <p className="text-sm text-purple-600 font-bold">{staff.role}</p>
         </div>
       </div>
-      <div className="text-xs text-gray-600 mb-3">{staff.phone || ""}</div>
+      <div className="text-sm text-gray-700 mb-4 font-semibold bg-white px-4 py-2 rounded-xl">{staff.phone || "No phone"}</div>
       <button
         onClick={goToStaff}
-        className="w-full py-2.5 bg-gradient-to-r from-orange-400 to-yellow-500 text-white rounded-full text-sm font-medium hover:shadow-md transition-all"
+        className="w-full py-3.5 bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white rounded-2xl text-sm font-bold hover:shadow-xl transform hover:scale-105 transition-all"
       >
-        View Profile
+        View Profile →
       </button>
     </div>
   );
 };
 
 const StatsCard = ({ icon: Icon, label, value, gradient }) => (
-  <div className="bg-white rounded-3xl p-6 shadow-sm">
+  <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl p-7 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-gray-100 group hover:scale-105 transform">
     <div
-      className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-3`}
+      className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-5 shadow-xl group-hover:rotate-12 transition-transform`}
     >
-      <Icon className="w-6 h-6 text-white" />
+      <Icon className="w-8 h-8 text-white" />
     </div>
-    <div className="text-2xl font-bold text-gray-900 mb-1">{value}</div>
-    <div className="text-sm text-gray-500">{label}</div>
+    <div className="text-4xl font-black bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">{value}</div>
+    <div className="text-sm text-gray-600 font-bold uppercase tracking-wide">{label}</div>
   </div>
 );
 
@@ -422,25 +423,25 @@ export default function PharmacyStockist() {
       key: "medicines",
       label: "Medicines",
       icon: Pill,
-      gradient: "from-cyan-400 to-blue-500",
+      gradient: "from-blue-500 via-cyan-500 to-teal-500",
     },
     {
       key: "companies",
       label: "Companies",
       icon: Building2,
-      gradient: "from-orange-400 to-pink-400",
+      gradient: "from-orange-500 via-amber-500 to-yellow-500",
     },
     {
       key: "staff",
       label: "Staff",
       icon: Users,
-      gradient: "from-purple-400 to-pink-400",
+      gradient: "from-purple-500 via-fuchsia-500 to-pink-500",
     },
     {
       key: "approvals",
       label: "Approvals",
       icon: Package,
-      gradient: "from-teal-400 to-cyan-400",
+      gradient: "from-emerald-500 via-teal-500 to-cyan-500",
     },
   ];
 
@@ -455,32 +456,32 @@ export default function PharmacyStockist() {
     const data = filteredData[activeTab];
     if (!data || data.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center p-12 bg-gray-50 rounded-3xl">
-          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+        <div className="flex flex-col items-center justify-center p-20 bg-gradient-to-br from-gray-50 via-white to-gray-100 rounded-3xl border-2 border-dashed border-gray-300">
+          <div className="w-24 h-24 bg-gradient-to-br from-white to-gray-100 rounded-3xl flex items-center justify-center mb-6 shadow-xl">
             {activeTab === "companies" && (
-              <Building2 className="w-8 h-8 text-gray-300" />
+              <Building2 className="w-12 h-12 text-gray-400" />
             )}
             {activeTab === "medicines" && (
-              <Pill className="w-8 h-8 text-gray-300" />
+              <Pill className="w-12 h-12 text-gray-400" />
             )}
             {activeTab === "staff" && (
-              <Users className="w-8 h-8 text-gray-300" />
+              <Users className="w-12 h-12 text-gray-400" />
             )}
           </div>
-          <h3 className="text-base font-semibold text-gray-900 mb-2">
+          <h3 className="text-xl font-black text-gray-900 mb-2">
             No {activeTab} found
           </h3>
-          <p className="text-gray-500 text-center text-sm">
+          <p className="text-gray-500 text-center text-sm max-w-md">
             {query
-              ? `No ${activeTab} match your search.`
-              : `No ${activeTab} available yet.`}
+              ? `No ${activeTab} match your search criteria.`
+              : `No ${activeTab} available at the moment.`}
           </p>
         </div>
       );
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {activeTab === "companies" &&
           data.map((company) => (
             <CompanyCard
@@ -505,7 +506,7 @@ export default function PharmacyStockist() {
 
   if (loading)
     return (
-      <div className="min-h-screen p-4 lg:p-6 bg-gradient-to-b from-gray-50 to-white">
+      <div className="min-h-screen p-4 lg:p-8 bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50">
         <div className="max-w-7xl mx-auto">
           <LoadingSkeleton />
         </div>
@@ -513,7 +514,7 @@ export default function PharmacyStockist() {
     );
   if (error)
     return (
-      <div className="min-h-screen p-4 lg:p-6 bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
+      <div className="min-h-screen p-4 lg:p-8 bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 flex items-center justify-center">
         <div className="max-w-md w-full">
           <ErrorMessage error={error} onRetry={handleRefresh} />
         </div>
@@ -521,57 +522,29 @@ export default function PharmacyStockist() {
     );
 
   return (
-    <div className="min-h-screen p-4 lg:p-6 bg-gradient-to-b from-gray-50 to-white">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="bg-white rounded-3xl shadow-sm p-6">
-          <div className="flex items-center justify-between mb-6">
-            <button className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <Avatar name={displayName} size={64} className="shadow-md" />
+    <div className="min-h-screen p-2 lg:p-8 bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50">
+      <div className="max-w-7xl mx-auto">
+        {/* Header Card */}
+        <div className="bg-gradient-to-br from-white to-violet-50 rounded-3xl shadow-2xl p-8 border-2 border-violet-100">            
+          <div className="flex items-center gap-6">
+            <Avatar name={displayName} size={80} />
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">
+              <h1 className="text-2xl font-black bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 bg-clip-text text-transparent mb-1">
                 {displayName}
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-base text-gray-700 font-bold">
                 {stockist?.email || stockist?.contactPerson || "—"}
               </p>
               {stockist?.location && (
-                <p className="text-xs text-gray-400 mt-1">
-                  {stockist.location}
+                <p className="text-sm text-gray-500 mt-1 font-semibold">
+                  📍 {stockist.location}
                 </p>
               )}
             </div>
           </div>
         </div>
 
-        {/* <div className="bg-gradient-to-br from-cyan-400 to-blue-500 rounded-3xl shadow-lg p-8 text-white">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <p className="text-sm opacity-90 mb-1">Your Health Hub</p>
-              <h2 className="text-xl font-bold">
-                {stockist?.companyName || "—"}
-              </h2>
-            </div>
-            <Package className="w-8 h-8 opacity-80" />
-          </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="opacity-75 mb-1">Phone</p>
-              <p className="font-semibold">{stockist?.phone || "—"}</p>
-            </div>
-            <div>
-              <p className="opacity-75 mb-1">ID</p>
-              <p className="font-semibold">
-                {stockist ? stockist._id?.slice(0, 8) : "—"}
-              </p>
-            </div>
-          </div>
-        </div> */}
-        {/* Ensure the ID card sees the derived display name as contactPerson */}
+        {/* ID Card */}
         <IdentityCard
           stockist={
             stockist
@@ -588,46 +561,49 @@ export default function PharmacyStockist() {
           onPrint={() => window.print()}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatsCard
             icon={Building2}
             label="Companies"
             value={stats.companies}
-            gradient="from-orange-400 to-pink-400"
+            gradient="from-orange-500 via-amber-500 to-yellow-500"
           />
           <StatsCard
             icon={Pill}
             label="Medicines"
             value={stats.medicines}
-            gradient="from-cyan-400 to-blue-500"
+            gradient="from-blue-500 via-cyan-500 to-teal-500"
           />
           <StatsCard
             icon={Users}
             label="Staff Members"
             value={stats.staff}
-            gradient="from-purple-400 to-pink-400"
+            gradient="from-purple-500 via-fuchsia-500 to-pink-500"
           />
         </div>
 
-        <div className="bg-white rounded-3xl shadow-sm">
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="flex gap-2 overflow-x-auto pb-2">
+        {/* Main Content Card */}
+        <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-2xl border-2 border-gray-100">
+          <div className="p-6 border-b-2 border-gray-100">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+              {/* Tabs */}
+              <div className="flex gap-3 overflow-x-auto pb-2">
                 {TAB_CONFIG.map(({ key, label, icon: Icon, gradient }) => (
                   <button
                     key={key}
                     onClick={() => setActiveTab(key)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all whitespace-nowrap text-sm ${
+                    className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl font-bold transition-all whitespace-nowrap text-sm ${
                       activeTab === key
-                        ? `bg-gradient-to-r ${gradient} text-white shadow-md`
-                        : "text-gray-600 bg-gray-100 hover:bg-gray-200"
+                        ? `bg-gradient-to-r ${gradient} text-white shadow-2xl transform scale-110`
+                        : "text-gray-700 bg-gray-100 hover:bg-gray-200 hover:scale-105"
                     }`}
                   >
-                    <Icon size={16} />
+                    <Icon size={20} />
                     <span>{label}</span>
                     <span
-                      className={`text-xs px-2 py-0.5 rounded-full ${
-                        activeTab === key ? "bg-white/30" : "bg-white"
+                      className={`text-xs px-3 py-1 rounded-xl font-black ${
+                        activeTab === key ? "bg-white/30" : "bg-white text-gray-700"
                       }`}
                     >
                       {filteredData[key].length}
@@ -636,47 +612,45 @@ export default function PharmacyStockist() {
                 ))}
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Actions */}
+              <div className="flex items-center gap-3">
                 <div className="relative flex-1 lg:flex-none">
                   <Search
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                    size={16}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={20}
                   />
                   <input
                     type="text"
                     placeholder={`Search ${activeTab}...`}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2.5 border border-gray-200 bg-gray-50 rounded-full focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 outline-none transition-all w-full lg:w-64 text-sm"
+                    className="pl-12 pr-5 py-3.5 border-2 border-gray-200 bg-white rounded-2xl focus:ring-4 focus:ring-violet-200 focus:border-violet-400 outline-none transition-all w-full lg:w-80 text-sm font-semibold shadow-sm"
                   />
                 </div>
 
-                {/* Add Staff action removed (not implemented) */}
-
-                {/* Add Staff button (desktop: text + icon, mobile: icon only) */}
                 <button
                   onClick={() => navigate("/adminCreateStaff")}
-                  className="hidden md:inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-400 to-yellow-500 text-white rounded-full text-sm font-medium hover:shadow-md transition-all"
+                  className="hidden md:inline-flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white rounded-2xl text-sm font-bold hover:shadow-2xl transform hover:scale-105 transition-all"
                 >
-                  <Users className="w-4 h-4" />
+                  <Users className="w-5 h-5" />
                   Add Staff
                 </button>
 
                 <button
                   onClick={() => navigate("/adminCreateStaff")}
-                  className="md:hidden w-10 h-10 rounded-full bg-orange-400 flex items-center justify-center text-white hover:shadow-md transition-colors"
+                  className="md:hidden w-12 h-12 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white hover:shadow-2xl transition-all"
                   aria-label="Add staff"
                 >
-                  <Users className="w-4 h-4" />
+                  <Users className="w-5 h-5" />
                 </button>
 
                 <button
                   onClick={handleRefresh}
-                  className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                  className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center hover:shadow-xl transition-all hover:scale-110 transform"
                 >
                   <Loader2
-                    size={18}
-                    className={`text-gray-600 ${
+                    size={22}
+                    className={`text-gray-700 ${
                       refreshing ? "animate-spin" : ""
                     }`}
                   />
@@ -685,18 +659,19 @@ export default function PharmacyStockist() {
             </div>
           </div>
 
-          <div className="p-6">{renderTabContent()}</div>
+          <div className="p-8">{renderTabContent()}</div>
         </div>
 
+        {/* Debug Section */}
         <div className="px-2">
           <button
             onClick={() => setShowDebug((s) => !s)}
-            className="text-sm text-gray-500 underline"
+            className="text-sm text-gray-600 hover:text-violet-600 underline font-bold transition-colors"
           >
             {showDebug ? "Hide" : "Show"} debug responses
           </button>
           {showDebug && (
-            <pre className="mt-4 p-4 bg-white rounded-2xl border overflow-auto text-xs max-h-64">
+            <pre className="mt-4 p-6 bg-gradient-to-br from-white to-gray-50 rounded-2xl border-2 border-gray-200 overflow-auto text-xs max-h-96 shadow-lg font-mono">
               {JSON.stringify(rawResponses, null, 2)}
             </pre>
           )}

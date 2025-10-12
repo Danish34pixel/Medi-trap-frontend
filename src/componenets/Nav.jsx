@@ -20,7 +20,6 @@ export default function Nav({ navigation: navProp }) {
     }
   })();
 
-  // navigation helper (accepts same signature used elsewhere)
   const navigation = navProp || {
     navigate: (path) => {
       if (navigate) navigate(path);
@@ -67,7 +66,6 @@ export default function Nav({ navigation: navProp }) {
               .map((m) => medicineDisplayName(m))
               .filter(Boolean);
 
-            // Fallback: if no medicines were found by id references, try matching by name
             if (
               (!medsForStockist || medsForStockist.length === 0) &&
               medicines.length > 0
@@ -111,7 +109,6 @@ export default function Nav({ navigation: navProp }) {
                 .filter(Boolean)
             );
 
-            // Also derive company ids that the stockist advertises (s.companies may contain ids or objects)
             const companyIdsFromStockist = new Set(
               (s.companies || s.items || [])
                 .map((c) => {
@@ -124,7 +121,6 @@ export default function Nav({ navigation: navProp }) {
                 .filter(Boolean)
             );
 
-            // If we still have no meds, try matching medicines by their `company` field against the stockist's companies
             if (
               (!medsForStockist || medsForStockist.length === 0) &&
               companyIdsFromStockist.size > 0
@@ -142,15 +138,11 @@ export default function Nav({ navigation: navProp }) {
                 ];
             }
 
-            // Companies that are related via medicines/companyIds
             let companiesForStockist = companies
               .filter((c) => companyIds.has(String(c._id)))
               .map((c) => (c.name ? c.name : c.shortName || ""))
               .filter(Boolean);
 
-            // we will compute reverseCompanies later using a deep-scan helper
-
-            // Resolve explicit companies listed on the stockist (may be ids or objects)
             const explicitItems = (
               Array.isArray(s.companies) ? s.companies : []
             )
@@ -166,7 +158,6 @@ export default function Nav({ navigation: navProp }) {
               })
               .filter(Boolean);
 
-            // Combine explicit list with computed companiesFromMedicines/reverse scan and dedupe by name
             const items = Array.from(
               new Set([
                 ...(explicitItems || []),
@@ -174,8 +165,6 @@ export default function Nav({ navigation: navProp }) {
               ])
             );
 
-            // Resolve any medicine entries that might be IDs or embedded objects
-            // by looking up the fetched `medicines` array. Fall back to name lists.
             let meds = [];
             if (Array.isArray(s.medicines) && s.medicines.length > 0) {
               meds = s.medicines
@@ -198,18 +187,14 @@ export default function Nav({ navigation: navProp }) {
                       );
                       if (found) return medicineDisplayName(found);
                     }
-                  } catch (e) {
-                    // ignore resolution errors
-                  }
+                  } catch (e) {}
                   return "";
                 })
                 .filter(Boolean);
             } else {
-              // fallback to previously computed medsForStockist (already names)
               meds = (medsForStockist || []).slice();
             }
 
-            // deep scan a company object for any occurrence of the stockist id
             const deepScanCompanyReferences = (obj, sid) => {
               if (!obj) return false;
               const target = String(sid);
@@ -218,7 +203,6 @@ export default function Nav({ navigation: navProp }) {
               const walk = (value) => {
                 if (value == null) return false;
                 if (seen.has(value)) return false;
-                // primitives
                 if (typeof value === "string" || typeof value === "number") {
                   if (String(value) === target) return true;
                   return false;
@@ -228,7 +212,6 @@ export default function Nav({ navigation: navProp }) {
                   return false;
                 }
                 if (typeof value === "object") {
-                  // guard against cycles
                   if (seen.has(value)) return false;
                   seen.add(value);
                   for (const k of Object.keys(value)) {
@@ -258,7 +241,6 @@ export default function Nav({ navigation: navProp }) {
             };
           });
           setSectionData(mapped);
-          console.warn("Nav: loaded stockists ->", mapped.length);
         }
       } catch (err) {
         console.warn("Nav: failed to load stockists", err);
@@ -267,13 +249,11 @@ export default function Nav({ navigation: navProp }) {
     return () => (mounted = false);
   }, []);
 
-  // read token
   useEffect(() => {
     const token = getCookie("token");
     setUserToken(token);
   }, []);
 
-  // helpers to gather all unique values for a given filter type
   const getAllItems = (type) => {
     if (type === "company") {
       const allCompanies = new Set();
@@ -297,7 +277,6 @@ export default function Nav({ navigation: navProp }) {
     return [];
   };
 
-  // change filter type and pre-populate selectedStockists for "show all"
   const handleFilterTypeChange = (newType) => {
     setFilterType(newType);
     setSearchQuery("");
@@ -333,7 +312,6 @@ export default function Nav({ navigation: navProp }) {
     }
   };
 
-  // suggestions logic
   useEffect(() => {
     const q = searchQuery.trim().toLowerCase();
     const resultSet = new Set();
@@ -371,7 +349,6 @@ export default function Nav({ navigation: navProp }) {
     setSuggestions(results);
     setShowSuggestions(results.length > 0);
 
-    // For company queries, always run a normalized substring match against stockist items
     if (filterType === "company") {
       const norm = (s) =>
         String(s || "")
@@ -383,7 +360,6 @@ export default function Nav({ navigation: navProp }) {
         );
         setSelectedStockists(matches);
         setShowAllResults(false);
-        // keep suggestions visible if any
         setShowSuggestions(results.length > 0);
         setIsLoading(false);
       }
@@ -406,7 +382,6 @@ export default function Nav({ navigation: navProp }) {
           String(s || "")
             .toLowerCase()
             .trim();
-        // suggestion is normalized; find stockists whose items contain a matching normalized name
         stockists = sectionData.filter((section) =>
           (section.items || []).some((it) => norm(it) === suggestion)
         );
@@ -463,24 +438,20 @@ export default function Nav({ navigation: navProp }) {
     setShowAllResults(false);
   };
 
-  // health-themed filter options
   const filterOptions = [
     { value: "medicine", label: "Medicine", icon: "💊" },
     { value: "company", label: "Company", icon: "🏥" },
     { value: "stockist", label: "Supplier", icon: "⚕️" },
   ];
 
-  // health-themed nav links
   const navLinks = [
-    { label: "Home", icon: "🏠" },
-    { label: "Health Info", icon: "🩺" },
-    { label: "Contact", icon: "📞" },
+    { label: "Home", icon: "🏠", path: "/" },
+    { label: "Dashboard", icon: "📊", path: "/dashboard" },
+    { label: "Contact", icon: "📞", path: "/contact" },
   ];
 
-  // initialize to company on mount
   useEffect(() => handleFilterTypeChange("company"), []); // eslint-disable-line
 
-  // ensure selectedStockists is populated when sectionData changes
   useEffect(() => {
     if (!sectionData || sectionData.length === 0) return;
     if (selectedStockists && selectedStockists.length > 0) return;
@@ -515,7 +486,6 @@ export default function Nav({ navigation: navProp }) {
     // eslint-disable-next-line
   }, [sectionData]);
 
-  // get health-themed icon for items
   const getHealthIcon = (item) => {
     const healthIcons = {
       cardiovascular: "❤️",
@@ -556,79 +526,75 @@ export default function Nav({ navigation: navProp }) {
         return icon;
       }
     }
-    return "💊"; // default health icon
+    return "💊";
   };
 
-  // render enhanced stockist card with micro-interactions
   const renderStockistCard = (item, idx) => (
     <div
       key={item._id || idx}
-      className="group relative bg-white/80 backdrop-blur-sm rounded-3xl p-6 mb-6 shadow-lg border border-slate-200/50 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 overflow-hidden"
+      className="group relative bg-gradient-to-br from-white to-blue-50 rounded-3xl p-6 mb-6 shadow-xl border-2 border-blue-100 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 overflow-hidden"
     >
-      {/* Animated background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-cyan-50/50 via-blue-50/30 to-purple-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-      {/* Content */}
       <div className="relative z-10">
         <div className="flex items-start justify-between mb-5">
           <div className="flex-1">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <span className="text-white font-bold">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                <span className="text-white font-black text-xl">
                   {item.title?.charAt(0)}
                 </span>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-700 transition-colors duration-300">
+                <h3 className="text-xl font-black text-gray-900 group-hover:text-blue-700 transition-colors">
                   {item.title}
                 </h3>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-emerald-600 font-semibold">
-                    VERIFIED
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-xs text-emerald-600 font-bold uppercase tracking-wide">
+                    Verified Supplier
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-3 mb-4">
-              <div className="flex items-center gap-3 group/contact hover:bg-cyan-50 rounded-xl p-2 transition-all duration-200">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center shadow-md">
-                  <span className="text-white text-sm">📞</span>
+            <div className="space-y-3 mb-5">
+              <div className="flex items-center gap-3 hover:bg-blue-50 rounded-xl p-3 transition-all duration-200 group/contact">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg">
+                  <span className="text-white text-lg">📞</span>
                 </div>
-                <span className="text-slate-700 font-medium group-hover/contact:text-cyan-700">
+                <span className="text-gray-800 font-bold group-hover/contact:text-blue-700">
                   {item.phone}
                 </span>
               </div>
-              <div className="flex items-start gap-3 group/address hover:bg-slate-50 rounded-xl p-2 transition-all duration-200">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-slate-400 to-slate-500 flex items-center justify-center shadow-md">
-                  <span className="text-white text-sm">📍</span>
+              <div className="flex items-start gap-3 hover:bg-gray-50 rounded-xl p-3 transition-all duration-200 group/address">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-gray-500 to-gray-600 flex items-center justify-center shadow-lg">
+                  <span className="text-white text-lg">📍</span>
                 </div>
-                <span className="text-slate-600 flex-1 group-hover/address:text-slate-800">
+                <span className="text-gray-700 flex-1 font-medium group-hover/address:text-gray-900">
                   {item.address}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Pulse indicator */}
           <div className="relative">
-            <div className="w-4 h-4 bg-emerald-400 rounded-full shadow-lg"></div>
-            <div className="absolute inset-0 w-4 h-4 bg-emerald-400 rounded-full animate-ping opacity-75"></div>
+            <div className="w-4 h-4 bg-emerald-500 rounded-full shadow-xl"></div>
+            <div className="absolute inset-0 w-4 h-4 bg-emerald-500 rounded-full animate-ping opacity-75"></div>
           </div>
         </div>
 
         {filterType === "company" && item.items && (
           <div className="mb-5">
             <div className="flex items-center mb-4">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 flex items-center justify-center mr-3 shadow-lg">
-                <span className="text-white">🏥</span>
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-orange-400 to-pink-500 flex items-center justify-center mr-3 shadow-xl">
+                <span className="text-white text-xl">🏥</span>
               </div>
-              <span className="font-bold text-slate-800">
-                Healthcare Partners:
+              <span className="font-black text-gray-900 text-lg">
+                Healthcare Partners
               </span>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3">
               {item.items.map((company, i) => {
                 const matched =
                   searchQuery &&
@@ -636,13 +602,13 @@ export default function Nav({ navigation: navProp }) {
                 return (
                   <div
                     key={i}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                    className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold transition-all duration-300 ${
                       matched
-                        ? "bg-gradient-to-r from-cyan-100 to-blue-100 border-2 border-cyan-400 text-cyan-800 shadow-lg scale-105"
-                        : "bg-gradient-to-r from-slate-50 to-slate-100 text-slate-700 hover:shadow-md hover:scale-105"
+                        ? "bg-gradient-to-r from-blue-400 to-cyan-400 border-2 border-blue-500 text-white shadow-2xl scale-110"
+                        : "bg-gradient-to-r from-gray-50 to-gray-100 text-gray-800 hover:shadow-xl hover:scale-105"
                     }`}
                   >
-                    <span className="text-lg">{getHealthIcon(company)}</span>
+                    <span className="text-xl">{getHealthIcon(company)}</span>
                     <span>{company}</span>
                   </div>
                 );
@@ -654,11 +620,11 @@ export default function Nav({ navigation: navProp }) {
         {filterType === "medicine" && item.Medicines && (
           <div className="mb-5">
             <div className="flex items-center mb-4">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-emerald-400 to-green-500 flex items-center justify-center mr-3 shadow-lg">
-                <span className="text-white">💊</span>
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-emerald-400 to-green-500 flex items-center justify-center mr-3 shadow-xl">
+                <span className="text-white text-xl">💊</span>
               </div>
-              <span className="font-bold text-slate-800">
-                Available Medicines:
+              <span className="font-black text-gray-900 text-lg">
+                Available Medicines
               </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -669,19 +635,19 @@ export default function Nav({ navigation: navProp }) {
                 return (
                   <div
                     key={i}
-                    className={`relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-300 ${
+                    className={`relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 ${
                       matched
-                        ? "bg-gradient-to-r from-emerald-100 to-green-100 border-2 border-emerald-400 text-emerald-800 shadow-lg scale-105"
-                        : "bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-700 hover:shadow-md hover:scale-105"
+                        ? "bg-gradient-to-r from-emerald-400 to-green-400 border-2 border-emerald-500 text-white shadow-2xl scale-105"
+                        : "bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-800 hover:shadow-xl hover:scale-105"
                     }`}
                   >
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-r from-emerald-400 to-green-500 flex items-center justify-center shadow-md">
-                      <span className="text-white text-lg">💊</span>
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 flex items-center justify-center shadow-lg">
+                      <span className="text-white text-xl">💊</span>
                     </div>
                     <span className="flex-1">{med}</span>
                     {matched && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full flex items-center justify-center">
-                        <span className="text-white text-xs">✓</span>
+                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center shadow-xl">
+                        <span className="text-white text-xs font-black">✓</span>
                       </div>
                     )}
                   </div>
@@ -696,20 +662,20 @@ export default function Nav({ navigation: navProp }) {
             {item.items && (
               <div>
                 <div className="flex items-center mb-4">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 flex items-center justify-center mr-3 shadow-lg">
-                    <span className="text-white">🏥</span>
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-orange-400 to-pink-500 flex items-center justify-center mr-3 shadow-xl">
+                    <span className="text-white text-xl">🏥</span>
                   </div>
-                  <span className="font-bold text-slate-800">
-                    Healthcare Partners:
+                  <span className="font-black text-gray-900 text-lg">
+                    Healthcare Partners
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3">
                   {item.items.map((company, i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-slate-50 to-slate-100 text-slate-700 hover:shadow-md hover:scale-105 transition-all duration-300"
+                      className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold bg-gradient-to-r from-gray-50 to-gray-100 text-gray-800 hover:shadow-xl hover:scale-105 transition-all duration-300"
                     >
-                      <span className="text-lg">{getHealthIcon(company)}</span>
+                      <span className="text-xl">{getHealthIcon(company)}</span>
                       <span>{company}</span>
                     </div>
                   ))}
@@ -720,21 +686,21 @@ export default function Nav({ navigation: navProp }) {
             {item.Medicines && (
               <div>
                 <div className="flex items-center mb-4">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-emerald-400 to-green-500 flex items-center justify-center mr-3 shadow-lg">
-                    <span className="text-white">💊</span>
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-emerald-400 to-green-500 flex items-center justify-center mr-3 shadow-xl">
+                    <span className="text-white text-xl">💊</span>
                   </div>
-                  <span className="font-bold text-slate-800">
-                    Medicine Catalog:
+                  <span className="font-black text-gray-900 text-lg">
+                    Medicine Catalog
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {item.Medicines.map((med, i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-700 hover:shadow-md hover:scale-105 transition-all duration-300"
+                      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-800 hover:shadow-xl hover:scale-105 transition-all duration-300"
                     >
-                      <div className="w-8 h-8 rounded-xl bg-gradient-to-r from-emerald-400 to-green-500 flex items-center justify-center shadow-md">
-                        <span className="text-white text-lg">💊</span>
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 flex items-center justify-center shadow-lg">
+                        <span className="text-white text-xl">💊</span>
                       </div>
                       <span className="flex-1">{med}</span>
                     </div>
@@ -745,15 +711,14 @@ export default function Nav({ navigation: navProp }) {
           </div>
         )}
 
-        {/* Interactive bottom bar */}
-        <div className="mt-6 pt-4 border-t border-slate-200/50">
+        <div className="mt-6 pt-5 border-t-2 border-gray-200">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-              <span>Live inventory</span>
+            <div className="flex items-center gap-2 text-sm text-gray-600 font-semibold">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+              <span>Live Inventory Available</span>
             </div>
-            <button className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
-              Contact Now
+            <button className="px-6 py-3 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 text-white rounded-2xl font-black shadow-2xl hover:shadow-2xl hover:scale-110 transition-all duration-300">
+              Contact Now →
             </button>
           </div>
         </div>
@@ -762,27 +727,23 @@ export default function Nav({ navigation: navProp }) {
   );
 
   return (
-    <div className="bg-slate-50 min-h-screen">
+    <div className="bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50">
       <div className="max-w-6xl mx-auto px-6">
-        {/* Enhanced Header with floating effects */}
         <div className="flex items-center justify-between py-8">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="w-24 h-10 flex items-center justify-center shadow-xl">
-                  <Logo />
-                </div>
+          <div className="flex items-center gap-5">
+            <div className="relative">
+              <div className="w-28 h-12 flex items-center justify-center">
+                <Logo />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-cyan-600 bg-clip-text text-transparent">
-                  Meditrap
-                </h1>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-
-                  <div className="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full font-semibold">
-                    LIVE
-                  </div>
+            </div>
+            <div>
+              <h1 className="text-3xl font-black bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 bg-clip-text text-transparent">
+                Meditrap
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                <div className="px-3 py-1 bg-gradient-to-r from-emerald-400 to-green-500 text-white text-xs rounded-full font-bold shadow-lg">
+                  LIVE
                 </div>
               </div>
             </div>
@@ -791,7 +752,7 @@ export default function Nav({ navigation: navProp }) {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsMenuOpen(true)}
-              className="w-12 h-12 bg-white rounded-2xl shadow-lg flex items-center justify-center border border-slate-200 hover:shadow-xl hover:scale-105 transition-all duration-200"
+              className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center border-2 border-violet-200 hover:shadow-2xl hover:scale-110 transition-all duration-200"
               aria-label="open menu"
             >
               <Icon>☰</Icon>
@@ -799,68 +760,71 @@ export default function Nav({ navigation: navProp }) {
           </div>
         </div>
 
-        {/* Mobile menu modal */}
         {isMenuOpen && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50">
-            <div className="bg-white rounded-3xl p-6 w-full max-w-md mx-4 max-h-[80vh] overflow-auto">
-              <div className="flex justify-end">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl p-8 w-full max-w-md mx-4 max-h-[85vh] overflow-auto shadow-2xl border-2 border-violet-200">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-black text-gray-900">Menu</h2>
                 <button
                   onClick={() => setIsMenuOpen(false)}
-                  className="p-2 rounded-2xl bg-slate-100"
+                  className="p-3 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 hover:shadow-lg transition-all"
                   aria-label="close menu"
                 >
                   <Icon>✖</Icon>
                 </button>
               </div>
 
-              <nav className="mt-4 space-y-2">
+              <nav className="space-y-3">
                 {navLinks.map((link, i) => (
                   <button
                     key={i}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-50 hover:bg-slate-100"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      navigation.navigate(link.path);
+                    }}
+                    className="w-full text-left flex items-center gap-4 px-5 py-4 rounded-2xl bg-gradient-to-r from-violet-50 to-purple-50 hover:from-violet-100 hover:to-purple-100 border-2 border-violet-200 transition-all hover:scale-105 hover:shadow-lg"
                   >
-                    <span className="text-lg">{link.icon}</span>
-                    <span className="font-medium text-slate-700">
+                    <span className="text-2xl">{link.icon}</span>
+                    <span className="font-bold text-gray-900 text-lg">
                       {link.label}
                     </span>
                   </button>
                 ))}
               </nav>
 
-              <div className="mt-6 pt-4 border-t border-slate-100">
+              <div className="mt-8 pt-6 border-t-2 border-gray-200">
                 {userToken ? (
                   <button
                     onClick={() => {
                       setIsMenuOpen(false);
-                      navigation.navigate("profile");
+                      navigation.navigate("/profile");
                     }}
-                    className="w-full flex items-center gap-3 justify-center px-4 py-3 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg"
+                    className="w-full flex items-center gap-3 justify-center px-6 py-4 rounded-2xl bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 text-white shadow-2xl hover:shadow-2xl hover:scale-105 transition-all font-black text-lg"
                   >
                     <Icon>👤</Icon>
-                    <span className="font-semibold">Profile</span>
+                    <span>My Profile</span>
                   </button>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <button
                       onClick={() => {
                         setIsMenuOpen(false);
-                        navigation.navigate("login");
+                        navigation.navigate("/login");
                       }}
-                      className="w-full flex items-center gap-3 justify-center px-4 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg"
+                      className="w-full flex items-center gap-3 justify-center px-6 py-4 rounded-2xl bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 text-white shadow-2xl hover:shadow-2xl hover:scale-105 transition-all font-black text-lg"
                     >
                       <Icon>🔐</Icon>
-                      <span className="font-semibold">Login</span>
+                      <span>Login</span>
                     </button>
                     <button
                       onClick={() => {
                         setIsMenuOpen(false);
-                        navigation.navigate("signup");
+                        navigation.navigate("/signup");
                       }}
-                      className="w-full flex items-center gap-3 justify-center px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg"
+                      className="w-full flex items-center gap-3 justify-center px-6 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 text-white shadow-2xl hover:shadow-2xl hover:scale-105 transition-all font-black text-lg"
                     >
                       <Icon>👤➕</Icon>
-                      <span className="font-semibold">Sign Up</span>
+                      <span>Sign Up</span>
                     </button>
                   </div>
                 )}
@@ -869,25 +833,24 @@ export default function Nav({ navigation: navProp }) {
           </div>
         )}
 
-        {/* Search section */}
-        <div className="mt-6 bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+        <div className="mt-8 bg-white rounded-3xl p-8 shadow-2xl border-2 border-violet-200">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
-              <div className="flex items-center gap-3 bg-slate-50 rounded-2xl px-4 py-4 border border-slate-200">
-                <div className="w-6 h-6 rounded-full bg-cyan-100 flex items-center justify-center">
-                  <span className="text-cyan-600 text-sm">🔍</span>
+              <div className="flex items-center gap-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-2xl px-5 py-4 border-2 border-violet-200">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 flex items-center justify-center shadow-lg">
+                  <span className="text-white text-lg">🔍</span>
                 </div>
                 <input
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   onFocus={() => setShowSuggestions(true)}
-                  className="flex-1 bg-transparent outline-none text-slate-800 placeholder-slate-500"
+                  className="flex-1 bg-transparent outline-none text-gray-900 placeholder-gray-500 font-semibold"
                   placeholder={`Search for ${filterType}...`}
                 />
                 {searchQuery && (
                   <button
                     onClick={clearResults}
-                    className="p-1 rounded-lg hover:bg-slate-200"
+                    className="p-2 rounded-xl hover:bg-violet-100 transition-all"
                   >
                     <Icon>✖</Icon>
                   </button>
@@ -898,47 +861,46 @@ export default function Nav({ navigation: navProp }) {
             <div>
               <button
                 onClick={() => setShowFilterModal(true)}
-                className="flex items-center gap-3 bg-slate-50 px-4 py-4 rounded-2xl border border-slate-200 hover:bg-slate-100"
+                className="flex items-center gap-3 bg-gradient-to-r from-violet-50 to-purple-50 px-6 py-4 rounded-2xl border-2 border-violet-200 hover:from-violet-100 hover:to-purple-100 transition-all hover:scale-105"
               >
-                <span className="text-lg">
+                <span className="text-2xl">
                   {filterOptions.find((opt) => opt.value === filterType)?.icon}
                 </span>
-                <span className="font-medium text-slate-700">
+                <span className="font-bold text-gray-900">
                   {filterOptions.find((opt) => opt.value === filterType)?.label}
                 </span>
-                <span className="text-sm text-slate-500">▼</span>
+                <span className="text-sm text-gray-600">▼</span>
               </button>
             </div>
           </div>
 
-          {/* Filter modal */}
           {showFilterModal && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
               <div
-                className="bg-white rounded-3xl p-6 w-full max-w-md mx-4"
+                className="bg-white rounded-3xl p-8 w-full max-w-md mx-4 shadow-2xl border-2 border-violet-200"
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="text-lg font-bold text-center mb-4 text-slate-800">
+                <h3 className="text-2xl font-black text-center mb-6 text-gray-900">
                   Select Search Category
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {filterOptions.map((opt) => (
                     <button
                       key={opt.value}
                       onClick={() => handleFilterTypeChange(opt.value)}
-                      className={`w-full text-left px-4 py-4 rounded-2xl ${
+                      className={`w-full text-left px-6 py-5 rounded-2xl transition-all hover:scale-105 ${
                         filterType === opt.value
-                          ? "bg-cyan-100 border-2 border-cyan-300"
-                          : "bg-slate-50 hover:bg-slate-100"
+                          ? "bg-gradient-to-r from-violet-400 to-purple-400 border-2 border-violet-500 shadow-2xl"
+                          : "bg-gradient-to-r from-violet-50 to-purple-50 hover:from-violet-100 hover:to-purple-100 border-2 border-violet-200"
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg">{opt.icon}</span>
+                      <div className="flex items-center gap-4">
+                        <span className="text-2xl">{opt.icon}</span>
                         <span
-                          className={`font-medium ${
+                          className={`font-black text-lg ${
                             filterType === opt.value
-                              ? "text-cyan-800"
-                              : "text-slate-700"
+                              ? "text-white"
+                              : "text-gray-900"
                           }`}
                         >
                           {opt.label}
@@ -947,10 +909,10 @@ export default function Nav({ navigation: navProp }) {
                     </button>
                   ))}
                 </div>
-                <div className="mt-6 text-center">
+                <div className="mt-8 text-center">
                   <button
                     onClick={() => setShowFilterModal(false)}
-                    className="px-6 py-2 rounded-2xl bg-slate-200 text-slate-700 hover:bg-slate-300"
+                    className="px-8 py-3 rounded-2xl bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 hover:from-gray-300 hover:to-gray-400 font-bold transition-all"
                   >
                     Close
                   </button>
@@ -959,13 +921,12 @@ export default function Nav({ navigation: navProp }) {
             </div>
           )}
 
-          {/* Suggestions */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="mt-4 bg-white border border-slate-200 rounded-2xl shadow-lg max-h-72 overflow-auto">
-              <div className="px-4 py-3 text-sm text-slate-500 border-b border-slate-100 bg-slate-50 rounded-t-2xl">
+            <div className="mt-6 bg-white border-2 border-violet-200 rounded-2xl shadow-2xl max-h-96 overflow-auto">
+              <div className="px-6 py-4 text-sm text-gray-600 border-b-2 border-violet-100 bg-gradient-to-r from-violet-50 to-purple-50 rounded-t-2xl font-bold">
                 Click on any suggestion to see detailed results
               </div>
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y-2 divide-violet-100">
                 {suggestions.map((sug, i) => {
                   let phone = null;
                   let additionalInfo = "";
@@ -1000,10 +961,10 @@ export default function Nav({ navigation: navProp }) {
                     <button
                       key={i}
                       onClick={() => handleSuggestionClick(sug)}
-                      className="w-full text-left px-4 py-4 flex items-center gap-3 hover:bg-slate-50"
+                      className="w-full text-left px-6 py-5 flex items-center gap-4 hover:bg-gradient-to-r hover:from-violet-50 hover:to-purple-50 transition-all"
                     >
-                      <div className="w-10 h-10 rounded-2xl bg-cyan-100 flex items-center justify-center">
-                        <span className="text-cyan-600">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center shadow-lg">
+                        <span className="text-white text-xl">
                           {filterType === "medicine"
                             ? "💊"
                             : filterType === "company"
@@ -1012,19 +973,19 @@ export default function Nav({ navigation: navProp }) {
                         </span>
                       </div>
                       <div className="flex-1">
-                        <div className="font-medium text-slate-700">{sug}</div>
+                        <div className="font-bold text-gray-900 text-base">{sug}</div>
                         {additionalInfo && (
-                          <div className="text-sm text-slate-500">
+                          <div className="text-sm text-gray-600 font-semibold">
                             {additionalInfo}
                           </div>
                         )}
                       </div>
                       {phone && (
-                        <div className="text-sm text-slate-600 font-semibold">
+                        <div className="text-sm text-gray-700 font-bold">
                           {phone}
                         </div>
                       )}
-                      <div className="text-cyan-500 ml-2">→</div>
+                      <div className="text-violet-600 ml-2 text-xl">→</div>
                     </button>
                   );
                 })}
@@ -1033,35 +994,29 @@ export default function Nav({ navigation: navProp }) {
           )}
         </div>
 
-        {/* Debug / counts */}
-        <div className="px-6 pt-4 text-sm text-slate-500">
-          Debug: sectionData = {sectionData.length} medical suppliers
-        </div>
-
-        {/* Results */}
         {selectedStockists.length > 0 && (
-          <div className="px-6 mt-6">
+          <div className="mt-8">
             {isLoading && (
-              <div className="flex items-center gap-3 bg-cyan-100 p-4 rounded-2xl mb-4">
-                <div className="animate-spin border-2 border-cyan-400 rounded-full w-5 h-5 border-t-transparent" />
-                <div className="text-cyan-700 font-medium">
+              <div className="flex items-center gap-4 bg-gradient-to-r from-cyan-100 to-blue-100 p-6 rounded-2xl mb-6 shadow-lg border-2 border-cyan-300">
+                <div className="animate-spin border-4 border-cyan-500 rounded-full w-8 h-8 border-t-transparent" />
+                <div className="text-cyan-800 font-black text-lg">
                   Loading results...
                 </div>
               </div>
             )}
 
             {searchQuery && (
-              <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-2xl p-6 mb-6 border border-cyan-200">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-cyan-100 flex items-center justify-center">
-                      <span className="text-2xl text-cyan-600">🔍</span>
+              <div className="bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400 rounded-3xl p-8 mb-8 shadow-2xl border-2 border-violet-500">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-5">
+                    <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-xl">
+                      <span className="text-4xl">🔍</span>
                     </div>
                     <div>
-                      <div className="font-bold text-cyan-800 text-lg">
+                      <div className="font-black text-white text-2xl mb-1">
                         Search Results for "{searchQuery}"
                       </div>
-                      <div className="text-sm text-slate-600">
+                      <div className="text-sm text-violet-100 font-bold">
                         {selectedStockists.length} medical supplier
                         {selectedStockists.length > 1 ? "s" : ""} found
                       </div>
@@ -1073,7 +1028,7 @@ export default function Nav({ navigation: navProp }) {
                         setSearchQuery("");
                         handleFilterTypeChange(filterType);
                       }}
-                      className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-2xl font-semibold shadow-lg"
+                      className="px-6 py-3 bg-white text-violet-700 rounded-2xl font-black shadow-xl hover:shadow-2xl hover:scale-110 transition-all"
                     >
                       Show All{" "}
                       {filterType === "stockist"
@@ -1087,9 +1042,9 @@ export default function Nav({ navigation: navProp }) {
               </div>
             )}
 
-            <div className="mb-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-slate-800">
+            <div className="mb-8">
+              <div className="text-center mb-6">
+                <h2 className="text-3xl font-black bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 bg-clip-text text-transparent">
                   {searchQuery
                     ? `Search Results for "${searchQuery}"`
                     : filterType === "stockist"
@@ -1098,7 +1053,7 @@ export default function Nav({ navigation: navProp }) {
                     ? "All Healthcare Companies"
                     : "All Medicines"}
                 </h2>
-                <div className="text-sm text-slate-500 mt-2">
+                <div className="text-sm text-gray-600 mt-3 font-semibold">
                   {searchQuery
                     ? `Found ${selectedStockists.length} result${
                         selectedStockists.length > 1 ? "s" : ""
@@ -1106,10 +1061,10 @@ export default function Nav({ navigation: navProp }) {
                     : `Showing ${selectedStockists.length} medical suppliers`}
                 </div>
               </div>
-              <div className="flex justify-end mt-4">
+              <div className="flex justify-end">
                 <button
                   onClick={clearResults}
-                  className="px-4 py-2 bg-slate-200 text-slate-700 rounded-2xl hover:bg-slate-300"
+                  className="px-6 py-3 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 rounded-2xl hover:from-gray-300 hover:to-gray-400 font-bold transition-all"
                 >
                   Clear Results
                 </button>
@@ -1122,8 +1077,7 @@ export default function Nav({ navigation: navProp }) {
           </div>
         )}
 
-        {/* Quick stats */}
-        <div className="px-6 mt-8 pb-12"></div>
+        <div className="pb-12"></div>
       </div>
     </div>
   );

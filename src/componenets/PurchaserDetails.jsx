@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
-import { apiUrl } from "./config/api";
+import { fetchJson, apiUrl } from "./config/api";
 import API_BASE from "./config/api";
 
 // small helper to resolve candidate URLs and provide fallback
@@ -25,8 +24,8 @@ const PurchaserDetails = () => {
     const fetchPurchaser = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(apiUrl(`/api/purchaser/${id}`));
-        setPurchaser(res.data.data);
+        const res = await fetchJson(`/purchaser/${id}`);
+        setPurchaser(res.data || res);
         setError(null);
       } catch (err) {
         setError("Failed to fetch purchaser details");

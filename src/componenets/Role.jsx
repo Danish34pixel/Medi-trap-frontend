@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-// Mock Logo component for demonstration
+
 const Logo = ({ className = "" }) => (
   <div className={`${className} rounded-lg flex items-center justify-center`}>
     <span className="text-white font-bold text-xl">
@@ -13,8 +13,8 @@ const Logo = ({ className = "" }) => (
 
 export default function SelectRolePage() {
   const navigate = useNavigate();
-  const [selectedRole, setSelectedRole] = useState("Purchaser");
   const [isHovered, setIsHovered] = useState(null);
+  // Remove isMobile if not used
 
   const roles = [
     {
@@ -47,29 +47,18 @@ export default function SelectRolePage() {
   ];
 
   const handleRoleSelect = (roleId) => {
-    setSelectedRole(roleId);
     localStorage.setItem("selectedRole", roleId);
-    if (roleId === "Staff") {
-      navigate("/staffs");
-      return;
-    }
-  };
-
-  const handleConfirm = () => {
-    localStorage.setItem("confirmedRole", selectedRole);
-    if (selectedRole === "Purchaser") {
-      navigate("/purchaser");
-      return;
-    }
-    if (selectedRole === "Stockist") {
+    if (roleId === "Purchaser") {
+      navigate("/purchaser-signup");
+    } else if (roleId === "Stockist") {
       navigate("/adminCreateStockist");
-      return;
-    }
-    if (selectedRole === "Medical Owner") {
+    } else if (roleId === "Medical Owner") {
       navigate("/signup");
-      return;
+    } else if (roleId === "Staff") {
+      navigate("/staffs");
+    } else {
+      navigate("/dashboard");
     }
-    navigate("/dashboard");
   };
 
   return (
@@ -96,18 +85,15 @@ export default function SelectRolePage() {
             <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 via-blue-600 to-indigo-600 bg-clip-text text-transparent mb-3 tracking-tight">
               Select Your Role
             </h1>
-            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
-          </div>
-          <p className="text-gray-600 text-base mt-4 font-medium">
-            Choose your primary function to get started
-          </p>
+            </div>
+          
         </div>
 
         {/* Enhanced Role Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-14">
           {roles.map((role, index) => {
             const IconComponent = role.icon;
-            const isActive = selectedRole === role.id;
+            const isActive = isHovered === role.id;
             const isHovering = isHovered === role.id;
 
             return (
@@ -116,8 +102,13 @@ export default function SelectRolePage() {
                 onClick={() => handleRoleSelect(role.id)}
                 onMouseEnter={() => setIsHovered(role.id)}
                 onMouseLeave={() => setIsHovered(null)}
+                onTouchStart={() => setIsHovered(role.id)}
+                onTouchEnd={() => {
+                  setIsHovered(null);
+                  handleRoleSelect(role.id);
+                }}
                 className={`
-                  group relative flex flex-col items-center p-8 rounded-3xl cursor-pointer transition-all duration-500 transform hover:scale-110 hover:-translate-y-2
+                  group relative flex flex-col items-center p-8 rounded-3xl cursor-pointer transition-all duration-500 transform hover:scale-110 hover:-translate-y-2 active:scale-105 active:-translate-y-1
                   ${
                     isActive
                       ? "bg-gradient-to-br from-white/90 to-white/70 border-2 border-blue-400/60 shadow-2xl shadow-blue-500/30"
@@ -235,35 +226,7 @@ export default function SelectRolePage() {
           })}
         </div>
 
-        {/* Enhanced Confirm Button */}
-        <div className="text-center mb-8">
-          <button
-            onClick={handleConfirm}
-            className="group relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-800 text-white font-bold py-5 px-16 rounded-full transition-all duration-500 transform hover:scale-110 hover:shadow-2xl hover:shadow-blue-500/40 min-w-[220px] overflow-hidden text-lg tracking-wide"
-          >
-            {/* Enhanced shine effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-
-            {/* Pulsing background */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/50 to-purple-600/50 rounded-full animate-pulse"></div>
-
-            {/* Button content */}
-            <span className="relative flex items-center justify-center gap-3">
-              <span>CONFIRM ROLE</span>
-              <div className="w-2 h-2 bg-white rounded-full animate-bounce group-hover:animate-pulse"></div>
-            </span>
-
-            {/* Button border animation */}
-            <div className="absolute inset-0 rounded-full border-2 border-white/20 group-hover:border-white/40 transition-colors duration-300"></div>
-          </button>
-        </div>
-
-        {/* Progress indicator */}
-        <div className="flex justify-center space-x-2">
-          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-          <div className="w-2 h-2 bg-blue-400/60 rounded-full animate-pulse delay-200"></div>
-          <div className="w-2 h-2 bg-blue-300/40 rounded-full animate-pulse delay-400"></div>
-        </div>
+       
       </div>
     </div>
   );
