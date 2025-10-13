@@ -26,18 +26,11 @@ const PurchaserLogin = () => {
         localStorage.setItem("token", res.token);
         localStorage.setItem("user", JSON.stringify(res.user));
         // Fetch the Purchaser by email to get the correct ID
-        try {
-          const purchaserRes = await postJson("/purchaser/find-by-email", { email });
-          const purchaser = purchaserRes.data || purchaserRes.purchaser || purchaserRes;
-          const purchaserId = purchaser._id || purchaser.id;
-          if (purchaserId) {
-            navigate(`/purchaser/${purchaserId}`);
-            return;
-          }
-        } catch (e) {
-          // fallback: go to dashboard or error
+        // If login response contains purchaser info, redirect to PurchaserDetails
+        if (res && res.user && res.user.role === "purchaser" && res.user._id) {
+          navigate(`/purchaser/${res.user._id}`);
+          return;
         }
-        navigate("/dashboard");
       } else {
         setError("Invalid response from server. Please try again.");
       }
