@@ -33,6 +33,38 @@ export default function Dashboard() {
       {/* Nav and Screen are expected to be React components (web). 
           They will receive a `navigation` prop similar to React Native. */}
       <Nav navigation={navigation} />
+      {/* Special 'Add Admin' button for a specific email */}
+      {(() => {
+        try {
+          const userStr = localStorage.getItem("user");
+          if (!userStr) return null;
+          const user = JSON.parse(userStr);
+          const email = (user && (user.email || "")).toString().toLowerCase();
+          if (email === "danishkhaannn34@gmail.com") {
+            return (
+              <div className="p-6">
+                <button
+                  onClick={() => {
+                    try {
+                      navigation && navigation.navigate
+                        ? navigation.navigate("/adminpanel")
+                        : (window.location.href = "/adminpanel");
+                    } catch (e) {
+                      window.location.href = "/adminpanel";
+                    }
+                  }}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 py-2 rounded"
+                >
+                  Add Admin
+                </button>
+              </div>
+            );
+          }
+        } catch (e) {
+          return null;
+        }
+        return null;
+      })()}
       <Screen navigation={navigation} />
     </div>
   );

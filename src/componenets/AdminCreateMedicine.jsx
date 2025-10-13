@@ -69,7 +69,11 @@ export default function AdminCreateMedicine() {
     e && e.preventDefault();
     setLoading(true);
     try {
-      const token = getCookie("token");
+      const token =
+        getCookie("token") ||
+        (typeof localStorage !== "undefined"
+          ? localStorage.getItem("token")
+          : null);
       const res = await fetch(apiUrl("/api/medicine/quick"), {
         method: "POST",
         headers: {

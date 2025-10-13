@@ -63,13 +63,60 @@ export default function AdminCreateCompany() {
   const submit = async (e) => {
     e && e.preventDefault();
     setLoading(true);
+    try {
+      const token =
+        typeof document !== "undefined" && document.cookie.includes("token=")
+          ? null
+          : null;
 
-    // Simulate API call
-    setTimeout(() => {
-      alert("Success — company created");
+      // Prefer cookie token, fall back to localStorage
+      const cookieToken = (() => {
+        try {
+          const m = document.cookie.match(/(?:^|; )token=([^;]+)/);
+          return m ? decodeURIComponent(m[1]) : null;
+        } catch (e) {
+          return null;
+        }
+      })();
+
+      const authToken =
+        cookieToken ||
+        (typeof localStorage !== "undefined"
+          ? localStorage.getItem("token")
+          : null);
+
+      const payload = {
+        name: form.name,
+        stockists: form.stockists,
+      };
+
+      const headers = {
+        "Content-Type": "application/json",
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+      };
+
+      const res = await axios.post(apiUrl("/api/company"), payload, {
+        headers,
+      });
+      if (res && res.status >= 200 && res.status < 300) {
+        alert("Success — company created");
+        // navigate back if using react-router
+        try {
+          window.history.back();
+        } catch (e) {}
+      } else {
+        alert(
+          (res && res.data && res.data.message) || "Failed to create company"
+        );
+      }
+    } catch (err) {
+      console.error("Create company failed:", err);
+      alert(
+        err.response?.data?.message || err.message || "Failed to create company"
+      );
+    } finally {
       setLoading(false);
-      // Navigate back would happen here
-    }, 2000);
+    }
   };
 
   const StockistCard = ({ stockist, isSelected, onToggle }) => (

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import IdentityCard from "../stockistComponents/IdentityCard";
 import StockistApprovals from "./StockistApprovals";
+import { motion } from "framer-motion";
 
 // Enhanced Avatar with modern gradients
 const Avatar = ({ name, size = 48, className = "" }) => {
@@ -56,7 +57,10 @@ const LoadingSkeleton = () => (
     <div className="h-56 bg-gradient-to-br from-blue-200 via-cyan-200 to-teal-200 rounded-3xl" />
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {[...Array(3)].map((_, i) => (
-        <div key={i} className="h-40 bg-gradient-to-br from-pink-200 via-rose-200 to-red-200 rounded-3xl" />
+        <div
+          key={i}
+          className="h-40 bg-gradient-to-br from-pink-200 via-rose-200 to-red-200 rounded-3xl"
+        />
       ))}
     </div>
   </div>
@@ -82,13 +86,19 @@ const ErrorMessage = ({ error, onRetry }) => (
   </div>
 );
 
-const CompanyCard = ({ company }) => {
+const CompanyCard = ({ company, productCount = 0 }) => {
   const goToCompany = () => {
     if (company?._id) window.location.href = `/company/${company._id}/products`;
   };
 
   return (
-    <div className="bg-gradient-to-br from-white to-orange-50 rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-orange-100 group hover:scale-105 transform">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="bg-gradient-to-br from-white to-orange-50 rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-orange-100 group transform"
+    >
       <div className="flex items-start justify-between mb-5">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 via-amber-500 to-yellow-500 flex items-center justify-center shadow-xl group-hover:rotate-6 transition-transform">
@@ -99,7 +109,7 @@ const CompanyCard = ({ company }) => {
               {company.name}
             </h3>
             <p className="text-sm text-gray-600 font-semibold">
-              {company.products ?? 0} products
+              {productCount} products
             </p>
           </div>
         </div>
@@ -110,12 +120,18 @@ const CompanyCard = ({ company }) => {
       >
         {company?._id ? "View Details →" : "No Details"}
       </button>
-    </div>
+    </motion.div>
   );
 };
 
 const MedicineCard = ({ medicine }) => (
-  <div className="bg-gradient-to-br from-white to-blue-50 rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-blue-100 group hover:scale-105 transform">
+  <motion.div
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    whileHover={{ scale: 1.02 }}
+    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+    className="bg-gradient-to-br from-white to-blue-50 rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-blue-100 group transform"
+  >
     <div className="flex items-start justify-between mb-4">
       <div className="flex items-center gap-4">
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 flex items-center justify-center shadow-xl group-hover:rotate-6 transition-transform">
@@ -125,21 +141,22 @@ const MedicineCard = ({ medicine }) => (
           <h3 className="font-black text-gray-900 text-lg mb-1">
             {medicine.name}
           </h3>
-          <p className="text-sm text-gray-600 font-semibold">{medicine.company || ""}</p>
+          <p className="text-sm text-gray-600 font-semibold">
+            {medicine.company?.name || medicine.companyName || ""}
+          </p>
         </div>
       </div>
     </div>
     <div className="flex items-center justify-between">
-      <div className="px-5 py-2.5 bg-gradient-to-r from-emerald-400 to-green-500 rounded-xl shadow-md">
-        <span className="text-white font-black text-base">
-          {medicine.price || "N/A"}
-        </span>
-      </div>
-      <span className="text-sm text-gray-700 font-bold bg-white px-4 py-2 rounded-xl shadow-sm">
-        Stock: {medicine.stock ?? 0}
-      </span>
+      {medicine.price ? (
+        <div className="px-5 py-2.5 bg-gradient-to-r from-emerald-400 to-green-500 rounded-xl shadow-md">
+          <span className="text-white font-black text-base">
+            {medicine.price}
+          </span>
+        </div>
+      ) : null}
     </div>
-  </div>
+  </motion.div>
 );
 
 const StaffCard = ({ staff }) => {
@@ -150,7 +167,11 @@ const StaffCard = ({ staff }) => {
   return (
     <div className="bg-gradient-to-br from-white to-purple-50 rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-purple-100 group hover:scale-105 transform">
       <div className="flex items-center gap-4 mb-5">
-        <Avatar name={staff.fullName || staff.name || "S"} size={64} className="group-hover:scale-110 transition-transform" />
+        <Avatar
+          name={staff.fullName || staff.name || "S"}
+          size={64}
+          className="group-hover:scale-110 transition-transform"
+        />
         <div className="flex-1">
           <h3 className="font-black text-gray-900 text-lg mb-1">
             {staff.fullName || staff.name}
@@ -158,7 +179,9 @@ const StaffCard = ({ staff }) => {
           <p className="text-sm text-purple-600 font-bold">{staff.role}</p>
         </div>
       </div>
-      <div className="text-sm text-gray-700 mb-4 font-semibold bg-white px-4 py-2 rounded-xl">{staff.phone || "No phone"}</div>
+      <div className="text-sm text-gray-700 mb-4 font-semibold bg-white px-4 py-2 rounded-xl">
+        {staff.phone || "No phone"}
+      </div>
       <button
         onClick={goToStaff}
         className="w-full py-3.5 bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white rounded-2xl text-sm font-bold hover:shadow-xl transform hover:scale-105 transition-all"
@@ -176,8 +199,12 @@ const StatsCard = ({ icon: Icon, label, value, gradient }) => (
     >
       <Icon className="w-8 h-8 text-white" />
     </div>
-    <div className="text-4xl font-black bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">{value}</div>
-    <div className="text-sm text-gray-600 font-bold uppercase tracking-wide">{label}</div>
+    <div className="text-4xl font-black bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+      {value}
+    </div>
+    <div className="text-sm text-gray-600 font-bold uppercase tracking-wide">
+      {label}
+    </div>
   </div>
 );
 
@@ -194,8 +221,6 @@ export default function PharmacyStockist() {
   const [activeTab, setActiveTab] = useState("medicines");
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const [showDebug, setShowDebug] = useState(false);
-  const [rawResponses, setRawResponses] = useState({});
 
   const stats = useMemo(
     () => ({
@@ -480,15 +505,41 @@ export default function PharmacyStockist() {
       );
     }
 
+    const companyProductCounts = (function () {
+      const map = new Map();
+      try {
+        (medicinesList || []).forEach((med) => {
+          // med.company may be an object, id string, or companyName
+          const compId = med.company?._id || med.company?.id || med.company;
+          if (compId) {
+            const k = String(compId);
+            map.set(k, (map.get(k) || 0) + 1);
+          } else if (med.companyName) {
+            const k = `name:${String(med.companyName).toLowerCase()}`;
+            map.set(k, (map.get(k) || 0) + 1);
+          }
+        });
+      } catch {}
+      return map;
+    })();
+
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {activeTab === "companies" &&
-          data.map((company) => (
-            <CompanyCard
-              key={company._id || company.id || company.name}
-              company={company}
-            />
-          ))}
+          data.map((company) => {
+            const idKey = company._id || company.id;
+            const nameKey = `name:${(company.name || "").toLowerCase()}`;
+            const count = idKey
+              ? companyProductCounts.get(String(idKey)) || 0
+              : companyProductCounts.get(nameKey) || 0;
+            return (
+              <CompanyCard
+                key={company._id || company.id || company.name}
+                company={company}
+                productCount={count}
+              />
+            );
+          })}
         {activeTab === "medicines" &&
           data.map((medicine) => (
             <MedicineCard
@@ -522,10 +573,13 @@ export default function PharmacyStockist() {
     );
 
   return (
-    <div className="min-h-screen p-2 lg:p-8 bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50">
+    <div
+      className="min-h-screen p-2 lg:p-8 bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 overflow-x-hidden"
+      style={{ touchAction: "pan-y" }}
+    >
       <div className="max-w-7xl mx-auto">
         {/* Header Card */}
-        <div className="bg-gradient-to-br from-white to-violet-50 rounded-3xl shadow-2xl p-8 border-2 border-violet-100">            
+        <div className="bg-gradient-to-br from-white to-violet-50 rounded-3xl shadow-2xl p-8 border-2 border-violet-100">
           <div className="flex items-center gap-6">
             <Avatar name={displayName} size={80} />
             <div className="flex-1">
@@ -545,21 +599,28 @@ export default function PharmacyStockist() {
         </div>
 
         {/* ID Card */}
-        <IdentityCard
-          stockist={
-            stockist
-              ? {
-                  ...stockist,
-                  contactPerson:
-                    stockist.contactPerson ||
-                    stockist.medicalName ||
-                    displayName,
-                }
-              : stockist
-          }
-          qrDataUrl={qrDataUrl}
-          onPrint={() => window.print()}
-        />
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ scale: 1.01 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+        >
+          <IdentityCard
+            stockist={
+              stockist
+                ? {
+                    ...stockist,
+                    contactPerson:
+                      stockist.contactPerson ||
+                      stockist.medicalName ||
+                      displayName,
+                  }
+                : stockist
+            }
+            qrDataUrl={qrDataUrl}
+            onPrint={() => window.print()}
+          />
+        </motion.div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -603,7 +664,9 @@ export default function PharmacyStockist() {
                     <span>{label}</span>
                     <span
                       className={`text-xs px-3 py-1 rounded-xl font-black ${
-                        activeTab === key ? "bg-white/30" : "bg-white text-gray-700"
+                        activeTab === key
+                          ? "bg-white/30"
+                          : "bg-white text-gray-700"
                       }`}
                     >
                       {filteredData[key].length}
@@ -662,20 +725,7 @@ export default function PharmacyStockist() {
           <div className="p-8">{renderTabContent()}</div>
         </div>
 
-        {/* Debug Section */}
-        <div className="px-2">
-          <button
-            onClick={() => setShowDebug((s) => !s)}
-            className="text-sm text-gray-600 hover:text-violet-600 underline font-bold transition-colors"
-          >
-            {showDebug ? "Hide" : "Show"} debug responses
-          </button>
-          {showDebug && (
-            <pre className="mt-4 p-6 bg-gradient-to-br from-white to-gray-50 rounded-2xl border-2 border-gray-200 overflow-auto text-xs max-h-96 shadow-lg font-mono">
-              {JSON.stringify(rawResponses, null, 2)}
-            </pre>
-          )}
-        </div>
+        {/* debug UI removed */}
       </div>
     </div>
   );

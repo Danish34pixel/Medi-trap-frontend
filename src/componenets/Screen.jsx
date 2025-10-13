@@ -38,12 +38,7 @@ const Screen = ({ navigation: navProp }) => {
   const [fullscreenStockist, setFullscreenStockist] = useState(null); // index for fullscreen modal
   const [isAdmin, setIsAdmin] = useState(false);
   const [sectionData, setSectionData] = useState([]);
-  const [rawResponses, setRawResponses] = useState({
-    medicines: null,
-    stockists: null,
-    companies: null,
-  });
-  const [showDebug, setShowDebug] = useState(false);
+  // debug UI removed: rawResponses and showDebug state intentionally discarded
   const [unmatchedMedicines, setUnmatchedMedicines] = useState([]);
 
   useEffect(() => {
@@ -65,18 +60,7 @@ const Screen = ({ navigation: navProp }) => {
         const medicines = (jsonMedicine && jsonMedicine.data) || [];
         const companies = (jsonCompany && jsonCompany.data) || [];
 
-        // store raw responses for debugging UI
-        setRawResponses({
-          medicines: jsonMedicine || null,
-          stockists: jsonStockist || null,
-          companies: jsonCompany || null,
-        });
-
-        // also print a small sample to the console to inspect shapes
-        console.warn(
-          "Screen DEBUG: medicines sample ->",
-          medicines.slice(0, 5)
-        );
+        // (debug data removed in production UI)
 
         if (mounted && jsonStockist && jsonStockist.data) {
           const mapped = jsonStockist.data.map((s) => {
@@ -277,7 +261,7 @@ const Screen = ({ navigation: navProp }) => {
             };
           });
 
-          console.warn("Screen: loaded stockists ->", mapped.length);
+          // loaded stockists -> mapped.length
           setSectionData(mapped);
 
           // compute unmatched medicines (those that don't match any stockist)
@@ -349,16 +333,12 @@ const Screen = ({ navigation: navProp }) => {
             }
 
             setUnmatchedMedicines(remaining.slice(0, 50)); // store a trimmed list
-            console.warn(
-              "Screen DEBUG: autoAssigned ->",
-              autoAssigned.slice(0, 10)
-            );
           } catch (e) {
-            console.warn("Screen: error computing unmatched medicines", e);
+            // ignore unmatched computation errors in production UI
           }
         }
       } catch (err) {
-        console.warn("Screen: failed to load stockists", err);
+        // failed to load stockists (errors are intentionally silent in UI)
       }
     })();
     return () => {
@@ -374,7 +354,7 @@ const Screen = ({ navigation: navProp }) => {
       const user = JSON.parse(userStr);
       setIsAdmin(user && user.role === "admin");
     } catch (err) {
-      console.warn("Screen: error reading user from storage", err);
+      // ignore storage parse errors silently
     }
   }, []);
 
@@ -453,7 +433,7 @@ const Screen = ({ navigation: navProp }) => {
           </div>
           <div>
             <span className="text-slate-700 text-lg font-semibold">
-              Your Health Hub
+              Your Stockists
             </span>
             <div className="text-sm text-slate-500">
               Trusted Healthcare Network
@@ -509,8 +489,8 @@ const Screen = ({ navigation: navProp }) => {
       )}
 
       <div className="mb-8">
-        <h3 className="text-xl font-bold text-slate-800 mb-6">Quick Actions</h3>
-        <div className="grid grid-cols-2 gap-6">
+        {/* <h3 className="text-xl font-bold text-slate-800 mb-6">Quick Actions</h3> */}
+        {/* <div className="grid grid-cols-2 gap-6">
           <div className="bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-3xl p-6 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
@@ -537,7 +517,7 @@ const Screen = ({ navigation: navProp }) => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       <div className="flex items-center justify-between mb-6">
@@ -548,9 +528,6 @@ const Screen = ({ navigation: navProp }) => {
           <div className="text-base text-slate-600 mt-1">
             {sectionData.length} trusted stockist
             {sectionData.length !== 1 ? "s" : ""} available
-          </div>
-          <div className="text-sm text-slate-400 mt-2">
-            Debug: loaded stockists = {sectionData.length}
           </div>
         </div>
         <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl px-5 py-3 shadow-lg">
@@ -662,83 +639,17 @@ const Screen = ({ navigation: navProp }) => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/30">
       <ListHeader />
 
-      {/* Debug toggle */}
-      <div className="px-6 mb-6">
-        <button
-          onClick={() => setShowDebug((s) => !s)}
-          className="px-6 py-3 bg-gradient-to-r from-slate-100 to-slate-200 rounded-2xl text-sm text-slate-600 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
-        >
-          {showDebug ? "Hide" : "Show"} debug responses
-        </button>
-      </div>
-
-      {/* Debug panel */}
-      {showDebug && (
-        <div className="px-6 mb-8">
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-xl text-sm text-slate-700 border border-white/50">
-            <div className="mb-4 font-bold text-lg text-slate-800">
-              Raw API Responses (trimmed)
-            </div>
-            <div className="mb-4">
-              <div className="font-semibold text-slate-800 mb-2">
-                Stockists:
-              </div>
-              <pre className="whitespace-pre-wrap max-h-48 overflow-auto text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                {JSON.stringify(
-                  rawResponses.stockists && rawResponses.stockists.data
-                    ? rawResponses.stockists.data.slice(0, 5)
-                    : rawResponses.stockists,
-                  null,
-                  2
-                )}
-              </pre>
-            </div>
-            <div className="mb-4">
-              <div className="font-semibold text-slate-800 mb-2">
-                Medicines:
-              </div>
-              <pre className="whitespace-pre-wrap max-h-48 overflow-auto text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                {JSON.stringify(
-                  rawResponses.medicines && rawResponses.medicines.data
-                    ? rawResponses.medicines.data.slice(0, 5)
-                    : rawResponses.medicines,
-                  null,
-                  2
-                )}
-              </pre>
-            </div>
-            <div className="mb-4">
-              <div className="font-semibold text-slate-800 mb-2">
-                Unmatched medicines (first 50):
-              </div>
-              <pre className="whitespace-pre-wrap max-h-48 overflow-auto text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                {JSON.stringify(unmatchedMedicines, null, 2)}
-              </pre>
-            </div>
-            <div>
-              <div className="font-semibold text-slate-800 mb-2">
-                Companies:
-              </div>
-              <pre className="whitespace-pre-wrap max-h-48 overflow-auto text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                {JSON.stringify(
-                  rawResponses.companies && rawResponses.companies.data
-                    ? rawResponses.companies.data.slice(0, 5)
-                    : rawResponses.companies,
-                  null,
-                  2
-                )}
-              </pre>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* debug panel removed */}
 
       <div className="pb-32">{sectionData.map((s, i) => renderCard(s, i))}</div>
     </div>
   );
 
   // Accepts an optional section and index for reuse
-  const renderDetailView = (section = sectionData[selectedSection], idx = selectedSection) => {
+  const renderDetailView = (
+    section = sectionData[selectedSection],
+    idx = selectedSection
+  ) => {
     const currentSection = section;
     if (!currentSection) return null;
     const [color1, color2] = generateHealthColor(idx || 0);
@@ -1032,7 +943,7 @@ const Screen = ({ navigation: navProp }) => {
             <div className="w-14 h-14 rounded-3xl bg-slate-100 flex items-center justify-center mb-2 shadow-md">
               <span className="text-2xl">📋</span>
             </div>
-            <div className="text-sm font-medium">Categories</div>
+            <div className="text-sm font-medium">Demand</div>
           </button>
           <button className="flex flex-col items-center text-slate-400">
             <div className="w-14 h-14 rounded-3xl bg-slate-100 flex items-center justify-center mb-2 shadow-md">
@@ -1063,16 +974,26 @@ const Screen = ({ navigation: navProp }) => {
         </>
       ) : (
         <div
-          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9999, background: 'white', overflowY: 'auto' }}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            zIndex: 9999,
+            background: "white",
+            overflowY: "auto",
+          }}
         >
           <button
             onClick={() => setFullscreenStockist(null)}
-            style={{ position: 'absolute', top: 24, right: 24, zIndex: 10000 }}
+            style={{ position: "absolute", top: 24, right: 24, zIndex: 10000 }}
             className="bg-red-500 text-white rounded-full px-4 py-2 shadow-lg hover:bg-red-600"
           >
             Close
           </button>
-          {fullscreenStockist !== null && renderDetailViewForFullscreen(fullscreenStockist)}
+          {fullscreenStockist !== null &&
+            renderDetailViewForFullscreen(fullscreenStockist)}
         </div>
       )}
     </div>

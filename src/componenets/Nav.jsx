@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import API_BASE, { apiUrl } from "./config/api";
 import { getCookie } from "./utils/cookies";
 import {
@@ -39,6 +39,29 @@ export default function Nav({ navigation: navProp }) {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [userToken, setUserToken] = useState(null);
   const [sectionData, setSectionData] = useState([]);
+  const [openCardId, setOpenCardId] = useState(null);
+  const cardRefs = useRef({});
+  const [navOpacity, setNavOpacity] = useState(1);
+  const scrollTick = useRef(false);
+
+  useEffect(() => {
+    const onScroll = () => {
+      if (scrollTick.current) return;
+      scrollTick.current = true;
+      window.requestAnimationFrame(() => {
+        try {
+          const y = window.scrollY || window.pageYOffset || 0;
+          // fade over first 300px of scroll but never fully disappear
+          const val = Math.max(0.6, Math.min(1, 1 - y / 300));
+          setNavOpacity(val);
+        } catch (e) {}
+        scrollTick.current = false;
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // fetch stockists, medicines, companies and map into sectionData
   useEffect(() => {
@@ -446,8 +469,9 @@ export default function Nav({ navigation: navProp }) {
 
   const navLinks = [
     { label: "Home", icon: "🏠", path: "/" },
-    { label: "Dashboard", icon: "📊", path: "/dashboard" },
-    { label: "Contact", icon: "📞", path: "/contact" },
+    { label: "Demand", icon: "�", path: "/demand" },
+    { label: "Saved", icon: "�", path: "/saved" },
+    { label: "Profile", icon: "👤", path: "/profile" },
   ];
 
   useEffect(() => handleFilterTypeChange("company"), []); // eslint-disable-line
@@ -532,7 +556,14 @@ export default function Nav({ navigation: navProp }) {
   const renderStockistCard = (item, idx) => (
     <div
       key={item._id || idx}
-      className="group relative bg-gradient-to-br from-white to-blue-50 rounded-3xl p-6 mb-6 shadow-xl border-2 border-blue-100 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 overflow-hidden"
+      ref={(el) => {
+        try {
+          if (el && item && item._id) cardRefs.current[item._id] = el;
+        } catch (e) {}
+      }}
+      className={`group relative bg-gradient-to-br from-white to-blue-50 rounded-3xl p-6 mb-6 shadow-xl border-2 border-blue-100 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 overflow-hidden ${
+        openCardId === item._id ? "ring-4 ring-cyan-200 z-40" : ""
+      }`}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-cyan-50/50 via-blue-50/30 to-purple-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
@@ -717,17 +748,97 @@ export default function Nav({ navigation: navProp }) {
               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
               <span>Live Inventory Available</span>
             </div>
-            <button className="px-6 py-3 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 text-white rounded-2xl font-black shadow-2xl hover:shadow-2xl hover:scale-110 transition-all duration-300">
-              Contact Now →
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  try {
+                    const next = openCardId === item._id ? null : item._id;
+                    setOpenCardId(next);
+                    if (
+                      next &&
+                      cardRefs.current &&
+                      cardRefs.current[item._id]
+                    ) {
+                      cardRefs.current[item._id].scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                      });
+                    }
+                  } catch (e) {
+                    setOpenCardId(item._id);
+                  }
+                }}
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 text-white rounded-2xl font-black shadow-2xl hover:shadow-2xl hover:scale-110 transition-all duration-300"
+              >
+                {openCardId === item._id ? "Close" : "Contact Now →"}
+              </button>
+              <button
+                onClick={() => {
+                  // quick navigate to detail/profile page if available
+                  try {
+                    navigation.navigate(`/stockist/${item._id}`);
+                  } catch (e) {
+                    window.location.href = `/stockist/${item._id}`;
+                  }
+                }}
+                title="Open profile"
+                className="px-4 py-3 bg-white text-violet-700 rounded-2xl font-black shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
+              >
+                Profile
+              </button>
+            </div>
           </div>
+
+          {openCardId === item._id && (
+            <div className="mt-4 bg-gradient-to-r from-cyan-50 to-white p-4 rounded-2xl border border-cyan-100">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="text-sm text-gray-700 font-semibold">
+                    Contact
+                  </div>
+                  <div className="text-lg font-black text-gray-900 mt-1">
+                    {item.title}
+                  </div>
+                  <div className="text-sm text-gray-600 mt-2">
+                    {item.address}
+                  </div>
+                  <div className="text-sm text-gray-800 mt-1 font-bold">
+                    {item.phone}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <a
+                    href={`tel:${item.phone || ""}`}
+                    className="px-4 py-3 bg-emerald-500 text-white rounded-2xl font-bold text-center shadow-lg"
+                  >
+                    Call
+                  </a>
+                  <button
+                    onClick={() => {
+                      try {
+                        navigation.navigate(`/stockist/${item._id}`);
+                      } catch (e) {
+                        window.location.href = `/stockist/${item._id}`;
+                      }
+                    }}
+                    className="px-4 py-3 bg-white text-violet-700 rounded-2xl font-bold shadow hover:shadow-lg"
+                  >
+                    View Profile
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50">
+    <div
+      className="bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50"
+      style={{ opacity: navOpacity, transition: "opacity 300ms ease-out" }}
+    >
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex items-center justify-between py-8">
           <div className="flex items-center gap-5">
@@ -973,7 +1084,9 @@ export default function Nav({ navigation: navProp }) {
                         </span>
                       </div>
                       <div className="flex-1">
-                        <div className="font-bold text-gray-900 text-base">{sug}</div>
+                        <div className="font-bold text-gray-900 text-base">
+                          {sug}
+                        </div>
                         {additionalInfo && (
                           <div className="text-sm text-gray-600 font-semibold">
                             {additionalInfo}

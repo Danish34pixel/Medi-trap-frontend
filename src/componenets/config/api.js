@@ -173,7 +173,20 @@ const SELECTED_API = import.meta.env.VITE_API_URL
   : REMOTE_API;
 
 // Final API Base (normalized)
-export const API_BASE = normalizeBase(SELECTED_API);
+// In development we prefer a relative base so that calls like `/api/*`
+// are sent to the Vite dev server and picked up by the dev proxy
+// (configured in `vite.config.js`). This avoids accidentally
+// calling an absolute production host when VITE_API_URL was set in
+// the environment used to start the dev server/builder.
+let finalSelectedApi;
+if (IS_DEV) {
+  // Use an empty base so apiUrl returns relative paths (e.g. '/api/user').
+  finalSelectedApi = "";
+} else {
+  finalSelectedApi = SELECTED_API;
+}
+
+export const API_BASE = normalizeBase(finalSelectedApi);
 
 // Helper to safely build complete URLs
 export const apiUrl = (path = "") => {
@@ -234,6 +247,19 @@ export const fetchJson = async (path, options = {}) => {
   const body = text && isJson ? JSON.parse(text) : text;
 
   if (!res.ok) {
+    // If 401, clear any stored auth state to avoid repeated invalid requests
+    try {
+      if (res.status === 401) {
+        console.warn(
+          "API: 401 received - clearing stored token/user for re-login"
+        );
+        try {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        } catch (e) {}
+      }
+    } catch (e) {}
+
     const err = new Error(body?.message || `Request failed ${res.status}`);
     err.status = res.status;
     err.body = body;

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, User, Eye, EyeOff, AlertCircle } from "lucide-react";
@@ -10,7 +9,6 @@ const PurchaserLogin = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -27,8 +25,11 @@ const PurchaserLogin = () => {
         localStorage.setItem("user", JSON.stringify(res.user));
         // Fetch the Purchaser by email to get the correct ID
         try {
-          const purchaserRes = await postJson("/purchaser/find-by-email", { email });
-          const purchaser = purchaserRes.data || purchaserRes.purchaser || purchaserRes;
+          const purchaserRes = await postJson("/purchaser/find-by-email", {
+            email,
+          });
+          const purchaser =
+            purchaserRes.data || purchaserRes.purchaser || purchaserRes;
           const purchaserId = purchaser._id || purchaser.id;
           if (purchaserId) {
             navigate(`/purchaser/${purchaserId}`);
@@ -37,7 +38,7 @@ const PurchaserLogin = () => {
         } catch (e) {
           // fallback: go to dashboard or error
         }
-        navigate("/dashboard");
+        navigate("/purchaser/:id");
       } else {
         setError("Invalid response from server. Please try again.");
       }
@@ -60,7 +61,9 @@ const PurchaserLogin = () => {
           <div className="flex flex-col items-center mb-6">
             <Logo className="w-20 h-20" alt="MedTrap Logo" />
             <h1 className="text-2xl font-bold text-gray-800">Welcome Back</h1>
-            <p className="text-sm text-gray-500 mt-1">Sign in to your purchaser account</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Sign in to your purchaser account
+            </p>
           </div>
 
           {/* Error Message */}
@@ -134,31 +137,31 @@ const PurchaserLogin = () => {
                 />
                 <span className="text-gray-600">Remember me</span>
               </label>
-        <button
-          type="button"
-          onClick={() => navigate('/forgot-password')}
-          className="text-blue-500 hover:text-blue-600 font-medium transition"
-        >
-          Forgot Password?
-        </button>
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                className="text-blue-500 hover:text-blue-600 font-medium transition"
+              >
+                Forgot Password?
+              </button>
             </div>
 
-        <button
+            <button
               type="submit"
               className="w-full py-4 rounded-2xl font-semibold text-white transition shadow-lg bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-500 hover:to-cyan-600 active:scale-[0.98] mt-6"
-              >
-               Sign In
-        </button>
-          </form>{/* Submit Button */}
-            
+            >
+              Sign In
+            </button>
+          </form>
+          {/* Submit Button */}
 
           {/* Sign Up Link */}
           <div className="text-center mt-6">
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+              Don't have an account?{" "}
               <button
                 type="button"
-                onClick={() => navigate('/purchaser-signup')}
+                onClick={() => navigate("/purchaser-signup")}
                 className="text-blue-500 hover:text-blue-600 font-semibold transition"
               >
                 Sign Up

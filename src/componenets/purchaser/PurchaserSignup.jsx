@@ -11,7 +11,7 @@ import {
   CheckCircle,
   AlertCircle,
   Search,
-  X
+  X,
 } from "lucide-react";
 
 export default function PurchaserSignup() {
@@ -186,14 +186,14 @@ export default function PurchaserSignup() {
       submitData.append("contactNo", formData.contactNo.trim());
       submitData.append("aadharImage", aFile);
       // Auth route expects 'personalPhoto' for purchaser signup
-  submitData.append("photo", pFile);
+      submitData.append("photo", pFile);
 
       // attach token if available so backend authenticate middleware accepts the multipart request
       const token = localStorage.getItem("token");
 
       // Use auth purchaser-signup so we also get back a token + user
       const createUrl = apiUrl("/api/auth/purchaser-signup");
-  const tokenPreview = token ? `${String(token).slice(0, 8)}...` : null;
+      const tokenPreview = token ? `${String(token).slice(0, 8)}...` : null;
       console.debug("Purchaser create request ->", {
         url: createUrl,
         token: !!token,
@@ -202,7 +202,7 @@ export default function PurchaserSignup() {
           typeof window !== "undefined" ? window.location.protocol : null,
         online: typeof navigator !== "undefined" ? navigator.onLine : null,
       });
-  const created = await postForm("/api/purchaser", submitData, {
+      const created = await postForm("/api/purchaser", submitData, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         credentials: "omit",
       });
@@ -463,22 +463,26 @@ export default function PurchaserSignup() {
       <div className="max-w-md mx-auto">
         {/* Logo */}
         <div className="flex justify-center mb-6">
-          <img 
-            src="/final-logo.png" 
-            alt="Medi-Trap Logo" 
+          <img
+            src="/final-logo.png"
+            alt="Medi-Trap Logo"
             className="h-16 w-auto"
           />
         </div>
-        
+
         {/* Header */}
         <div className="bg-white rounded-3xl shadow-sm p-6 mb-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
               <User className="w-5 h-5 text-gray-600" />
             </div>
-            <h1 className="text-xl font-bold text-gray-800">Purchaser Registration</h1>
+            <h1 className="text-xl font-bold text-gray-800">
+              Purchaser Registration
+            </h1>
           </div>
-          <p className="text-sm text-gray-500">Complete your profile to get started</p>
+          <p className="text-sm text-gray-500">
+            Complete your profile to get started
+          </p>
         </div>
 
         {/* Status Messages */}
@@ -487,8 +491,12 @@ export default function PurchaserSignup() {
             <div className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold text-gray-800 text-sm">Success!</h3>
-                <p className="text-xs text-gray-600 mt-1">Registration completed successfully</p>
+                <h3 className="font-semibold text-gray-800 text-sm">
+                  Success!
+                </h3>
+                <p className="text-xs text-gray-600 mt-1">
+                  Registration completed successfully
+                </p>
               </div>
             </div>
           </div>
@@ -512,7 +520,9 @@ export default function PurchaserSignup() {
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold text-gray-800 text-sm">Unavailable</h3>
+                <h3 className="font-semibold text-gray-800 text-sm">
+                  Unavailable
+                </h3>
                 <p className="text-xs text-gray-600 mt-1">{errorMessage}</p>
               </div>
             </div>
@@ -539,7 +549,9 @@ export default function PurchaserSignup() {
               />
             </div>
             {errors.fullName && (
-              <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.fullName}</p>
+              <p className="text-red-500 text-xs mt-1.5 ml-1">
+                {errors.fullName}
+              </p>
             )}
           </div>
 
@@ -559,7 +571,9 @@ export default function PurchaserSignup() {
               placeholder="Enter your complete address"
             />
             {errors.address && (
-              <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.address}</p>
+              <p className="text-red-500 text-xs mt-1.5 ml-1">
+                {errors.address}
+              </p>
             )}
           </div>
 
@@ -580,7 +594,9 @@ export default function PurchaserSignup() {
               placeholder="10-digit mobile number"
             />
             {errors.contactNo && (
-              <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.contactNo}</p>
+              <p className="text-red-500 text-xs mt-1.5 ml-1">
+                {errors.contactNo}
+              </p>
             )}
           </div>
 
@@ -635,12 +651,16 @@ export default function PurchaserSignup() {
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
                 className={`w-full px-4 py-3 bg-gray-50 border ${
-                  errors.confirmPassword ? "border-red-300" : "border-transparent"
+                  errors.confirmPassword
+                    ? "border-red-300"
+                    : "border-transparent"
                 } rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white transition text-sm`}
                 placeholder="••••••"
               />
               {errors.confirmPassword && (
-                <p className="text-red-500 text-xs mt-1.5">{errors.confirmPassword}</p>
+                <p className="text-red-500 text-xs mt-1.5">
+                  {errors.confirmPassword}
+                </p>
               )}
             </div>
           </div>
@@ -676,10 +696,15 @@ export default function PurchaserSignup() {
                     </button>
                   </div>
                 ) : (
-                  <label htmlFor="aadharImage" className="cursor-pointer block aspect-square">
+                  <label
+                    htmlFor="aadharImage"
+                    className="cursor-pointer block aspect-square"
+                  >
                     <div className="flex flex-col items-center justify-center h-full p-4">
                       <Image className="w-8 h-8 text-white mb-2" />
-                      <span className="text-xs text-white font-medium text-center">Upload Aadhar</span>
+                      <span className="text-xs text-white font-medium text-center">
+                        Upload Aadhar
+                      </span>
                     </div>
                     <input
                       type="file"
@@ -692,7 +717,9 @@ export default function PurchaserSignup() {
                 )}
               </div>
               {errors.aadharImage && (
-                <p className="text-red-500 text-xs mt-1.5">{errors.aadharImage}</p>
+                <p className="text-red-500 text-xs mt-1.5">
+                  {errors.aadharImage}
+                </p>
               )}
             </div>
 
@@ -725,10 +752,15 @@ export default function PurchaserSignup() {
                     </button>
                   </div>
                 ) : (
-                  <label htmlFor="photo" className="cursor-pointer block aspect-square">
+                  <label
+                    htmlFor="photo"
+                    className="cursor-pointer block aspect-square"
+                  >
                     <div className="flex flex-col items-center justify-center h-full p-4">
                       <Camera className="w-8 h-8 text-white mb-2" />
-                      <span className="text-xs text-white font-medium text-center">Upload Photo</span>
+                      <span className="text-xs text-white font-medium text-center">
+                        Upload Photo
+                      </span>
                     </div>
                     <input
                       type="file"
@@ -798,16 +830,26 @@ export default function PurchaserSignup() {
               {stockistDropdownOpen && (
                 <div className="absolute z-20 left-0 right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg max-h-48 overflow-auto">
                   {loadingStockists ? (
-                    <div className="p-4 text-sm text-gray-500 text-center">Loading...</div>
+                    <div className="p-4 text-sm text-gray-500 text-center">
+                      Loading...
+                    </div>
                   ) : (
                     stockists
                       .filter((s) => {
                         const q = stockistQuery.trim().toLowerCase();
                         if (!q) return true;
-                        const label = (s.contactPerson || s.name || "").toLowerCase();
+                        const label = (
+                          s.contactPerson ||
+                          s.name ||
+                          ""
+                        ).toLowerCase();
                         const email = (s.email || "").toLowerCase();
                         const phone = (s.phone || "").toLowerCase();
-                        return label.includes(q) || email.includes(q) || phone.includes(q);
+                        return (
+                          label.includes(q) ||
+                          email.includes(q) ||
+                          phone.includes(q)
+                        );
                       })
                       .map((s) => {
                         const id = s._id;
@@ -827,25 +869,35 @@ export default function PurchaserSignup() {
                             }`}
                           >
                             <div>
-                              <div className="text-sm font-medium text-gray-800">{label}</div>
-                              <div className="text-xs text-gray-500">{s.email || s.phone}</div>
+                              <div className="text-sm font-medium text-gray-800">
+                                {label}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {s.email || s.phone}
+                              </div>
                             </div>
                             {isSelected && (
-                              <span className="text-xs text-cyan-500 font-semibold">Selected</span>
+                              <span className="text-xs text-cyan-500 font-semibold">
+                                Selected
+                              </span>
                             )}
                           </button>
                         );
                       })
                   )}
                   {stockists.length === 0 && !loadingStockists && (
-                    <div className="p-4 text-sm text-gray-500 text-center">No stockists found</div>
+                    <div className="p-4 text-sm text-gray-500 text-center">
+                      No stockists found
+                    </div>
                   )}
                 </div>
               )}
             </div>
 
             {errors.stockists && (
-              <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.stockists}</p>
+              <p className="text-red-500 text-xs mt-1.5 ml-1">
+                {errors.stockists}
+              </p>
             )}
           </div>
 
@@ -865,7 +917,9 @@ export default function PurchaserSignup() {
 
           {/* Sign In Link */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 mb-2">Already have an account?</p>
+            <p className="text-sm text-gray-600 mb-2">
+              Already have an account?
+            </p>
             <button
               type="button"
               onClick={() => navigate("/purchaserLogin")}
