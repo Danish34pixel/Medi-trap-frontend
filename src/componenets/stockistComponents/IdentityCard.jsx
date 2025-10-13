@@ -1,6 +1,6 @@
 import React from "react";
 
-// --- Utility Components (Unchanged) ---
+// --- Utility Components ---
 const Logo = ({ className }) => (
   <div className={`font-bold text-xl ${className}`}>LUVOX PVT LTD</div>
 );
@@ -62,15 +62,12 @@ function renderValue(val, fallback = "—") {
   return String(val);
 }
 
-// --- NEW PORTRAIT CARD COMPONENT ---
-
 export default function IdentityCard({ stockist, qrDataUrl }) {
   const handlePrint = () => {
     const printContents = document.getElementById('id-card-print-area');
     if (!printContents) return window.print();
     const printWindow = window.open('', '', 'height=800,width=800');
     printWindow.document.write('<html><head><title>ID Card</title>');
-    // Copy all <link rel="stylesheet"> and <style> tags
     document.querySelectorAll('link[rel="stylesheet"], style').forEach((node) => {
       printWindow.document.write(node.outerHTML);
     });
@@ -84,43 +81,34 @@ export default function IdentityCard({ stockist, qrDataUrl }) {
   };
 
   return (
-    // Responsive Wrapper for screen view
     <div className="w-full max-w-sm mx-auto p-4 print:p-0 print:max-w-full print:m-0">
       
       <style>{`
-        /* --- FIX: Small Portrait Dimensions & Real Colors --- */
         @media print {
-            /* 1. FORCE REAL COLORS */
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
 
-            /* 2. FIX: Portrait CR80 Size (53.98mm W x 85.6mm H) */
             @page {
-                /* Set page size to Portrait ID Card Dimensions */
                 size: 53.98mm 85.6mm; 
                 orientation: portrait;
                 margin: 0;
             }
             
-            /* Hide the main print wrapper on screen print context */
             .print\\:hidden, .print-only-card:not(#id-card-print-area) {
               display: none !important;
             }
 
-            /* 3. Enforce body size for single-page print area */
             body.print-only-card {
                 padding: 0 !important;
                 margin: 0 !important;
                 display: block !important;
                 overflow: hidden !important;
-                /* Set body size to the exact ID card dimensions (Portrait CR80) */
                 width: 53.98mm !important; 
                 height: 85.6mm !important;
             }
 
-            /* 4. Ensure the card container fits the fixed page size */
             #id-card-print-area {
                 width: 53.98mm;
                 height: 85.6mm;
@@ -131,7 +119,6 @@ export default function IdentityCard({ stockist, qrDataUrl }) {
                 display: block !important;
             }
             
-            /* Ensure the inner card wrapper fits and avoids page breaks */
             #id-card-print-area > div {
                 width: 100%;
                 height: 100%;
@@ -143,103 +130,194 @@ export default function IdentityCard({ stockist, qrDataUrl }) {
         }
       `}</style>
 
-      {/* ID Card Container - Set fixed size for Portrait desktop preview, print styles override */}
       <div 
         id="id-card-print-area" 
-        // New Portrait Dimensions: w-[203px] h-[320px] (same aspect ratio as 53.98mm x 85.6mm)
-        className="w-[203px] h-[320px] mx-auto shadow-xl transition-all duration-300"
+        className="w-[280px] h-[480px] mx-auto shadow-2xl transition-all duration-300"
       >
-        <div className="bg-white rounded-lg overflow-hidden border-2 border-gray-200 w-full h-full flex flex-col">
+        <div className="bg-white rounded-2xl overflow-hidden border-2 border-gray-200 w-full h-full flex flex-col">
           
-          {/* Header (Top) */}
-          <div className="flex-shrink-0 bg-gradient-to-r from-blue-900 to-blue-800 px-2 py-1 flex flex-col items-center justify-center text-center">
-            <Logo className="text-white text-xs font-extrabold tracking-wider" />
-            <div className="bg-yellow-400 text-blue-900 px-1 rounded mt-0.5 text-[8px] font-black uppercase">
-              Authorized Stockist
+          {/* Header */}
+          <div className="flex-shrink-0 bg-gradient-to-r from-blue-900 to-blue-800 px-2 py-1.5 flex flex-col items-center justify-center text-center">
+            <Logo className="text-white text-[10px] font-extrabold tracking-wider" />
+            <div className="bg-yellow-400 text-blue-900 px-2 py-0.5 rounded-full mt-1 text-[7px] font-black uppercase">
+              Authorized
             </div>
           </div>
-          {/* Accent Stripe */}
-          <div className="flex-shrink-0 h-0.5 bg-gradient-to-r from-yellow-400 to-yellow-500"></div>
           
-          {/* Main Content: Organized vertically */}
-          <div className="p-2 flex flex-col items-center flex-grow overflow-hidden">
+          {/* Accent Stripe */}
+          <div className="flex-shrink-0 h-1 bg-gradient-to-r from-yellow-400 to-yellow-500"></div>
+          
+          {/* Main Content */}
+          <div className="p-3 flex flex-col items-center flex-grow">
             
-            {/* Photo Section */}
-            <div className="relative w-20 h-20 border-3 border-blue-600 p-[3px] mt-1 mb-1.5">
+            {/* Photo Section - FULLY ROUNDED */}
+            <div className="relative mb-2">
+              {/* Corner Brackets */}
+              <div className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-blue-600"></div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-blue-600"></div>
+              <div className="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-blue-600"></div>
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-blue-600"></div>
+              
               {stockist?.profileImageUrl ? (
                 <img
                   src={stockist?.profileImageUrl}
                   alt="Profile"
-                  className="w-full h-full object-cover"
+                  className="w-20 h-20 rounded-full object-cover border-2 border-white shadow-lg"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center border-2 border-white shadow-lg">
                   <Avatar name={renderValue(stockist?.name, "")} size={48} />
                 </div>
               )}
             </div>
             
-            {/* Name & Role */}
-            <div className="text-center w-full mb-1">
-              {/* Role Badge - Tighter spacing */}
-              <div className="inline-block bg-blue-900 text-white px-2 py-0.5 text-[7px] font-bold uppercase mb-0.5">
-                {stockist?.roleType || stockist?.designation || "Employee"}
-              </div>
-              
-              {/* Name */}
-              <h1 className="text-sm font-black text-gray-900 uppercase leading-tight truncate px-1">
-                {renderValue(stockist?.contactPerson || stockist?.name, "Employee Name")}
-              </h1>
+            {/* Role Badge */}
+            <div className="inline-block bg-blue-900 text-white px-2 py-0.5 text-[8px] font-bold uppercase mb-1">
+              {stockist?.roleType || stockist?.designation || "Employee"}
             </div>
+            
+            {/* Name */}
+            <h1 className="text-sm font-black text-gray-900 uppercase leading-tight text-center px-1 mb-2">
+              {renderValue(stockist?.contactPerson || stockist?.name, "Employee Name")}
+            </h1>
+            <div className="h-0.5 w-12 bg-gradient-to-r from-blue-600 to-yellow-400 mb-2"></div>
 
             {/* ID Number */}
-            <div className="w-full bg-gray-50 border-l-3 border-blue-600 px-2 py-1 rounded-r mb-2">
-              <p className="text-[8px] text-gray-500 font-semibold uppercase leading-tight">ID Number</p>
-              <p className="text-sm font-bold text-blue-900 font-mono leading-tight">
+            <div className="w-full bg-gray-50 border-l-4 border-blue-600 px-2 py-1.5 rounded-r mb-2">
+              <p className="text-[7px] text-gray-500 font-semibold uppercase leading-tight">ID Number</p>
+              <p className="text-xs font-bold text-blue-900 font-mono leading-tight">
                 {stockist?._id ? String(stockist._id).slice(-8).toUpperCase() : "00000000"}
               </p>
             </div>
             
-            {/* Contact Info (Stacked Vertically) */}
-            <div className="w-full grid grid-cols-1 gap-y-1 text-[10px] text-center">
-              <div>
-                <p className="text-gray-500 font-semibold uppercase text-[7px] leading-tight">Phone</p>
-                <p className="font-bold text-gray-900 leading-snug">
+            {/* Contact Info */}
+            <div className="w-full space-y-1 text-[9px] mb-1.5">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 font-semibold uppercase text-[7px]">Phone</span>
+                <span className="font-bold text-gray-900">
                   {renderValue(stockist?.phone || stockist?.contactNo, "—")}
-                </p>
+                </span>
               </div>
-              <div className="grid grid-cols-2 gap-x-1">
-                <div>
-                  <p className="text-gray-500 font-semibold uppercase text-[7px] leading-tight">DOB</p>
-                  <p className="font-bold text-gray-900 leading-snug">{formatDate(stockist?.dob)}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col">
+                  <span className="text-gray-500 font-semibold uppercase text-[7px]">DOB</span>
+                  <span className="font-bold text-gray-900">{formatDate(stockist?.dob)}</span>
                 </div>
-                <div>
-                  <p className="text-gray-500 font-semibold uppercase text-[7px] leading-tight">Blood</p>
-                  <p className="font-bold text-gray-900 leading-snug">{stockist?.bloodGroup || "—"}</p>
+                <div className="flex flex-col">
+                  <span className="text-gray-500 font-semibold uppercase text-[7px]">Blood</span>
+                  <span className="font-bold text-gray-900">{stockist?.bloodGroup || "—"}</span>
                 </div>
               </div>
             </div>
 
-            {/* QR Code (Bottom Center) */}
-            <div className="bg-white p-0.5 rounded border border-gray-300 shadow-sm mt-2 mb-1">
-              {qrDataUrl ? (
-                <img src={qrDataUrl} alt="QR" className="w-12 h-12" />
-              ) : (
-                <div className="w-12 h-12 bg-gray-200"></div>
-              )}
+            {/* QR Code - CLEARLY VISIBLE */}
+            <div className="w-full flex flex-col items-center my-2 bg-gray-50 py-2 rounded">
+              <div className="bg-white p-1.5 rounded border-2 border-blue-600 shadow">
+                {qrDataUrl ? (
+                  <img 
+                    src={qrDataUrl} 
+                    alt="QR Code" 
+                    className="w-16 h-16"
+                    style={{ display: 'block' }}
+                  />
+                ) : (
+                  <div className="w-16 h-16 bg-white" style={{ display: 'block' }}>
+                    <svg width="64" height="64" viewBox="0 0 29 29" style={{ display: 'block', width: '100%', height: '100%' }}>
+                      <rect width="29" height="29" fill="white"/>
+                      <g fill="black">
+                        <rect x="0" y="0" width="9" height="9" fill="none" stroke="black" strokeWidth="1"/>
+                        <rect x="20" y="0" width="9" height="9" fill="none" stroke="black" strokeWidth="1"/>
+                        <rect x="0" y="20" width="9" height="9" fill="none" stroke="black" strokeWidth="1"/>
+                        <rect x="2" y="2" width="5" height="5"/>
+                        <rect x="22" y="2" width="5" height="5"/>
+                        <rect x="2" y="22" width="5" height="5"/>
+                        <rect x="10" y="0" width="1" height="1"/>
+                        <rect x="12" y="0" width="1" height="1"/>
+                        <rect x="14" y="0" width="1" height="1"/>
+                        <rect x="10" y="2" width="1" height="1"/>
+                        <rect x="14" y="2" width="1" height="1"/>
+                        <rect x="16" y="2" width="1" height="1"/>
+                        <rect x="12" y="4" width="1" height="1"/>
+                        <rect x="16" y="4" width="1" height="1"/>
+                        <rect x="10" y="6" width="1" height="1"/>
+                        <rect x="14" y="6" width="1" height="1"/>
+                        <rect x="18" y="6" width="1" height="1"/>
+                        <rect x="12" y="8" width="1" height="1"/>
+                        <rect x="16" y="8" width="1" height="1"/>
+                        <rect x="0" y="10" width="1" height="1"/>
+                        <rect x="4" y="10" width="1" height="1"/>
+                        <rect x="6" y="10" width="1" height="1"/>
+                        <rect x="10" y="10" width="9" height="9"/>
+                        <rect x="20" y="10" width="1" height="1"/>
+                        <rect x="24" y="10" width="1" height="1"/>
+                        <rect x="28" y="10" width="1" height="1"/>
+                        <rect x="2" y="12" width="1" height="1"/>
+                        <rect x="6" y="12" width="1" height="1"/>
+                        <rect x="20" y="12" width="1" height="1"/>
+                        <rect x="26" y="12" width="1" height="1"/>
+                        <rect x="0" y="14" width="1" height="1"/>
+                        <rect x="4" y="14" width="1" height="1"/>
+                        <rect x="8" y="14" width="1" height="1"/>
+                        <rect x="20" y="14" width="1" height="1"/>
+                        <rect x="22" y="14" width="1" height="1"/>
+                        <rect x="28" y="14" width="1" height="1"/>
+                        <rect x="2" y="16" width="1" height="1"/>
+                        <rect x="6" y="16" width="1" height="1"/>
+                        <rect x="20" y="16" width="1" height="1"/>
+                        <rect x="24" y="16" width="1" height="1"/>
+                        <rect x="0" y="18" width="1" height="1"/>
+                        <rect x="4" y="18" width="1" height="1"/>
+                        <rect x="8" y="18" width="1" height="1"/>
+                        <rect x="20" y="18" width="1" height="1"/>
+                        <rect x="26" y="18" width="1" height="1"/>
+                        <rect x="10" y="20" width="1" height="1"/>
+                        <rect x="12" y="20" width="1" height="1"/>
+                        <rect x="16" y="20" width="1" height="1"/>
+                        <rect x="18" y="20" width="1" height="1"/>
+                        <rect x="20" y="20" width="1" height="1"/>
+                        <rect x="22" y="20" width="1" height="1"/>
+                        <rect x="24" y="20" width="1" height="1"/>
+                        <rect x="28" y="20" width="1" height="1"/>
+                        <rect x="10" y="22" width="1" height="1"/>
+                        <rect x="14" y="22" width="1" height="1"/>
+                        <rect x="18" y="22" width="1" height="1"/>
+                        <rect x="20" y="22" width="1" height="1"/>
+                        <rect x="24" y="22" width="1" height="1"/>
+                        <rect x="26" y="22" width="1" height="1"/>
+                        <rect x="12" y="24" width="1" height="1"/>
+                        <rect x="16" y="24" width="1" height="1"/>
+                        <rect x="20" y="24" width="1" height="1"/>
+                        <rect x="22" y="24" width="1" height="1"/>
+                        <rect x="28" y="24" width="1" height="1"/>
+                        <rect x="10" y="26" width="1" height="1"/>
+                        <rect x="14" y="26" width="1" height="1"/>
+                        <rect x="22" y="26" width="1" height="1"/>
+                        <rect x="26" y="26" width="1" height="1"/>
+                        <rect x="12" y="28" width="1" height="1"/>
+                        <rect x="16" y="28" width="1" height="1"/>
+                        <rect x="18" y="28" width="1" height="1"/>
+                        <rect x="20" y="28" width="1" height="1"/>
+                        <rect x="24" y="28" width="1" height="1"/>
+                        <rect x="28" y="28" width="1" height="1"/>
+                      </g>
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <p className="text-[7px] text-gray-700 font-bold uppercase mt-1">SCAN ID</p>
             </div>
             
-            {/* Signature Area */}
-            <div className="w-full text-center mt-auto">
-              <div className="w-24 border-b border-gray-400 mx-auto mb-0.5"></div>
-              <p className="text-gray-500 font-semibold uppercase text-[8px] leading-tight">Authorized Sign</p>
+            {/* Signature */}
+            <div className="w-full text-center">
+              <div className="w-20 border-b border-gray-400 mx-auto mb-0.5"></div>
+              <p className="text-gray-500 font-semibold uppercase text-[7px]">Authorized Sign</p>
             </div>
 
           </div>
           
-          {/* Footer Bar (Address & Web) */}
-          <div className="flex-shrink-0 bg-gradient-to-r from-blue-900 to-blue-800 px-2 py-1 text-[7px] text-blue-200 text-center leading-snug">
-            <p className="font-semibold line-clamp-2 mb-0.5">
+          {/* Footer */}
+          <div className="flex-shrink-0 bg-gradient-to-r from-blue-900 to-blue-800 px-2 py-1 text-[7px] text-blue-200 text-center leading-tight">
+            <p className="font-semibold truncate mb-0.5">
               {renderValue(stockist?.address || stockist?.location, "N/A")}
             </p>
             <p className="font-bold">www.luvox.com</p>
@@ -248,7 +326,7 @@ export default function IdentityCard({ stockist, qrDataUrl }) {
         </div>
       </div>
       
-      {/* Print Button (Hidden on print) */}
+      {/* Print Button */}
       <div className="w-[203px] mx-auto">
         <button
           onClick={handlePrint}
