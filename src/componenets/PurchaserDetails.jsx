@@ -24,7 +24,10 @@ const PurchaserDetails = () => {
     const fetchPurchaser = async () => {
       setLoading(true);
       try {
-        const res = await fetchJson(`/purchaser/${id}`);
+        const token = localStorage.getItem("token");
+        const res = await fetchJson(`/purchaser/${id}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         setPurchaser(res.data || res);
         setError(null);
       } catch (err) {

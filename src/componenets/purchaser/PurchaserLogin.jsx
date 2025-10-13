@@ -38,7 +38,7 @@ const PurchaserLogin = () => {
         } catch (e) {
           // fallback: go to dashboard or error
         }
-        navigate("/purchaser/:id");
+        navigate("/dashboard");
       } else {
         setError("Invalid response from server. Please try again.");
       }
