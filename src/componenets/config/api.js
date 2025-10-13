@@ -243,6 +243,54 @@ export const fetchJson = async (path, options = {}) => {
   return body;
 };
 
+// -------------------------
+// 🔁 Central request helper
+// -------------------------
+// requestJson: convenience wrapper for fetch that:
+// - builds the full backend URL via apiUrl(path)
+// - injects Authorization: Bearer <token> when token exists in localStorage or cookie
+// - sends credentials: 'include' by default (so server-set cookies are sent)
+// - merges provided headers/options
+export const requestJson = async (path, opts = {}) => {
+  const url = apiUrl(path);
+
+  // Prefer localStorage token, fall back to cookie (helper exists elsewhere)
+  let token = null;
+  try {
+    token = localStorage.getItem("token") || null;
+  } catch (e) {
+    token = null;
+  }
+
+  // Allow caller to override sending credentials
+  const credentials =
+    opts.credentials === undefined ? "include" : opts.credentials;
+
+  const headers = {
+    "Content-Type": "application/json",
+    ...(opts.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+
+  const options = {
+    ...opts,
+    headers,
+    credentials,
+  };
+
+  const res = await fetch(url, options);
+  const text = await res.text();
+  const isJson = res.headers.get("content-type")?.includes("application/json");
+  const body = text && isJson ? JSON.parse(text) : text;
+  if (!res.ok) {
+    const err = new Error(body?.message || `Request failed ${res.status}`);
+    err.status = res.status;
+    err.body = body;
+    throw err;
+  }
+  return body;
+};
+
 // // -------------------------
 // // 📤 POST FormData Helper (Image Uploads)
 // // -------------------------

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-
 const Logo = ({ className = "" }) => (
   <div className={`${className} rounded-lg flex items-center justify-center`}>
     <span className="text-white font-bold text-xl">
@@ -51,7 +50,8 @@ export default function SelectRolePage() {
     if (roleId === "Purchaser") {
       navigate("/purchaser-signup");
     } else if (roleId === "Stockist") {
-      navigate("/adminCreateStockist");
+      // Open stockist login by default for stockist role
+      navigate("/stockist-login");
     } else if (roleId === "Medical Owner") {
       navigate("/signup");
     } else if (roleId === "Staff") {
@@ -85,8 +85,7 @@ export default function SelectRolePage() {
             <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 via-blue-600 to-indigo-600 bg-clip-text text-transparent mb-3 tracking-tight">
               Select Your Role
             </h1>
-            </div>
-          
+          </div>
         </div>
 
         {/* Enhanced Role Cards Grid */}
@@ -225,8 +224,6 @@ export default function SelectRolePage() {
             );
           })}
         </div>
-
-       
       </div>
     </div>
   );

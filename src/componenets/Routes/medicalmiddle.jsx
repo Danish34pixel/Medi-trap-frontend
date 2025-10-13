@@ -33,12 +33,13 @@ const MedicalMiddle = () => {
     let cancelled = false;
     const check = async () => {
       try {
-        const useProxy = import.meta.env.MODE === "development";
-        const build = (path) => (useProxy ? path : apiUrl(path));
+        const build = (path) => apiUrl(path);
 
         // Prefer checking stockistId first (original behavior), otherwise check userId
         if (stockistId) {
-          const res = await fetch(build(`/api/stockist/${stockistId}`));
+          const res = await fetch(build(`/api/stockist/${stockistId}`), {
+            credentials: "include",
+          });
           const json = await res.json().catch(() => ({}));
           if (res.ok && json && json.data) {
             if (json.data.approved) {
@@ -54,7 +55,9 @@ const MedicalMiddle = () => {
             }
           }
         } else if (userId) {
-          const res = await fetch(build(`/api/user/${userId}`));
+          const res = await fetch(build(`/api/user/${userId}`), {
+            credentials: "include",
+          });
           const json = await res.json().catch(() => ({}));
           if (res.ok && json && json.data) {
             if (json.data.approved) {

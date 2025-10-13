@@ -17,8 +17,8 @@ const UserAdmin = () => {
     setLoading(true);
     setError(null);
     try {
-      const useProxy = import.meta.env.MODE === "development";
-      const build = (path) => (useProxy ? path : apiUrl(path));
+      // Build full backend URL
+      const build = (path) => apiUrl(path);
       const res = await fetch(build("/api/user"));
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Failed to load users");
@@ -82,8 +82,7 @@ const UserAdmin = () => {
       const headers = { "Content-Type": "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const useProxy = import.meta.env.MODE === "development";
-      const build = (path) => (useProxy ? path : apiUrl(path));
+      const build = (path) => apiUrl(path);
       const url = build(`/api/user/${id}/approve`);
 
       const extraHeaders = {};
@@ -145,8 +144,7 @@ const UserAdmin = () => {
       const headers = { "Content-Type": "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const useProxy = import.meta.env.MODE === "development";
-      const build = (path) => (useProxy ? path : apiUrl(path));
+      const build = (path) => apiUrl(path);
       const url = build(`/api/user/${id}/decline`);
 
       const extraHeaders = {};

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { apiUrl } from "../config/api";
+// navigate not required in this component
+import { apiUrl, requestJson } from "../config/api";
 import { getCookie, setCookie } from "../utils/cookies";
 
 const AdminPage = () => {
-  const navigate = useNavigate();
+  // navigate intentionally unused here
   const [stockists, setStockists] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -17,10 +17,32 @@ const AdminPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const useProxy = import.meta.env.MODE === "development";
-      const build = (path) => (useProxy ? path : apiUrl(path));
-      const res = await fetch(build("/api/stockist"));
+      // Build a URL that prefers a relative '/api' path when running locally.
+      // This avoids accidentally calling the production API during local dev
+      // (which can trigger CORS preflight rejections for PATCH).
+      const isLocal =
+        import.meta.env.MODE === "development" ||
+        window.location.hostname === "localhost" ||
+        window.location.hostname.startsWith("127.");
+
+      const build = (path) => {
+        const p = path.startsWith("/api")
+          ? path
+          : path.startsWith("/")
+          ? `/api${path}`
+          : `/api/${path}`;
+        return isLocal ? p : apiUrl(p);
+      };
+
+      const url = build("/stockist");
+      console.debug("AdminPage: fetchStockists ->", url);
+      const res = await fetch(url, { credentials: "include" });
       const json = await res.json();
+      console.debug("AdminPage: fetchStockists response ->", {
+        url,
+        status: res.status,
+        count: (json.data || []).length,
+      });
       if (!res.ok) throw new Error(json.message || "Failed to load stockists");
       let fetched = json.data || [];
 
@@ -67,6 +89,9 @@ const AdminPage = () => {
   const saveDevToken = () => {
     if (!devToken) return alert("Enter a token to save");
     setCookie("token", devToken, 7);
+    try {
+      localStorage.setItem("token", devToken);
+    } catch (e) {}
     alert("Token saved to cookie for dev testing");
   };
 
@@ -74,33 +99,57 @@ const AdminPage = () => {
   const approve = async (id) => {
     setApproving((p) => ({ ...p, [id]: true }));
     try {
-      // Try cookie first, then fallback to localStorage (some flows store token there)
-      let token = getCookie("token");
-      if (!token && typeof localStorage !== "undefined") {
-        token = localStorage.getItem("token");
-      }
-      const headers = { "Content-Type": "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
+      // When running locally, send requests to the local backend via a
+      // relative '/api' path to avoid production CORS issues. Use the
+      // centralized requestJson in non-local (production) mode.
+      const isLocal =
+        import.meta.env.MODE === "development" ||
+        window.location.hostname === "localhost" ||
+        window.location.hostname.startsWith("127.");
 
-      const useProxy = import.meta.env.MODE === "development";
-      const build = (path) => (useProxy ? path : apiUrl(path));
-      const url = build(`/api/stockist/${id}/approve`);
+      let json = null;
+      if (isLocal) {
+        const token = (() => {
+          try {
+            return localStorage.getItem("token") || getCookie("token");
+          } catch (e) {
+            try {
+              return getCookie("token");
+            } catch (ee) {
+              return null;
+            }
+          }
+        })();
 
-      const extraHeaders = {};
-      if (import.meta.env.MODE === "development")
-        extraHeaders["x-dev-admin"] = "1";
+        const headers = {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(import.meta.env.MODE === "development"
+            ? { "x-dev-admin": "1" }
+            : {}),
+          "Content-Type": "application/json",
+        };
 
-      const res = await fetch(url, {
-        method: "PATCH",
-        headers: { ...headers, ...extraHeaders },
-        // ensure cookies are sent when using cookie-based auth on same origin / proxy
-        credentials: "include",
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        // Provide more helpful error feedback when 401 occurs
-        const msg = json?.message || `Approval failed (${res.status})`;
-        throw new Error(msg);
+        const approveUrl = `/api/stockist/${id}/approve`;
+        console.debug("AdminPage: approve (local) ->", { approveUrl, headers });
+        const res = await fetch(approveUrl, {
+          method: "PATCH",
+          headers,
+          credentials: "include",
+        });
+        const text = await res.text();
+        const body = text ? JSON.parse(text) : null;
+        if (!res.ok)
+          throw new Error(body?.message || `Request failed ${res.status}`);
+        json = body;
+      } else {
+        const url = `/stockist/${id}/approve`;
+        json = await requestJson(url, {
+          method: "PATCH",
+          headers:
+            import.meta.env.MODE === "development"
+              ? { "x-dev-admin": "1" }
+              : {},
+        });
       }
 
       // Update approved status locally
@@ -137,31 +186,52 @@ const AdminPage = () => {
   const decline = async (id) => {
     setDeclining((p) => ({ ...p, [id]: true }));
     try {
-      // Try cookie first, then fallback to localStorage
-      let token = getCookie("token");
-      if (!token && typeof localStorage !== "undefined") {
-        token = localStorage.getItem("token");
-      }
-      const headers = { "Content-Type": "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
+      const isLocal =
+        import.meta.env.MODE === "development" ||
+        window.location.hostname === "localhost" ||
+        window.location.hostname.startsWith("127.");
 
-      const useProxy = import.meta.env.MODE === "development";
-      const build = (path) => (useProxy ? path : apiUrl(path));
-      const url = build(`/api/stockist/${id}/decline`);
+      if (isLocal) {
+        const token = (() => {
+          try {
+            return localStorage.getItem("token") || getCookie("token");
+          } catch (e) {
+            try {
+              return getCookie("token");
+            } catch (ee) {
+              return null;
+            }
+          }
+        })();
 
-      const extraHeaders = {};
-      if (import.meta.env.MODE === "development")
-        extraHeaders["x-dev-admin"] = "1";
+        const headers = {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(import.meta.env.MODE === "development"
+            ? { "x-dev-admin": "1" }
+            : {}),
+          "Content-Type": "application/json",
+        };
 
-      const res = await fetch(url, {
-        method: "PATCH",
-        headers: { ...headers, ...extraHeaders },
-        credentials: "include",
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        const msg = json?.message || `Decline failed (${res.status})`;
-        throw new Error(msg);
+        const declineUrl = `/api/stockist/${id}/decline`;
+        console.debug("AdminPage: decline (local) ->", { declineUrl, headers });
+        const res = await fetch(declineUrl, {
+          method: "PATCH",
+          headers,
+          credentials: "include",
+        });
+        const text = await res.text();
+        const body = text ? JSON.parse(text) : null;
+        if (!res.ok)
+          throw new Error(body?.message || `Request failed ${res.status}`);
+      } else {
+        const urlDecline = `/stockist/${id}/decline`;
+        await requestJson(urlDecline, {
+          method: "PATCH",
+          headers:
+            import.meta.env.MODE === "development"
+              ? { "x-dev-admin": "1" }
+              : {},
+        });
       }
 
       // Remove declined stockist locally

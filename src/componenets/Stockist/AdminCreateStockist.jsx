@@ -188,8 +188,8 @@ export default function ModernStockistForm() {
         cntxNumber: form.cntxNumber || null,
       };
 
-      const useProxy = import.meta.env.MODE === "development";
-      const build = (path) => (useProxy ? path : apiUrl(path));
+      // Ensure this request targets the backend API server
+      const build = (path) => apiUrl(path);
       const res = await axios.post(build("/api/stockist/register"), payload, {
         headers: { "Content-Type": "application/json" },
       });
@@ -203,7 +203,9 @@ export default function ModernStockistForm() {
         } catch (e) {}
 
         // Inform user that registration is under review and navigate to verification
-        alert("Your registration is under review. You’ll be notified once approved.");
+        alert(
+          "Your registration is under review. You’ll be notified once approved."
+        );
         navigate("/stockist/verification");
       } else {
         alert(res?.data?.message || "Failed to create stockist");

@@ -25,9 +25,15 @@ const Verification = () => {
     let cancelled = false;
     const check = async () => {
       try {
-        const useProxy = import.meta.env.MODE === "development";
-        const build = (path) => (useProxy ? path : apiUrl(path));
-        const res = await fetch(build(`/api/stockist/${id}`));
+        // In development, prefer a relative /api path so the Vite proxy or local backend is used.
+        // In production, use apiUrl to target the deployed backend.
+        const useLocal =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1";
+        const build = (path) => (useLocal ? path : apiUrl(path));
+        const res = await fetch(build(`/api/stockist/${id}`), {
+          credentials: "include",
+        });
         const json = await res.json().catch(() => ({}));
         if (res.ok && json && json.data) {
           if (json.data.approved) {
