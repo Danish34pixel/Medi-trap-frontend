@@ -202,7 +202,7 @@ export default function PurchaserSignup() {
           typeof window !== "undefined" ? window.location.protocol : null,
         online: typeof navigator !== "undefined" ? navigator.onLine : null,
       });
-      const created = await postForm("/api/auth/purchaser-signup", submitData, {
+  const created = await postForm("/api/purchaser", submitData, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         credentials: "omit",
       });
