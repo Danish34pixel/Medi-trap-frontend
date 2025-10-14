@@ -192,21 +192,7 @@ const StaffCard = ({ staff }) => {
   );
 };
 
-const StatsCard = ({ icon: Icon, label, value, gradient }) => (
-  <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl p-7 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-gray-100 group hover:scale-105 transform">
-    <div
-      className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-5 shadow-xl group-hover:rotate-12 transition-transform`}
-    >
-      <Icon className="w-8 h-8 text-white" />
-    </div>
-    <div className="text-4xl font-black bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
-      {value}
-    </div>
-    <div className="text-sm text-gray-600 font-bold uppercase tracking-wide">
-      {label}
-    </div>
-  </div>
-);
+// Stats component removed as it's now inline in the main component
 
 export default function PharmacyStockist() {
   const navigate = useNavigate();
@@ -435,6 +421,26 @@ export default function PharmacyStockist() {
     window.location.reload();
   };
 
+  const handleLogout = () => {
+    try {
+      // Clear local storage user object
+      try { localStorage.removeItem('user'); } catch (e) {}
+      // Clear token cookie by setting expiry in the past
+      try {
+        document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      } catch (e) {}
+      // Optionally clear other keys
+      try { localStorage.removeItem('token'); } catch (e) {}
+    } finally {
+      // navigate to login
+      try {
+        navigate('/login');
+      } catch {
+        window.location.href = '/login';
+      }
+    }
+  };
+
   const qrDataUrl = useMemo(() => {
     if (!stockist?._id) return null;
     const shareUrl = `${window.location.origin}/stockist/${stockist._id}`;
@@ -448,25 +454,37 @@ export default function PharmacyStockist() {
       key: "medicines",
       label: "Medicines",
       icon: Pill,
-      gradient: "from-blue-500 via-cyan-500 to-teal-500",
+      color: "text-blue-600",
+      bgColor: "bg-gradient-to-br from-blue-50 to-cyan-50",
+      activeColor: "bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500",
+      hoverEffect: "hover:shadow-blue-200",
     },
     {
       key: "companies",
       label: "Companies",
       icon: Building2,
-      gradient: "from-orange-500 via-amber-500 to-yellow-500",
+      color: "text-orange-600",
+      bgColor: "bg-gradient-to-br from-orange-50 to-amber-50",
+      activeColor: "bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500",
+      hoverEffect: "hover:shadow-orange-200",
     },
     {
       key: "staff",
       label: "Staff",
       icon: Users,
-      gradient: "from-purple-500 via-fuchsia-500 to-pink-500",
+      color: "text-purple-600",
+      bgColor: "bg-gradient-to-br from-purple-50 to-fuchsia-50",
+      activeColor: "bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500",
+      hoverEffect: "hover:shadow-purple-200",
     },
     {
       key: "approvals",
       label: "Approvals",
       icon: Package,
-      gradient: "from-emerald-500 via-teal-500 to-cyan-500",
+      color: "text-emerald-600",
+      bgColor: "bg-gradient-to-br from-emerald-50 to-green-50",
+      activeColor: "bg-gradient-to-r from-emerald-500 via-green-500 to-lime-500",
+      hoverEffect: "hover:shadow-emerald-200",
     },
   ];
 
@@ -595,6 +613,26 @@ export default function PharmacyStockist() {
                 </p>
               )}
             </div>
+
+            {/* Logout on the right side of header */}
+            <div className="ml-auto flex items-center gap-3">
+              <button
+                onClick={handleLogout}
+                className="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-2xl text-sm font-bold hover:shadow-2xl transform hover:scale-105 transition-all"
+              >
+                Logout
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="md:hidden w-12 h-12 rounded-2xl bg-gradient-to-r from-red-500 to-rose-500 flex items-center justify-center text-white hover:shadow-2xl transition-all"
+                aria-label="Logout"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -623,25 +661,42 @@ export default function PharmacyStockist() {
         </motion.div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatsCard
-            icon={Building2}
-            label="Companies"
-            value={stats.companies}
-            gradient="from-orange-500 via-amber-500 to-yellow-500"
-          />
-          <StatsCard
-            icon={Pill}
-            label="Medicines"
-            value={stats.medicines}
-            gradient="from-blue-500 via-cyan-500 to-teal-500"
-          />
-          <StatsCard
-            icon={Users}
-            label="Staff Members"
-            value={stats.staff}
-            gradient="from-purple-500 via-fuchsia-500 to-pink-500"
-          />
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 px-4 py-3">
+          <div className="bg-gradient-to-br from-white to-orange-50 rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-orange-100 group">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 via-amber-500 to-yellow-500 flex items-center justify-center shadow-xl mb-4 group-hover:rotate-6 transition-transform">
+              <Building2 className="w-7 h-7 text-white" />
+            </div>
+            <div className="text-3xl font-black bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1">
+              {stats.companies}
+            </div>
+            <div className="text-sm text-gray-600 font-bold uppercase tracking-wide">
+              Companies
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-white to-blue-50 rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-blue-100 group">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 flex items-center justify-center shadow-xl mb-4 group-hover:rotate-6 transition-transform">
+              <Pill className="w-7 h-7 text-white" />
+            </div>
+            <div className="text-3xl font-black bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1">
+              {stats.medicines}
+            </div>
+            <div className="text-sm text-gray-600 font-bold uppercase tracking-wide">
+              Medicines
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-white to-purple-50 rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-purple-100 group">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 flex items-center justify-center shadow-xl mb-4 group-hover:rotate-6 transition-transform">
+              <Users className="w-7 h-7 text-white" />
+            </div>
+            <div className="text-3xl font-black bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1">
+              {stats.staff}
+            </div>
+            <div className="text-sm text-gray-600 font-bold uppercase tracking-wide">
+              Staff Members
+            </div>
+          </div>
         </div>
 
         {/* Main Content Card */}
@@ -649,28 +704,28 @@ export default function PharmacyStockist() {
           <div className="p-6 border-b-2 border-gray-100">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
               {/* Tabs */}
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {TAB_CONFIG.map(({ key, label, icon: Icon, gradient }) => (
+              <div className="flex gap-2 overflow-x-auto hide-scrollbar py-2">
+                {TAB_CONFIG.map(({ key, label, icon: Icon, color, bgColor, activeColor }) => (
                   <button
                     key={key}
                     onClick={() => setActiveTab(key)}
-                    className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl font-bold transition-all whitespace-nowrap text-sm ${
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all whitespace-nowrap text-sm ${
                       activeTab === key
-                        ? `bg-gradient-to-r ${gradient} text-white shadow-2xl transform scale-110`
-                        : "text-gray-700 bg-gray-100 hover:bg-gray-200 hover:scale-105"
+                        ? `${activeColor} text-white`
+                        : `${bgColor} ${color}`
                     }`}
                   >
-                    <Icon size={20} />
-                    <span>{label}</span>
-                    <span
-                      className={`text-xs px-3 py-1 rounded-xl font-black ${
+                    <Icon className="w-4 h-4" />
+                    <span className="font-medium">{label}</span>
+                    {filteredData[key].length > 0 && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
                         activeTab === key
-                          ? "bg-white/30"
-                          : "bg-white text-gray-700"
-                      }`}
-                    >
-                      {filteredData[key].length}
-                    </span>
+                          ? "bg-white/20 text-white"
+                          : "bg-white text-gray-600"
+                      }`}>
+                        {filteredData[key].length}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -718,14 +773,14 @@ export default function PharmacyStockist() {
                     }`}
                   />
                 </button>
+                
+                
               </div>
             </div>
           </div>
 
           <div className="p-8">{renderTabContent()}</div>
         </div>
-
-        {/* debug UI removed */}
       </div>
     </div>
   );

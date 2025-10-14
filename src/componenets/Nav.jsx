@@ -469,7 +469,7 @@ export default function Nav({ navigation: navProp }) {
 
   const navLinks = [
     { label: "Home", icon: "🏠", path: "/" },
-    { label: "Demand", icon: "�", path: "/demand" },
+   
     { label: "Saved", icon: "�", path: "/saved" },
     { label: "Profile", icon: "👤", path: "/profile" },
   ];
@@ -758,7 +758,7 @@ export default function Nav({ navigation: navProp }) {
         </div>
 
         {isMenuOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center mb-20 justify-center bg-black/60 backdrop-blur-sm">
             <div className="bg-white rounded-3xl p-8 w-full max-w-md mx-4 max-h-[85vh] overflow-auto shadow-2xl border-2 border-violet-200">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-black text-gray-900">Menu</h2>
@@ -789,43 +789,7 @@ export default function Nav({ navigation: navProp }) {
                 ))}
               </nav>
 
-              <div className="mt-8 pt-6 border-t-2 border-gray-200">
-                {userToken ? (
-                  <button
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      navigation.navigate("/profile");
-                    }}
-                    className="w-full flex items-center gap-3 justify-center px-6 py-4 rounded-2xl bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 text-white shadow-2xl hover:shadow-2xl hover:scale-105 transition-all font-black text-lg"
-                  >
-                    <Icon>👤</Icon>
-                    <span>My Profile</span>
-                  </button>
-                ) : (
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        navigation.navigate("/login");
-                      }}
-                      className="w-full flex items-center gap-3 justify-center px-6 py-4 rounded-2xl bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 text-white shadow-2xl hover:shadow-2xl hover:scale-105 transition-all font-black text-lg"
-                    >
-                      <Icon>🔐</Icon>
-                      <span>Login</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        navigation.navigate("/signup");
-                      }}
-                      className="w-full flex items-center gap-3 justify-center px-6 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 text-white shadow-2xl hover:shadow-2xl hover:scale-105 transition-all font-black text-lg"
-                    >
-                      <Icon>👤➕</Icon>
-                      <span>Sign Up</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+              
             </div>
           </div>
         )}

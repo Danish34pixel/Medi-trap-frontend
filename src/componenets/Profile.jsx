@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API_BASE, { apiUrl } from "./config/api";
 import { getCookie, removeCookie } from "./utils/cookies";
+import { Shield } from "lucide-react";
 
 const Profile = () => {
   const storedUser = (() => {
@@ -13,17 +14,7 @@ const Profile = () => {
     }
   })();
 
-  const [user, setUser] = useState(
-    storedUser || {
-      medicalName: "HealthCare Pharmacy",
-      ownerName: "John Doe",
-      email: "john@healthcare.com",
-      contactNo: "+1 234-567-8900",
-      address: "123 Medical Street, Health City, HC 12345",
-      drugLicenseNo: "DL-2024-12345",
-      drugLicenseImage: null,
-    }
-  );
+  const [user, setUser] = useState(storedUser || null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -34,7 +25,15 @@ const Profile = () => {
     (async () => {
       try {
         const tokenAtRequest = getCookie("token");
-        if (!tokenAtRequest) return;
+        // If there's no token and no stored user, force the user to login
+        if (!tokenAtRequest) {
+          if (!storedUser) {
+            navigate("/login");
+            return;
+          }
+          // otherwise rely on storedUser already set in state
+          return;
+        }
 
         setLoading(true);
         const res = await fetch(apiUrl("/api/auth/me"), {
@@ -231,6 +230,21 @@ const Profile = () => {
 
   const [licenseImageBroken, setLicenseImageBroken] = useState(false);
 
+  // Map the exact signup fields you provided to display variables
+  const profileImg = normalizeImageUrl(
+    user?.profileImageUrl || user?.profileImage || user?.profileImageUrl || user?.photo || (user && user.logo && user.logo.url) || null
+  );
+  const storeName = user?.name || user?.medicalName || "";
+  const ownerName = user?.contactPerson || user?.ownerName || "";
+  const emailAddr = user?.email || "";
+  const phone = user?.phone || user?.contactNo || user?.cntxNumber || "";
+  const addressFormatted =
+    typeof user?.address === "object" && user.address !== null
+      ? [user.address.street, user.address.city, user.address.state, user.address.pincode].filter(Boolean).join(", ")
+      : user?.address || "";
+  const licenseNo = user?.licenseNumber || user?.drugLicenseNo || user?.druglicenseNo || null;
+  const licenseImg = normalizeImageUrl(user?.licenseImageUrl || user?.drugLicenseImage || user?.licenseImage || null);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
       <div className="max-w-5xl mx-auto">
@@ -239,16 +253,7 @@ const Profile = () => {
           <div className="flex justify-center mb-4">
             {/* compute profile image from common fields used across models */}
             <Pill
-              imageUrl={
-                (user &&
-                  (user.profileImageUrl ||
-                    user.image ||
-                    user.photo ||
-                    user.avatar ||
-                    (user.logo && user.logo.url) ||
-                    user.photoUrl)) ||
-                null
-              }
+              imageUrl={profileImg}
             />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent mb-2">
@@ -287,6 +292,12 @@ const Profile = () => {
         )}
 
         {/* Profile Content */}
+        {!loading && !user && (
+          <div className="bg-white rounded-3xl shadow-xl p-8 text-center border-2 border-gray-100 mb-6">
+            <p className="text-gray-700">You are not logged in. Please <button onClick={() => navigate('/login')} className="text-cyan-600 underline">sign in</button> to view your profile.</p>
+          </div>
+        )}
+
         {user && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Personal Information */}
@@ -306,7 +317,7 @@ const Profile = () => {
                       </span>
                     </div>
                     <p className="text-gray-900 font-bold text-lg">
-                      {user.medicalName}
+                      {storeName}
                     </p>
                   </div>
 
@@ -318,7 +329,7 @@ const Profile = () => {
                       </span>
                     </div>
                     <p className="text-gray-900 font-bold text-lg">
-                      {user.ownerName}
+                      {ownerName}
                     </p>
                   </div>
 
@@ -330,7 +341,7 @@ const Profile = () => {
                       </span>
                     </div>
                     <p className="text-gray-900 font-bold break-all">
-                      {user.email}
+                      {emailAddr}
                     </p>
                   </div>
 
@@ -341,7 +352,7 @@ const Profile = () => {
                         Contact Number
                       </span>
                     </div>
-                    <p className="text-gray-900 font-bold">{user.contactNo}</p>
+                    <p className="text-gray-900 font-bold">{phone}</p>
                   </div>
                 </div>
               </div>
@@ -360,23 +371,15 @@ const Profile = () => {
                         Store Address
                       </span>
                     </div>
-                    <p className="text-gray-900 font-bold">
-                      {typeof user.address === 'object' && user.address !== null
-                        ? [user.address.street, user.address.city, user.address.state, user.address.pincode].filter(Boolean).join(', ')
-                        : user.address}
-                    </p>
+                    <p className="text-gray-900 font-bold">{addressFormatted}</p>
                   </div>
 
                   <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-5 rounded-2xl border-2 border-amber-200">
                     <div className="flex items-center gap-2 mb-2">
                       <FileText className="w-5 h-5 text-amber-600" />
-                      <span className="text-gray-600 text-sm font-semibold">
-                        Drug License Number
-                      </span>
+                      <span className="text-gray-600 text-sm font-semibold">Drug License Number</span>
                     </div>
-                    <p className="text-gray-900 font-bold text-lg font-mono">
-                      {user.drugLicenseNo}
-                    </p>
+                    <p className="text-gray-900 font-bold text-lg font-mono">{licenseNo || <span className="text-gray-400">Not provided</span>}</p>
                   </div>
                 </div>
               </div>
@@ -391,70 +394,17 @@ const Profile = () => {
                   Drug License
                 </h2>
                 <div className="border-3 border-dashed border-gray-200 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
-                  {user.drugLicenseImage ? (
-                    (() => {
-                      const licenseUrl = normalizeImageUrl(
-                        user.drugLicenseImage
-                      );
-                      // log for debugging when developer tools are open
-                      // eslint-disable-next-line no-console
-                      console.debug("Profile: licenseUrl ->", licenseUrl);
-                      if (!licenseUrl) {
-                        return (
-                          <div className="h-64 flex flex-col items-center justify-center text-gray-400">
-                            <ImageIcon className="w-16 h-16 mb-3 text-gray-300" />
-                            <p className="text-center font-semibold text-gray-500">
-                              No valid image URL
-                            </p>
-                          </div>
-                        );
-                      }
-
-                      if (!licenseImageBroken) {
-                        return (
-                          <img
-                            src={licenseUrl}
-                            alt="Drug License"
-                            onError={() => {
-                              // eslint-disable-next-line no-console
-                              console.warn(
-                                "Drug license image failed to load:",
-                                licenseUrl
-                              );
-                              setLicenseImageBroken(true);
-                            }}
-                            className="w-full h-64 object-contain bg-white"
-                          />
-                        );
-                      }
-
-                      // If image failed to load, show fallback with a link to open it in a new tab
-                      return (
-                        <div className="h-64 flex flex-col items-center justify-center text-gray-500 p-4">
-                          <ImageIcon className="w-12 h-12 mb-2 text-gray-300" />
-                          <p className="text-sm text-center mb-2">
-                            Image failed to load in the preview.
-                          </p>
-                          <a
-                            href={licenseUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-blue-600 underline"
-                          >
-                            Open image in new tab
-                          </a>
-                        </div>
-                      );
-                    })()
+                  {licenseImg ? (
+                    <img
+                      src={licenseImg}
+                      alt="Drug License"
+                      className="w-full h-64 object-contain bg-white"
+                    />
                   ) : (
                     <div className="h-64 flex flex-col items-center justify-center text-gray-400">
                       <ImageIcon className="w-16 h-16 mb-3 text-gray-300" />
-                      <p className="text-center font-semibold text-gray-500">
-                        No image uploaded
-                      </p>
-                      <p className="text-sm text-gray-400 mt-1">
-                        Upload your drug license
-                      </p>
+                      <p className="text-center font-semibold text-gray-500">No image uploaded</p>
+                      <p className="text-sm text-gray-400 mt-1">Upload your drug license</p>
                     </div>
                   )}
                 </div>
@@ -466,25 +416,7 @@ const Profile = () => {
                   Quick Actions
                 </h2>
                 <div className="space-y-3">
-                  <button
-                    onClick={() => navigate("/profile/edit")}
-                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-400 to-cyan-500 text-white px-5 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2.5}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
-                    <span>Edit Profile</span>
-                  </button>
+                  {/* Edit profile action removed per request */}
 
                   <button
                     onClick={handleLogout}
