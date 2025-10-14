@@ -13,6 +13,9 @@ const Logo = ({ className = "" }) => (
 export default function SelectRolePage() {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(null);
+  const [selectedRole, setSelectedRole] = useState(null);
+  const [lastPointerType, setLastPointerType] = useState(null);
+  const clearSelectionTimeout = React.useRef(null);
   // Remove isMobile if not used
 
   const roles = [
@@ -53,7 +56,8 @@ export default function SelectRolePage() {
       // Open stockist login by default for stockist role
       navigate("/stockist-login");
     } else if (roleId === "Medical Owner") {
-      navigate("/signup");
+      // show sign-in page first for Medical Owner
+      navigate("/login");
     } else if (roleId === "Staff") {
       navigate("/staffs");
     } else {
@@ -92,20 +96,36 @@ export default function SelectRolePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-14">
           {roles.map((role, index) => {
             const IconComponent = role.icon;
-            const isActive = isHovered === role.id;
+            const isActive = (isHovered === role.id) || (selectedRole === role.id);
             const isHovering = isHovered === role.id;
 
             return (
               <div
-                key={role.id}
-                onClick={() => handleRoleSelect(role.id)}
-                onMouseEnter={() => setIsHovered(role.id)}
-                onMouseLeave={() => setIsHovered(null)}
-                onTouchStart={() => setIsHovered(role.id)}
-                onTouchEnd={() => {
-                  setIsHovered(null);
-                  handleRoleSelect(role.id);
-                }}
+                  key={role.id}
+                  onMouseEnter={() => setIsHovered(role.id)}
+                  onMouseLeave={() => setIsHovered(null)}
+                  onPointerDown={(e) => {
+                    // remember pointer type to differentiate touch vs mouse
+                    setLastPointerType(e.pointerType);
+                    // For touch/pointer (mobile), implement two-tap: first selects, second opens
+                    if (e.pointerType === "touch") {
+                      if (selectedRole === role.id) {
+                        handleRoleSelect(role.id);
+                        setSelectedRole(null);
+                      } else {
+                        setSelectedRole(role.id);
+                        // clear selection after a short timeout to avoid permanent selection
+                        if (clearSelectionTimeout.current) clearTimeout(clearSelectionTimeout.current);
+                        clearSelectionTimeout.current = setTimeout(() => setSelectedRole(null), 3000);
+                      }
+                    }
+                  }}
+                  onClick={(e) => {
+                    // For mouse/keyboard, open immediately
+                    if (lastPointerType !== "touch") {
+                      handleRoleSelect(role.id);
+                    }
+                  }}
                 className={`
                   group relative flex flex-col items-center p-8 rounded-3xl cursor-pointer transition-all duration-500 transform hover:scale-110 hover:-translate-y-2 active:scale-105 active:-translate-y-1
                   ${
