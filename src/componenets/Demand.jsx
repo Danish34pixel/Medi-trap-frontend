@@ -13,6 +13,7 @@ import {
   nameMatchesStockistItems,
   tokenOverlapScore,
 } from "./utils/normalizeMatching";
+import Logo from "./Logo";
 
 export default function Demand() {
   const [lines, setLines] = useState([{ id: Date.now(), name: "", qty: 0 }]);
@@ -73,7 +74,7 @@ export default function Demand() {
   const removeLine = (id) =>
     setLines((prev) => prev.filter((l) => l.id !== id));
 
-  // Core grouping logic: For each demand line, find medicines that match (by name, fuzzy) and group by stockist
+  // Core grouping logic: For each demand line, find medicines that match and check stockist availability
   const createDemand = async () => {
     setLoading(true);
     setError(null);
@@ -83,12 +84,25 @@ export default function Demand() {
 
       const normalizeQuery = (s) => (s || "").toString().trim();
 
+      // First, check if stockists have medicines listed in their inventory
+      const checkStockistInventory = (medicine, stockist) => {
+        // Check if medicine exists in stockist's Medicines array
+        if (stockist.Medicines && Array.isArray(stockist.Medicines)) {
+          return stockist.Medicines.some(med => 
+            med.toLowerCase() === medicine.toLowerCase() ||
+            (medicine.name && med.toLowerCase() === medicine.name.toLowerCase())
+          );
+        }
+        return false;
+      };
+
       for (const line of lines) {
         const thisDebug = {
           query: line.name,
           foundMeds: [],
           candidateStockists: [],
           assignedTo: null,
+          availability: []
         };
         const q = normalizeQuery(line.name);
         if (!q) {
@@ -121,62 +135,67 @@ export default function Demand() {
 
         let assigned = false;
 
-        // If we have matched medicines, prefer grouping by stockist references on those meds
+        // If we have matched medicines, check stockist availability
         for (const med of foundMeds) {
-          // Try to find a stockist that the medicine references
-          let matchedStockist = null;
+          // Find stockists that have this medicine in their inventory
+          let availableStockists = [];
           if (Array.isArray(stockists) && stockists.length > 0) {
-            matchedStockist = stockists.find((s) =>
-              medicineReferencesStockist(med, s._id)
-            );
-            // fallback: maybe stockist lists contain the med name
-            if (!matchedStockist) {
-              const mName = medicineDisplayName(med) || "";
-              matchedStockist = stockists.find((s) =>
-                nameMatchesStockistItems(mName, s)
-              );
-            }
-          }
+            availableStockists = stockists.filter(s => {
+              // Check if medicine is explicitly listed in stockist's inventory
+              const hasInInventory = checkStockistInventory(med, s);
+              // Or if medicine references this stockist
+              const isReferenced = medicineReferencesStockist(med, s._id);
+              return hasInInventory || isReferenced;
+            });
+            
+            // Add availability info to debug
+            thisDebug.availability = availableStockists.map(s => s.name || s.title);
 
-          if (matchedStockist) {
-            thisDebug.candidateStockists.push(
-              matchedStockist.title ||
-                matchedStockist.name ||
-                matchedStockist._id
-            );
-            const label =
-              matchedStockist.title ||
-              matchedStockist.name ||
-              matchedStockist._id;
-            groups[label] = groups[label] || [];
-            groups[label].push({ line, medicine: med });
-            assigned = true;
-            thisDebug.assignedTo = label;
+            // Process each available stockist
+            for (const matchedStockist of availableStockists) {
+
+              const label = matchedStockist.title || matchedStockist.name || matchedStockist._id;
+              thisDebug.candidateStockists.push(label);
+              groups[label] = groups[label] || [];
+              groups[label].push({ 
+                line, 
+                medicine: med,
+                available: true, // Mark as available since we confirmed it's in inventory
+                quantity: line.qty
+              });
+              assigned = true;
+              thisDebug.assignedTo = label;
+            }
           }
         }
 
-        if (assigned) continue;
+        if (assigned) {
+          thisDebug.status = "Found with availability";
+          continue;
+        }
 
-        // If not assigned from medicines, try to find a stockist directly by the query
-        if (Array.isArray(stockists) && stockists.length > 0) {
-          // first try strong name match
-          let matchedStockist = stockists.find((s) =>
-            nameMatchesStockistItems(q, s)
+        // If not assigned yet, check stockists' medicine lists directly
+        if (!assigned && Array.isArray(stockists) && stockists.length > 0) {
+          // Find stockists that list this medicine in their inventory
+          const stockistsWithMedicine = stockists.filter(s => 
+            checkStockistInventory({ name: q }, s)
           );
 
-          // then token-overlap scoring
-          if (!matchedStockist) {
-            let bestScore = 0;
-            let best = null;
-            for (const s of stockists) {
-              const score = tokenOverlapScore(q, s);
-              if (score > bestScore) {
-                bestScore = score;
-                best = s;
-              }
+          // If direct inventory match found, use those stockists
+          if (stockistsWithMedicine.length > 0) {
+            for (const matchedStockist of stockistsWithMedicine) {
+              const label = matchedStockist.title || matchedStockist.name || matchedStockist._id;
+              thisDebug.candidateStockists.push(label);
+              groups[label] = groups[label] || [];
+              groups[label].push({ 
+                line, 
+                medicine: { name: q },
+                available: true,
+                quantity: line.qty
+              });
+              assigned = true;
+              thisDebug.assignedTo = label;
             }
-            // accept minimal overlap of 1 token as a suggestion
-            if (bestScore >= 1) matchedStockist = best;
           }
 
           if (matchedStockist) {
@@ -224,228 +243,223 @@ export default function Demand() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-50">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 text-white rounded-full mb-4">
-            <Package size={32} />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Create Today's Demand
-          </h1>
-          <p className="text-gray-600">
-            Add medicine requirements and organize by stockists
-          </p>
+    <div className="min-h-screen bg-slate-50 font-sans">
+  <div className="container mx-auto max-w-2xl px-4 py-12">
+    {/* Header */}
+    <header className="text-center mb-10">
+      <Logo className="w-20 h-20 mx-auto mb-4" alt="MedTrap Logo" />
+      <p className="text-slate-500 text-lg">
+        Create a new medicine demand list for your stockists.
+      </p>
+    </header>
+
+    {/* Main Form Card */}
+    <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-8">
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-2xl font-semibold text-slate-800">
+          Medicine Requirements
+        </h2>
+        <div className="text-sm font-medium text-center text-white bg-teal-500 rounded-full px-6 py-1">
+          {lines.length} item{lines.length !== 1 ? "s" : ""}
         </div>
+      </div>
 
-        {/* Main Form Card */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">
-              Medicine Requirements
-            </h2>
-            <div className="text-sm text-gray-500">
-              {lines.length} item{lines.length !== 1 ? "s" : ""}
+      {/* Medicine Lines */}
+      <div className="space-y-4 mb-8">
+        {lines.map((line, index) => (
+          <div
+            key={line.id}
+            className="group flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200 transition-all hover:border-teal-400 hover:bg-white"
+          >
+            <div className="flex-shrink-0 w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-sm font-bold text-slate-600">
+              {index + 1}
             </div>
+
+            <div className="flex-1">
+              <input
+                value={line.name}
+                onChange={(e) =>
+                  updateLine(line.id, { name: e.target.value })
+                }
+                placeholder="Enter medicine name..."
+                className="w-full bg-transparent text-slate-800 placeholder-slate-400 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-slate-600 hidden sm:block">
+                  Qty:
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  value={line.qty}
+                  onChange={(e) =>
+                    updateLine(line.id, {
+                      qty: Number(
+                        e.target.value === "" ? 0 : e.target.value
+                      ),
+                    })
+                  }
+                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-center bg-white"
+                />
+              </div>
+            </div>
+
+            {lines.length > 1 && (
+              <button
+                onClick={() => removeLine(line.id)}
+                className="flex-shrink-0 p-2 text-slate-400 hover:bg-orange-100 hover:text-orange-500 rounded-full transition-colors opacity-50 group-hover:opacity-100"
+                title="Remove item"
+              >
+                <Trash2 size={18} />
+              </button>
+            )}
           </div>
+        ))}
+      </div>
 
-          {/* Medicine Lines */}
-          <div className="space-y-4 mb-6">
-            {lines.map((line, index) => (
-              <div key={line.id} className="group">
-                <div className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
-                  <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm font-medium text-gray-600">
-                    {index + 1}
-                  </div>
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <button
+          onClick={addLine}
+          className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 text-slate-600 hover:text-teal-600 rounded-lg font-semibold transition-colors"
+        >
+          <Plus size={18} />
+          Add Item
+        </button>
+        <button
+          onClick={createDemand}
+          className="flex w-full sm:w-auto items-center justify-center gap-2 px-8 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-semibold transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              Processing...
+            </>
+          ) : (
+            <>
+              <CheckCircle2 size={18} />
+              Create Demand
+            </>
+          )}
+        </button>
+      </div>
+    </div>
 
-                  <div className="flex-1">
-                    <input
-                      value={line.name}
-                      onChange={(e) =>
-                        updateLine(line.id, { name: e.target.value })
-                      }
-                      placeholder="Enter medicine name..."
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                    />
-                  </div>
+    {/* Error Display */}
+    {error && (
+      <div className="bg-orange-100 border-l-4 border-orange-500 rounded-r-lg p-4 mb-8">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="text-orange-500" size={20} />
+          <div className="text-orange-800 font-medium">{error}</div>
+        </div>
+      </div>
+    )}
 
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-gray-700">
-                        Qty:
-                      </label>
-                      <input
-                        type="number"
-                        min={0}
-                        value={line.qty}
-                        onChange={(e) =>
-                          updateLine(line.id, {
-                            qty: Number(
-                              e.target.value === "" ? 0 : e.target.value
-                            ),
-                          })
-                        }
-                        className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-center"
-                      />
+    {/* Results */}
+    {result && (
+      <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+        <h3 className="text-2xl font-semibold text-slate-800 mb-6 flex items-center gap-3">
+          <CheckCircle2 className="text-teal-500" size={28} />
+          Grouped Demand Results
+        </h3>
+
+        {Object.keys(result).length === 0 ? (
+          <div className="text-center py-12 text-slate-500">
+            <Package size={48} className="mx-auto mb-4 opacity-40" />
+            <p className="text-lg">No results to display</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(result).map(([group, items]) => (
+              <div
+                key={group}
+                className="border border-slate-200 rounded-xl overflow-hidden"
+              >
+                <div
+                  className={`px-6 py-4 font-semibold text-white ${
+                    group === "unmatched"
+                      ? "bg-gradient-to-r from-amber-500 to-orange-500"
+                      : "bg-gradient-to-r from-teal-500 to-cyan-500"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 text-lg">
+                        {group === "unmatched" && <AlertTriangle size={20} />}
+                        {group === "unmatched" ? "Unmatched / Not Found" : group}
+                      </div>
+                      <div className="text-sm opacity-90 mt-1 font-normal">
+                        {items.length} item{items.length !== 1 ? "s" : ""}
+                      </div>
                     </div>
+                    {group !== "unmatched" && stockists.find(s => (s.name === group || s.title === group))?.phone && (
+                      <button
+                        onClick={() => {
+                          const stockist = stockists.find(s => s.name === group || s.title === group);
+                          if (stockist?.phone) {
+                            window.location.href = `tel:${stockist.phone}`;
+                          }
+                        }}
+                        className="flex items-center gap-2 px-3 py-2.5 bg-white text-teal-600 rounded-2xl hover:bg-teal-50 transition-all font-bold shadow-lg hover:scale-105"
+                      >
+                        <span className="text-xl">📞</span>
+                        
+                      </button>
+                    )}
                   </div>
+                </div>
 
-                  {lines.length > 1 && (
-                    <button
-                      onClick={() => removeLine(line.id)}
-                      className="flex-shrink-0 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                      title="Remove item"
+                <div className="divide-y divide-slate-100">
+                  {items.map((it, i) => (
+                    <div
+                      key={i}
+                      className="px-6 py-4 hover:bg-slate-50 transition-colors"
                     >
-                      <Trash2 size={18} />
-                    </button>
-                  )}
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium text-slate-900 mb-1">
+                            {it.line.name}
+                          </div>
+                          {it.medicine && (
+                            <div className="text-sm text-teal-600 flex items-center gap-1.5">
+                              <CheckCircle2 size={14}/>
+                              <span>
+                                Matches:{" "}
+                                {it.medicine.name ||
+                                  it.medicine.title ||
+                                  it.medicine.medicineName ||
+                                  it.medicine._id}
+                              </span>
+                            </div>
+                          )}
+                          {!it.medicine && group !== "unmatched" && (
+                            <div className="text-sm text-slate-500">
+                              No direct medicine match
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-shrink-0 ml-4">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
+                            Qty: {it.line.qty}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <button
-              onClick={addLine}
-              className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
-            >
-              <Plus size={18} />
-              Add Item
-            </button>
-            <button
-              onClick={createDemand}
-              className="flex items-center gap-2 px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 size={18} />
-                  Create Demand
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Error Display */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="text-red-500" size={20} />
-              <div className="text-red-700 font-medium">{error}</div>
-            </div>
-          </div>
-        )}
-
-        {/* Results */}
-        {result && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-              <CheckCircle2 className="text-green-500" size={24} />
-              Grouped Demand Results
-            </h3>
-
-            {Object.keys(result).length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Package size={48} className="mx-auto mb-4 opacity-50" />
-                <p>No results to display</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {Object.entries(result).map(([group, items]) => (
-                  <div
-                    key={group}
-                    className="border border-gray-200 rounded-lg overflow-hidden"
-                  >
-                    <div
-                      className={`px-6 py-4 font-semibold text-white ${
-                        group === "unmatched"
-                          ? "bg-amber-500"
-                          : "bg-gradient-to-r from-blue-500 to-blue-600"
-                      }`}
-                    >
-                      {group === "unmatched" ? (
-                        <div className="flex items-center gap-2">
-                          <AlertTriangle size={20} />
-                          Unmatched / Not Found
-                        </div>
-                      ) : (
-                        group
-                      )}
-                      <div className="text-sm opacity-90 mt-1">
-                        {items.length} item{items.length !== 1 ? "s" : ""}
-                      </div>
-                    </div>
-
-                    <div className="divide-y divide-gray-100">
-                      {items.map((it, i) => (
-                        <div
-                          key={i}
-                          className="px-6 py-4 hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="font-medium text-gray-900 mb-1">
-                                {it.line.name}
-                              </div>
-                              {it.medicine && (
-                                <div className="text-sm text-green-600">
-                                  ✓ Matches:{" "}
-                                  {it.medicine.name ||
-                                    it.medicine.title ||
-                                    it.medicine.medicineName ||
-                                    it.medicine._id}
-                                </div>
-                              )}
-                              {!it.medicine && group !== "unmatched" && (
-                                <div className="text-sm text-gray-500">
-                                  No direct medicine match
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-shrink-0">
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                                Qty: {it.line.qty}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Debug Panel */}
-        {debugInfo && debugInfo.length > 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
-            <h4 className="font-semibold mb-3">Debug: matching details</h4>
-            <div className="space-y-3 text-sm text-gray-700">
-              {debugInfo.map((d, i) => (
-                <div key={i} className="p-3 border rounded">
-                  <div className="font-medium">Query: {d.query}</div>
-                  <div>Found medicines: {d.foundMeds.join(", ") || "none"}</div>
-                  <div>
-                    Candidate stockists:{" "}
-                    {d.candidateStockists.join(", ") || "none"}
-                  </div>
-                  <div>Assigned to: {d.assignedTo || "none"}</div>
-                </div>
-              ))}
-            </div>
-          </div>
         )}
       </div>
-    </div>
+    )}
+
+    
+  </div>
+</div>
   );
 }

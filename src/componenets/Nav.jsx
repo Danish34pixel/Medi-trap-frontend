@@ -553,310 +553,196 @@ export default function Nav({ navigation: navProp }) {
     return "💊";
   };
 
+  const handleToggleCard = (itemId) => {
+    setOpenCardId(openCardId === itemId ? null : itemId);
+  };
+
   const renderStockistCard = (item, idx) => (
     <div
       key={item._id || idx}
       ref={(el) => {
-        try {
-          if (el && item && item._id) cardRefs.current[item._id] = el;
-        } catch (e) {}
+        if (el && item?._id) cardRefs.current[item._id] = el;
       }}
-      className={`group relative bg-gradient-to-br from-white to-blue-50 rounded-3xl p-6 mb-6 shadow-xl border-2 border-blue-100 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 overflow-hidden ${
-        openCardId === item._id ? "ring-4 ring-cyan-200 z-40" : ""
-      }`}
+      className={`bg-white rounded-2xl shadow-lg border border-slate-100 p-4 transition-all duration-300 mb-5 ${openCardId === item._id ? 'ring-2 ring-cyan-400' : 'shadow-md'}`}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-50/50 via-blue-50/30 to-purple-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      {/* --- Card Header --- */}
+      <div className="flex items-start gap-4 mb-4">
+        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center shadow-md shadow-cyan-500/20">
+          <span className="text-white font-bold text-2xl">{item.title?.charAt(0)}</span>
+        </div>
+        <div className="flex-1">
+          <h3 className="text-lg font-bold text-slate-800">{item.title}</h3>
+          <p className="text-sm text-slate-500">{item.address}</p>
+        </div>
+        <button
+            onClick={() => {
+              try {
+                navigation.navigate(`/stockist/${item._id}`);
+              } catch (e) {
+                window.location.href = `/stockist/${item._id}`;
+              }
+            }}
+            className="text-cyan-500 font-bold text-2xl h-8 w-8 flex items-center justify-center rounded-full hover:bg-cyan-50"
+        >
+          ›
+        </button>
+      </div>
 
-      <div className="relative z-10">
-        <div className="flex items-start justify-between mb-5">
-          <div className="flex-1">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
-                <span className="text-white font-black text-xl">
-                  {item.title?.charAt(0)}
-                </span>
-              </div>
-              <div>
-                <h3 className="text-xl font-black text-gray-900 group-hover:text-blue-700 transition-colors">
-                  {item.title}
-                </h3>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-lg"></div>
-                  <span className="text-xs text-emerald-600 font-bold uppercase tracking-wide">
-                    Verified Supplier
-                  </span>
+      {/* --- Medicine & Company Lists --- */}
+      {filterType === "medicine" && item.Medicines && (
+        <div className="mb-4">
+          <h4 className="text-xs uppercase font-semibold text-slate-500 mb-2">Available Medicines</h4>
+          <div className="flex flex-wrap gap-2">
+            {item.Medicines.map((med, i) => {
+              const isMatched = searchQuery && med.toLowerCase().includes(searchQuery.toLowerCase());
+              return (
+                <div
+                  key={i}
+                  className={`px-3 py-1 rounded-full text-sm font-semibold transition-all ${
+                    isMatched
+                      ? 'bg-orange-500 text-white shadow-md'
+                      : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  {med}
                 </div>
-              </div>
-            </div>
-
-            <div className="space-y-3 mb-5">
-              <div className="flex items-center gap-3 hover:bg-blue-50 rounded-xl p-3 transition-all duration-200 group/contact">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg">
-                  <span className="text-white text-lg">📞</span>
-                </div>
-                <span className="text-gray-800 font-bold group-hover/contact:text-blue-700">
-                  {item.phone}
-                </span>
-              </div>
-              <div className="flex items-start gap-3 hover:bg-gray-50 rounded-xl p-3 transition-all duration-200 group/address">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-gray-500 to-gray-600 flex items-center justify-center shadow-lg">
-                  <span className="text-white text-lg">📍</span>
-                </div>
-                <span className="text-gray-700 flex-1 font-medium group-hover/address:text-gray-900">
-                  {item.address}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative">
-            <div className="w-4 h-4 bg-emerald-500 rounded-full shadow-xl"></div>
-            <div className="absolute inset-0 w-4 h-4 bg-emerald-500 rounded-full animate-ping opacity-75"></div>
+              );
+            })}
           </div>
         </div>
+      )}
 
-        {filterType === "company" && item.items && (
-          <div className="mb-5">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-orange-400 to-pink-500 flex items-center justify-center mr-3 shadow-xl">
-                <span className="text-white text-xl">🏥</span>
-              </div>
-              <span className="font-black text-gray-900 text-lg">
-                Healthcare Partners
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {item.items.map((company, i) => {
-                const matched =
-                  searchQuery &&
-                  company.toLowerCase().includes(searchQuery.toLowerCase());
-                return (
-                  <div
-                    key={i}
-                    className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold transition-all duration-300 ${
-                      matched
-                        ? "bg-gradient-to-r from-blue-400 to-cyan-400 border-2 border-blue-500 text-white shadow-2xl scale-110"
-                        : "bg-gradient-to-r from-gray-50 to-gray-100 text-gray-800 hover:shadow-xl hover:scale-105"
-                    }`}
-                  >
-                    <span className="text-xl">{getHealthIcon(company)}</span>
-                    <span>{company}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {filterType === "medicine" && item.Medicines && (
-          <div className="mb-5">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-emerald-400 to-green-500 flex items-center justify-center mr-3 shadow-xl">
-                <span className="text-white text-xl">💊</span>
-              </div>
-              <span className="font-black text-gray-900 text-lg">
-                Available Medicines
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {item.Medicines.map((med, i) => {
-                const matched =
-                  searchQuery &&
-                  med.toLowerCase().includes(searchQuery.toLowerCase());
-                return (
-                  <div
-                    key={i}
-                    className={`relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 ${
-                      matched
-                        ? "bg-gradient-to-r from-emerald-400 to-green-400 border-2 border-emerald-500 text-white shadow-2xl scale-105"
-                        : "bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-800 hover:shadow-xl hover:scale-105"
-                    }`}
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 flex items-center justify-center shadow-lg">
-                      <span className="text-white text-xl">💊</span>
-                    </div>
-                    <span className="flex-1">{med}</span>
-                    {matched && (
-                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center shadow-xl">
-                        <span className="text-white text-xs font-black">✓</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {filterType === "stockist" && (
-          <div className="space-y-5">
-            {item.items && (
-              <div>
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-orange-400 to-pink-500 flex items-center justify-center mr-3 shadow-xl">
-                    <span className="text-white text-xl">🏥</span>
-                  </div>
-                  <span className="font-black text-gray-900 text-lg">
-                    Healthcare Partners
-                  </span>
+      {filterType === "company" && item.items && (
+        <div className="mb-4">
+          <h4 className="text-xs uppercase font-semibold text-slate-500 mb-2">Partner Companies</h4>
+          <div className="flex flex-wrap gap-2">
+            {item.items.map((company, i) => {
+              const isMatched = searchQuery && company.toLowerCase().includes(searchQuery.toLowerCase());
+              return (
+                <div
+                  key={i}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold transition-all ${
+                    isMatched
+                      ? 'bg-orange-500 text-white shadow-md'
+                      : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <span>{getHealthIcon(company)}</span>
+                  <span>{company}</span>
                 </div>
-                <div className="flex flex-wrap gap-3">
+              );
+            })}
+          </div>
+        </div>
+      )}
+      
+       {filterType === "stockist" && (
+        <div className="space-y-4 mb-4">
+          {item.items && (
+            <div>
+              <h4 className="text-xs uppercase font-semibold text-slate-500 mb-2">Partner Companies</h4>
+                <div className="flex flex-wrap gap-2">
                   {item.items.map((company, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold bg-gradient-to-r from-gray-50 to-gray-100 text-gray-800 hover:shadow-xl hover:scale-105 transition-all duration-300"
-                    >
-                      <span className="text-xl">{getHealthIcon(company)}</span>
+                    <div key={i} className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-slate-100 text-slate-700">
+                      <span>{getHealthIcon(company)}</span>
                       <span>{company}</span>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {item.Medicines && (
-              <div>
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-emerald-400 to-green-500 flex items-center justify-center mr-3 shadow-xl">
-                    <span className="text-white text-xl">💊</span>
-                  </div>
-                  <span className="font-black text-gray-900 text-lg">
-                    Medicine Catalog
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            </div>
+          )}
+          {item.Medicines && (
+            <div>
+              <h4 className="text-xs uppercase font-semibold text-slate-500 mb-2">Medicine Catalog</h4>
+                <div className="flex flex-wrap gap-2">
                   {item.Medicines.map((med, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-800 hover:shadow-xl hover:scale-105 transition-all duration-300"
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 flex items-center justify-center shadow-lg">
-                        <span className="text-white text-xl">💊</span>
-                      </div>
-                      <span className="flex-1">{med}</span>
+                    <div key={i} className="px-3 py-1 rounded-full text-sm font-semibold bg-slate-100 text-slate-700">
+                      {med}
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="mt-6 pt-5 border-t-2 border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-gray-600 font-semibold">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-              <span>Live Inventory Available</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => {
-                  try {
-                    const next = openCardId === item._id ? null : item._id;
-                    setOpenCardId(next);
-                    if (
-                      next &&
-                      cardRefs.current &&
-                      cardRefs.current[item._id]
-                    ) {
-                      cardRefs.current[item._id].scrollIntoView({
-                        behavior: "smooth",
-                        block: "center",
-                      });
-                    }
-                  } catch (e) {
-                    setOpenCardId(item._id);
-                  }
-                }}
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 text-white rounded-2xl font-black shadow-2xl hover:shadow-2xl hover:scale-110 transition-all duration-300"
-              >
-                {openCardId === item._id ? "Close" : "Contact Now →"}
-              </button>
-              <button
-                onClick={() => {
-                  // quick navigate to detail/profile page if available
-                  try {
-                    navigation.navigate(`/stockist/${item._id}`);
-                  } catch (e) {
-                    window.location.href = `/stockist/${item._id}`;
-                  }
-                }}
-                title="Open profile"
-                className="px-4 py-3 bg-white text-violet-700 rounded-2xl font-black shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
-              >
-                Profile
-              </button>
-            </div>
-          </div>
-
-          {openCardId === item._id && (
-            <div className="mt-4 bg-gradient-to-r from-cyan-50 to-white p-4 rounded-2xl border border-cyan-100">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="text-sm text-gray-700 font-semibold">
-                    Contact
-                  </div>
-                  <div className="text-lg font-black text-gray-900 mt-1">
-                    {item.title}
-                  </div>
-                  <div className="text-sm text-gray-600 mt-2">
-                    {item.address}
-                  </div>
-                  <div className="text-sm text-gray-800 mt-1 font-bold">
-                    {item.phone}
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <a
-                    href={`tel:${item.phone || ""}`}
-                    className="px-4 py-3 bg-emerald-500 text-white rounded-2xl font-bold text-center shadow-lg"
-                  >
-                    Call
-                  </a>
-                  <button
-                    onClick={() => {
-                      try {
-                        navigation.navigate(`/stockist/${item._id}`);
-                      } catch (e) {
-                        window.location.href = `/stockist/${item._id}`;
-                      }
-                    }}
-                    className="px-4 py-3 bg-white text-violet-700 rounded-2xl font-bold shadow hover:shadow-lg"
-                  >
-                    View Profile
-                  </button>
-                </div>
-              </div>
             </div>
           )}
         </div>
+      )}
+
+
+      {/* --- Card Footer & Actions --- */}
+      <div className="border-t border-slate-200 pt-3">
+        <div className="flex items-center justify-between">
+           <div className="flex items-center gap-2">
+             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+             <span className="text-xs text-green-600 font-bold">Verified</span>
+           </div>
+            <button
+                onClick={() => handleToggleCard(item._id)}
+                className="bg-cyan-500 text-white font-bold text-sm px-5 py-2.5 rounded-lg shadow-md shadow-cyan-500/20 hover:bg-cyan-600 transition-all"
+            >
+                {openCardId === item._id ? "Hide Contact" : "Contact Now"}
+            </button>
+        </div>
+
+        {/* --- Render Contact Card --- */}
+        {renderContactCard(item)}
       </div>
     </div>
   );
+
+  const renderContactCard = (item) => {
+    if (openCardId !== item._id) return null;
+    
+    return (
+      <div className="bg-white p-4 rounded-2xl shadow-md border border-slate-100">
+      <div className="flex items-center gap-4">
+        {/* Left side: Contact Information */}
+        <div className="flex-1">
+          <div className="text-xs font-bold uppercase text-slate-500 mb-1">
+            Contact Details
+          </div>
+          <h4 className="text-lg font-bold text-slate-800">
+            {item.title}
+          </h4>
+          <p className="text-sm text-slate-500 mt-1">
+            {item.address}
+          </p>
+          <p className="text-sm font-semibold text-cyan-600 mt-1">
+            {item.phone}
+          </p>
+        </div>
+
+        {/* Right side: Action Buttons */}
+        <div className="flex flex-col gap-2">
+          <a
+            href={`tel:${item.phone || ""}`}
+            className="w-12 h-12 bg-cyan-500 text-white rounded-xl font-bold text-2xl flex items-center justify-center shadow-lg shadow-cyan-500/20 hover:bg-cyan-600 transform hover:-translate-y-0.5 transition-all"
+            aria-label="Call"
+          >
+            <span>📞</span>
+          </a>
+          
+         
+        </div>
+      </div>
+    </div>
+    );
+  };
 
   return (
     <div
       className="bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50"
       style={{ opacity: navOpacity, transition: "opacity 300ms ease-out" }}
     >
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="flex items-center justify-between py-8">
-          <div className="flex items-center gap-5">
+      <div className="max-w-4xl mx-auto px-6">
+        <div className="flex items-center justify-between py-8 ml-10">
+          <div className="flex items-center ">
             <div className="relative">
-              <div className="w-28 h-12 flex items-center justify-center">
+              <div className="w-32  flex items-center justify-center">
                 <Logo />
+              <img className="" src="logo.png" alt="" />
               </div>
             </div>
             <div>
-              <h1 className="text-3xl font-black bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 bg-clip-text text-transparent">
-                Meditrap
-              </h1>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <div className="px-3 py-1 bg-gradient-to-r from-emerald-400 to-green-500 text-white text-xs rounded-full font-bold shadow-lg">
-                  LIVE
-                </div>
-              </div>
+              
             </div>
           </div>
 
