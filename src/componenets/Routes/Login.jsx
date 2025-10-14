@@ -92,7 +92,7 @@ const Login = () => {
   }, []);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -104,7 +104,7 @@ const Login = () => {
       const response = await fetch(apiUrl(`/api/auth/login`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.email, password: form.password }),
+        body: JSON.stringify({ email: form.email, password: form.password, role: "medicalOwner" }),
       });
 
       const data = await response.json();
@@ -186,6 +186,7 @@ const Login = () => {
             </div>
 
             <div className="space-y-6 slide-in-right">
+
               <InputField
                 icon={Mail}
                 label="Email Address"

@@ -19,7 +19,7 @@ const PurchaserLogin = () => {
     setError("");
     try {
       // Call backend login endpoint
-      const res = await postJson("/auth/login", { email, password });
+  const res = await postJson("/auth/login", { email, password, role: "purchaser" });
       if (res && res.token && res.user) {
         localStorage.setItem("token", res.token);
         localStorage.setItem("user", JSON.stringify(res.user));
