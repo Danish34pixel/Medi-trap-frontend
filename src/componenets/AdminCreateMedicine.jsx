@@ -13,14 +13,27 @@ import {
 } from "lucide-react";
 import { apiUrl } from "./config/api";
 import { getCookie } from "./utils/cookies";
+import Logo from "./Logo";
 
 export default function AdminCreateMedicine() {
   const [form, setForm] = useState({ name: "", company: "", stockists: [] });
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState([]);
   const [stockistsList, setStockistsList] = useState([]);
+  const [companySearch, setCompanySearch] = useState("");
+  const [stockistSearch, setStockistSearch] = useState("");
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [particles, setParticles] = useState([]);
+  const filteredCompanies = companies.filter((company) =>
+    (company.name || "").toLowerCase().includes(companySearch.toLowerCase()) ||
+    (company.email || "").toLowerCase().includes(companySearch.toLowerCase())
+  );
+
+  const filteredStockists = stockistsList.filter((stockist) =>
+    (stockist.name || "").toLowerCase().includes(stockistSearch.toLowerCase()) ||
+    (stockist.email || "").toLowerCase().includes(stockistSearch.toLowerCase()) ||
+    (stockist.location || "").toLowerCase().includes(stockistSearch.toLowerCase())
+  );
 
   const navigate = useNavigate();
 
@@ -312,25 +325,9 @@ export default function AdminCreateMedicine() {
             <div className="relative z-10">
               {/* Header */}
               <div className="text-center mb-12 relative">
-                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
-                  <Sparkles className="text-blue-400 animate-pulse" size={24} />
-                </div>
-                <div className="absolute -top-3 left-1/3 transform -translate-x-1/2">
-                  <Pill
-                    className="text-indigo-400 animate-bounce delay-300"
-                    size={16}
-                  />
-                </div>
-                <div className="absolute -top-3 right-1/3 transform translate-x-1/2">
-                  <Plus
-                    className="text-purple-400 animate-bounce delay-700"
-                    size={16}
-                  />
-                </div>
-
-                <div className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-3xl backdrop-blur-xl border border-white/30 mb-6">
-                  <Pill className="w-8 h-8 text-blue-500 animate-pulse" />
-                </div>
+                
+                
+                <Logo className="w-26 h-20 mx-auto mb-4" />
 
                 <h1 className="text-4xl sm:text-5xl font-black mb-4 relative">
                   <span className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-500 bg-clip-text text-transparent">
@@ -381,22 +378,53 @@ export default function AdminCreateMedicine() {
                       Select Company
                     </h2>
 
+                    {/* Search Bar for Company */}
+                    <div className="mb-4">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Search companies by name or email..."
+                          value={companySearch}
+                          onChange={(e) => setCompanySearch(e.target.value)}
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-gray-800 
+                            placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 
+                            focus:border-transparent transition-all duration-200"
+                        />
+                        {companySearch && (
+                          <button
+                            onClick={() => setCompanySearch("")}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 
+                              hover:text-gray-600 focus:outline-none"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="space-y-4">
                       {companies.length === 0 ? (
                         <div className="p-6 bg-yellow-50/80 border border-yellow-200/50 rounded-2xl backdrop-blur-xl">
-                          <p className="text-yellow-700 font-medium">
-                            No companies found.
-                          </p>
+                          <p className="text-yellow-700 font-medium">No companies found.</p>
+                        </div>
+                      ) : filteredCompanies.length === 0 ? (
+                        <div className="p-6 bg-yellow-50/80 border border-yellow-200/50 rounded-2xl backdrop-blur-xl">
+                          <p className="text-yellow-700 font-medium">No matching companies found.</p>
                         </div>
                       ) : (
-                        companies.map((company) => (
-                          <CompanyCard
-                            key={company._id}
-                            company={company}
-                            isSelected={form.company === company._id}
-                            onClick={() => setField("company", company._id)}
-                          />
-                        ))
+                        <>
+                          {/* Always show all companies in a scrollable area */}
+                          <div className="max-h-64 overflow-y-auto space-y-4">
+                            {filteredCompanies.map((company) => (
+                              <CompanyCard
+                                key={company._id}
+                                company={company}
+                                isSelected={form.company === company._id}
+                                onClick={() => setField("company", company._id)}
+                              />
+                            ))}
+                          </div>
+                        </>
                       )}
                     </div>
                   </div>
@@ -414,22 +442,53 @@ export default function AdminCreateMedicine() {
                       </span>
                     </h2>
 
+                    {/* Search Bar for Stockists */}
+                    <div className="mb-4">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Search stockists by name, email or location..."
+                          value={stockistSearch}
+                          onChange={(e) => setStockistSearch(e.target.value)}
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-gray-800 
+                            placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 
+                            focus:border-transparent transition-all duration-200"
+                        />
+                        {stockistSearch && (
+                          <button
+                            onClick={() => setStockistSearch("")}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 
+                              hover:text-gray-600 focus:outline-none"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="space-y-4">
                       {stockistsList.length === 0 ? (
                         <div className="p-6 bg-yellow-50/80 border border-yellow-200/50 rounded-2xl backdrop-blur-xl">
-                          <p className="text-yellow-700 font-medium">
-                            No stockists found.
-                          </p>
+                          <p className="text-yellow-700 font-medium">No stockists found.</p>
+                        </div>
+                      ) : filteredStockists.length === 0 ? (
+                        <div className="p-6 bg-yellow-50/80 border border-yellow-200/50 rounded-2xl backdrop-blur-xl">
+                          <p className="text-yellow-700 font-medium">No matching stockists found.</p>
                         </div>
                       ) : (
-                        stockistsList.map((stockist) => (
-                          <StockistCard
-                            key={stockist._id}
-                            stockist={stockist}
-                            isSelected={form.stockists.includes(stockist._id)}
-                            onToggle={() => toggleStockist(stockist._id)}
-                          />
-                        ))
+                        <>
+                          {/* Always show all stockists in a scrollable area */}
+                          <div className="max-h-64 overflow-y-auto space-y-4">
+                            {filteredStockists.map((stockist) => (
+                              <StockistCard
+                                key={stockist._id}
+                                stockist={stockist}
+                                isSelected={form.stockists.includes(stockist._id)}
+                                onToggle={() => toggleStockist(stockist._id)}
+                              />
+                            ))}
+                          </div>
+                        </>
                       )}
                     </div>
 
@@ -472,7 +531,7 @@ export default function AdminCreateMedicine() {
                         </>
                       ) : (
                         <>
-                          <Pill size={20} />
+                          
                           <span className="text-lg tracking-wider">
                             CREATE MEDICINE
                           </span>

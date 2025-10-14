@@ -20,6 +20,7 @@ export default function AdminCreateCompany() {
   const [stockistsList, setStockistsList] = useState([]);
   const [stockistsLoading, setStockistsLoading] = useState(true);
   const [stockistsError, setStockistsError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -59,6 +60,12 @@ export default function AdminCreateCompany() {
         : [...f.stockists, id],
     }));
   };
+
+  const filteredStockists = stockistsList.filter((stockist) =>
+    (stockist.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (stockist.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (stockist.location || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const submit = async (e) => {
     e && e.preventDefault();
@@ -201,10 +208,8 @@ export default function AdminCreateCompany() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-md mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <ArrowLeft size={20} className="text-gray-600" />
-            </button>
+          <div className="flex ml-25 items-center justify-between">
+            
             <h1 className="text-lg font-semibold text-gray-800">
               Create Company
             </h1>
@@ -261,34 +266,7 @@ export default function AdminCreateCompany() {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Quick Actions
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-teal-400 rounded-2xl p-4 text-white">
-              <div className="flex items-center justify-between mb-2">
-                <UserCheck size={20} />
-                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
-                  Active
-                </span>
-              </div>
-              <p className="text-sm font-medium">Assign Stockists</p>
-              <p className="text-xs text-teal-100">Manage distribution</p>
-            </div>
-            <div className="bg-orange-400 rounded-2xl p-4 text-white">
-              <div className="flex items-center justify-between mb-2">
-                <Pill size={20} />
-                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
-                  Setup
-                </span>
-              </div>
-              <p className="text-sm font-medium">Product Catalog</p>
-              <p className="text-xs text-orange-100">Add medicines</p>
-            </div>
-          </div>
-        </div>
+        
 
         {/* Stockists Assignment */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
@@ -314,15 +292,41 @@ export default function AdminCreateCompany() {
               </div>
             </div>
 
+            {/* Search Bar */}
+            <div className="mb-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search stockists by name, email or location..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-gray-800 
+                    placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-400 
+                    focus:border-transparent transition-all duration-200"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 
+                      hover:text-gray-600 focus:outline-none"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="space-y-3 max-h-80 overflow-y-auto">
               {stockistsList.length === 0 ? (
                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-center">
-                  <p className="text-yellow-700 text-sm font-medium">
-                    No stockists found.
-                  </p>
+                  <p className="text-yellow-700 text-sm font-medium">No stockists found.</p>
+                </div>
+              ) : filteredStockists.length === 0 ? (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-center">
+                  <p className="text-yellow-700 text-sm font-medium">No matching stockists found.</p>
                 </div>
               ) : (
-                stockistsList.map((stockist) => (
+                filteredStockists.map((stockist) => (
                   <StockistCard
                     key={stockist._id}
                     stockist={stockist}
@@ -335,36 +339,7 @@ export default function AdminCreateCompany() {
           </div>
         </div>
 
-        {/* Health Tips Card */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <Heart size={18} className="text-red-500" />
-            Health Tips
-          </h3>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="text-center">
-              <div className="bg-blue-100 p-3 rounded-xl mb-2 mx-auto w-fit">
-                <Pill size={16} className="text-blue-600" />
-              </div>
-              <p className="text-xs font-medium text-gray-700">Stay Hydrated</p>
-              <p className="text-xs text-gray-500">Drink Water</p>
-            </div>
-            <div className="text-center">
-              <div className="bg-orange-100 p-3 rounded-xl mb-2 mx-auto w-fit">
-                <Heart size={16} className="text-orange-600" />
-              </div>
-              <p className="text-xs font-medium text-gray-700">New Moms</p>
-              <p className="text-xs text-gray-500">Care Guide</p>
-            </div>
-            <div className="text-center">
-              <div className="bg-green-100 p-3 rounded-xl mb-2 mx-auto w-fit">
-                <ShieldCheck size={16} className="text-green-600" />
-              </div>
-              <p className="text-xs font-medium text-gray-700">Check Labels</p>
-              <p className="text-xs text-gray-500">Read carefully</p>
-            </div>
-          </div>
-        </div>
+        
 
         {/* Submit Button */}
         <div className="pb-6">
@@ -393,33 +368,7 @@ export default function AdminCreateCompany() {
         </div>
       </div>
 
-      {/* Bottom Navigation Simulation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
-        <div className="max-w-md mx-auto px-6 py-4">
-          <div className="flex items-center justify-around">
-            <div className="flex flex-col items-center">
-              <div className="p-2 bg-teal-100 rounded-xl">
-                <Building2 size={16} className="text-teal-600" />
-              </div>
-              <span className="text-xs text-teal-600 font-medium mt-1">
-                Companies
-              </span>
-            </div>
-            <div className="flex flex-col items-center">
-              <Package size={16} className="text-gray-400" />
-              <span className="text-xs text-gray-400 mt-1">Products</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <Users size={16} className="text-gray-400" />
-              <span className="text-xs text-gray-400 mt-1">Stockists</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <Heart size={16} className="text-gray-400" />
-              <span className="text-xs text-gray-400 mt-1">Health</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      
     </div>
   );
 }

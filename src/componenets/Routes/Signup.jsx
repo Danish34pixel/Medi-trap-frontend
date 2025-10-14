@@ -4,6 +4,47 @@ import { apiUrl } from "../config/api";
 import { setCookie, getCookie } from "../utils/cookies";
 import { useNavigate } from "react-router-dom";
 
+const InputField = ({
+  icon: Icon,
+  label,
+  name,
+  type = "text",
+  placeholder,
+  required = false,
+  accept,
+  value,
+  onChange,
+}) => (
+  <div className="mb-4">
+    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+      {Icon && <Icon className="h-4 w-4 text-cyan-600" />}
+      {label}
+    </label>
+    {type === "file" ? (
+      <input
+        name={name}
+        type={type}
+        placeholder={placeholder}
+        onChange={onChange}
+        required={required}
+        accept={accept}
+        className="block w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all duration-200"
+      />
+    ) : (
+      <input
+        name={name}
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        required={required}
+        autoComplete={name === "password" ? "new-password" : "on"}
+        className="block w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all duration-200"
+      />
+    )}
+  </div>
+);
+
 const Signup = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -19,21 +60,7 @@ const Signup = () => {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
-  // Purchaser self-signup state
-  const [isPurchaser, setIsPurchaser] = useState(false);
-  const [purchaserForm, setPurchaserForm] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    aadharImage: null,
-    personalPhoto: null,
-  });
-  const [purchaserLoading, setPurchaserLoading] = useState(false);
-  const [purchaserMessage, setPurchaserMessage] = useState("");
-  const [showStockistPicker, setShowStockistPicker] = useState(false);
-  const [stockistsList, setStockistsList] = useState([]);
-  const [selectedStockists, setSelectedStockists] = useState([]);
-  const [requestingStockists, setRequestingStockists] = useState(false);
+  
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -44,17 +71,6 @@ const Signup = () => {
     }
   };
 
-  const handlePurchaserChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "aadharImage" || name === "personalPhoto") {
-      setPurchaserForm((p) => ({
-        ...p,
-        [name]: files && files[0] ? files[0] : null,
-      }));
-    } else {
-      setPurchaserForm((p) => ({ ...p, [name]: value }));
-    }
-  };
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -80,74 +96,6 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    // Branch: purchaser self-signup
-    if (isPurchaser) {
-      setPurchaserLoading(true);
-      setPurchaserMessage("");
-      try {
-        // Basic validation
-        if (
-          !purchaserForm.fullName ||
-          !purchaserForm.email ||
-          !purchaserForm.password
-        ) {
-          setPurchaserMessage("Please fill all purchaser fields");
-          setPurchaserLoading(false);
-          return;
-        }
-        if (!purchaserForm.aadharImage || !purchaserForm.personalPhoto) {
-          setPurchaserMessage("Please upload aadhar image and personal photo");
-          setPurchaserLoading(false);
-          return;
-        }
-
-        const fd = new FormData();
-        fd.append("fullName", purchaserForm.fullName);
-        fd.append("email", purchaserForm.email);
-        fd.append("password", purchaserForm.password);
-        // aadhar number removed from signup
-        fd.append("aadharImage", purchaserForm.aadharImage);
-        fd.append("personalPhoto", purchaserForm.personalPhoto);
-
-        const resp = await fetch(apiUrl(`/api/auth/purchaser-signup`), {
-          method: "POST",
-          body: fd,
-        });
-        const data = await resp.json();
-        if (!resp.ok) throw new Error(data.message || "Signup failed");
-
-        // Save token for subsequent requests (store token in cookie)
-        if (data.token) {
-          try {
-            setCookie("token", data.token, 7);
-          } catch (e) {}
-        }
-
-        setPurchaserMessage(
-          "Account created. Please select stockists to notify."
-        );
-        // fetch stockists and open picker
-        try {
-          const token = data.token || getCookie("token");
-          const sres = await fetch(apiUrl(`/api/stockist`), {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const sd = await sres.json();
-          setStockistsList(sd.data || []);
-          setSelectedStockists([]);
-          setShowStockistPicker(true);
-        } catch (err) {
-          console.warn("Failed to load stockists", err && err.message);
-        }
-      } catch (err) {
-        setPurchaserMessage(err.message || "Signup failed");
-      } finally {
-        setPurchaserLoading(false);
-      }
-      return;
-    }
-
-    // Existing medical store signup flow
     setIsLoading(true);
     setMessage("");
     const formData = new FormData();
@@ -164,19 +112,8 @@ const Signup = () => {
         throw new Error(data.message || "Registration failed");
       }
       if (data.success) {
-        // Save the pending user id so the verification waiting page can poll for approval
-        try {
-          if (data.user && data.user._id) {
-            localStorage.setItem("pendingUserId", data.user._id);
-          }
-        } catch (e) {
-          console.warn("Failed to save pendingUserId", e && e.message);
-        }
-
-        setMessage(
-          "Registration successful! You will be redirected to verification."
-        );
-        setTimeout(() => navigate("/medical-middle"), 800);
+        setMessage("Registration successful! You can now log in.");
+        setTimeout(() => navigate("/login"), 2000);
       } else {
         throw new Error("Invalid response format from server");
       }
@@ -186,8 +123,6 @@ const Signup = () => {
       setIsLoading(false);
     }
   };
-  // Move InputField and icons to module scope (below) so they don't get re-created
-  // on every Signup render. This prevents remounting which can cause inputs to lose focus.
 
   // Icon components
   const Building2 = (props) => (
@@ -307,296 +242,198 @@ const Signup = () => {
   );
 
   return (
-    <div
-      className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center"
-      style={{ backgroundColor: "#f8fafc" }}
-    >
+    <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-md w-full mx-auto">
         {/* Logo and Header */}
-        <div className="text-center mb-8">
-          <Logo className="w-20 h-20" alt="MedTrap Logo" />
+        <div className="text-center mb-6">
+          <div className="flex justify-center mb-3">
+            <Logo className="w-16 h-16" alt="MedTrap Logo" />
+          </div>
           <h1 className="text-2xl font-bold text-gray-800">MedTrap</h1>
-          <p className="text-gray-600 mt-1">Medical Store Management</p>
+          <p className="text-sm text-gray-600 mt-1">Healthcare Management System</p>
         </div>
 
         {/* Registration Form */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              Create Your Account
+        <div className="bg-white rounded-3xl shadow-sm p-6 border border-gray-100">
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-1">
+              Create Account
             </h2>
-            <p className="text-gray-600">
-              Register your medical store with MedTrap
+            <p className="text-sm text-gray-600">
+              Register your medical store
             </p>
           </div>
 
-          <div className="space-y-6">
-            <InputField
-              icon={Building2}
-              label="Medical Store Name"
-              name="medicalName"
-              placeholder="Enter your medical store name"
-              required
-              value={form.medicalName}
-              onChange={handleChange}
-            />
-            <div className="flex items-center gap-3 mb-4">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={isPurchaser}
-                  onChange={(e) => setIsPurchaser(e.target.checked)}
-                />
-                <span>Register as Purchaser (need stockist approvals)</span>
-              </label>
-            </div>
-            {isPurchaser ? (
-              <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
-                  </label>
-                  <input
-                    name="fullName"
-                    value={purchaserForm.fullName}
-                    onChange={handlePurchaserChange}
-                    className="w-full px-3 py-2 rounded-xl border"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
-                  <input
-                    name="email"
-                    type="email"
-                    value={purchaserForm.email}
-                    onChange={handlePurchaserChange}
-                    className="w-full px-3 py-2 rounded-xl border"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Password
-                  </label>
-                  <input
-                    name="password"
-                    type="password"
-                    value={purchaserForm.password}
-                    onChange={handlePurchaserChange}
-                    className="w-full px-3 py-2 rounded-xl border"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Aadhar Number
-                  </label>
-                  <input
-                    name="aadharNo"
-                    value={purchaserForm.aadharNo}
-                    onChange={handlePurchaserChange}
-                    className="w-full px-3 py-2 rounded-xl border"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Aadhar Image
-                  </label>
-                  <input
-                    name="aadharImage"
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePurchaserChange}
-                    className="w-full text-sm text-gray-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Personal Photo
-                  </label>
-                  <input
-                    name="personalPhoto"
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePurchaserChange}
-                    className="w-full text-sm text-gray-500"
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleSubmit}
-                    disabled={purchaserLoading}
-                    className="flex-1 py-3 px-4 rounded-xl bg-teal-500 text-white font-semibold"
-                  >
-                    {purchaserLoading
-                      ? "Creating..."
-                      : "Create Purchaser Account"}
-                  </button>
-                </div>
-                {purchaserMessage && (
-                  <div className="text-sm text-gray-700">
-                    {purchaserMessage}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <InputField
-                  icon={User}
-                  label="Owner Name"
-                  name="ownerName"
-                  placeholder="Enter owner's full name"
-                  required
-                  value={form.ownerName}
-                  onChange={handleChange}
-                />
-                <InputField
-                  icon={MapPin}
-                  label="Address"
-                  name="address"
-                  placeholder="Enter complete address"
-                  required
-                  value={form.address}
-                  onChange={handleChange}
-                />
-                <InputField
-                  icon={Mail}
-                  label="Email Address"
-                  name="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  required
-                  value={form.email}
-                  onChange={handleChange}
-                />
-                <InputField
-                  icon={Phone}
-                  label="Contact Number"
-                  name="contactNo"
-                  type="tel"
-                  placeholder="Enter contact number"
-                  required
-                  value={form.contactNo}
-                  onChange={handleChange}
-                />
-                <InputField
-                  icon={Shield}
-                  label="Drug License Number"
-                  name="drugLicenseNo"
-                  placeholder="Enter drug license number"
-                  required
-                  value={form.drugLicenseNo}
-                  onChange={handleChange}
-                />
+          
+          {/* Medical store signup form (only option) */}
+            <>
+              <InputField
+                icon={Building2}
+                label="Medical Store Name"
+                name="medicalName"
+                placeholder="Enter store name"
+                value={form.medicalName}
+                onChange={handleChange}
+                required
+              />
+              <InputField
+                icon={User}
+                label="Owner Name"
+                name="ownerName"
+                placeholder="Enter owner's name"
+                value={form.ownerName}
+                onChange={handleChange}
+                required
+              />
+              <InputField
+                icon={MapPin}
+                label="Address"
+                name="address"
+                placeholder="Complete address"
+                value={form.address}
+                onChange={handleChange}
+                required
+              />
+              <InputField
+                icon={Mail}
+                label="Email Address"
+                name="email"
+                type="email"
+                placeholder="your@email.com"
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
+              <InputField
+                icon={Phone}
+                label="Contact Number"
+                name="contactNo"
+                type="tel"
+                placeholder="Phone number"
+                value={form.contactNo}
+                onChange={handleChange}
+                required
+              />
+              <InputField
+                icon={Shield}
+                label="Drug License Number"
+                name="drugLicenseNo"
+                placeholder="License number"
+                value={form.drugLicenseNo}
+                onChange={handleChange}
+                required
+              />
 
-                {/* File Upload */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Drug License Image
-                  </label>
-                  <div
-                    className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200 ${
-                      dragActive
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-blue-300"
-                    }`}
-                    onDragEnter={handleDrag}
-                    onDragLeave={handleDrag}
-                    onDragOver={handleDrag}
-                    onDrop={handleDrop}
-                  >
-                    <input
-                      name="drugLicenseImage"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleChange}
-                      required
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                    <div className="mt-3">
-                      <p className="text-sm text-gray-600">
-                        {form.drugLicenseImage ? (
-                          <span className="text-blue-600 font-medium">
-                            {form.drugLicenseImage.name}
-                          </span>
-                        ) : (
-                          <>
-                            <span className="font-medium text-blue-600">
-                              Click to upload
-                            </span>{" "}
-                            or drag and drop
-                          </>
-                        )}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        PNG, JPG, GIF up to 10MB
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <InputField
-                  icon={Lock}
-                  label="Password"
-                  name="password"
-                  type="password"
-                  placeholder="Create a strong password"
-                  required
-                  value={form.password}
-                  onChange={handleChange}
-                />
-
-                <button
-                  onClick={handleSubmit}
-                  disabled={isLoading}
-                  className="w-full flex justify-center py-4 px-6 border border-transparent rounded-xl shadow-md text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold"
+              {/* File Upload */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Drug License Image
+                </label>
+                <div
+                  className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
+                    dragActive
+                      ? "border-cyan-400 bg-cyan-50"
+                      : "border-gray-200 hover:border-cyan-300"
+                  }`}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
                 >
-                  {isLoading ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Creating Account...
-                    </div>
-                  ) : (
-                    "Create Account"
-                  )}
-                </button>
-              </>
-            )}
+                  <input
+                    name="drugLicenseImage"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleChange}
+                    required
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <Upload className="mx-auto h-10 w-10 text-gray-400 mb-2" />
+                  <div>
+                    <p className="text-sm text-gray-600">
+                      {form.drugLicenseImage ? (
+                        <span className="text-cyan-600 font-medium">
+                          ✓ {form.drugLicenseImage.name}
+                        </span>
+                      ) : (
+                        <>
+                          <span className="font-medium text-cyan-600">
+                            Tap to upload
+                          </span>{" "}
+                          or drag and drop
+                        </>
+                      )}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      PNG, JPG, GIF up to 10MB
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-            {message && (
-              <div
-                className={`flex items-center p-4 rounded-xl ${
-                  message.includes("successful")
-                    ? "bg-green-50 border border-green-200"
-                    : "bg-red-50 border border-red-200"
+              <InputField
+                icon={Lock}
+                label="Password"
+                name="password"
+                type="password"
+                placeholder="Create password"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
+
+              <button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className={`w-full py-4 rounded-2xl font-bold text-white shadow-md transition-all ${
+                  isLoading
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-gradient-to-r from-cyan-500 to-cyan-600 hover:shadow-lg active:scale-98"
                 }`}
               >
-                {message.includes("successful") ? (
-                  <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
+                {isLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Creating Account...
+                  </div>
                 ) : (
-                  <AlertCircle className="h-5 w-5 text-red-600 mr-3" />
+                  "Create Account"
                 )}
-                <span
-                  className={`text-sm font-medium ${
-                    message.includes("successful")
-                      ? "text-green-700"
-                      : "text-red-700"
-                  }`}
-                >
-                  {message}
-                </span>
-              </div>
-            )}
-          </div>
+              </button>
+            </>
 
-          <div className="mt-8 text-center">
+          {message && (
+            <div
+              className={`mt-4 flex items-center gap-2 p-4 rounded-xl ${
+                message.includes("successful")
+                  ? "bg-green-50 border border-green-200"
+                  : "bg-red-50 border border-red-200"
+              }`}
+            >
+              {message.includes("successful") ? (
+                <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+              ) : (
+                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+              )}
+              <span
+                className={`text-sm font-medium ${
+                  message.includes("successful")
+                    ? "text-green-700"
+                    : "text-red-700"
+                }`}
+              >
+                {message}
+              </span>
+            </div>
+          )}
+
+          <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
               <button
                 type="button"
                 onClick={() => navigate("/login")}
-                className="font-semibold text-blue-600 hover:text-blue-500 transition-colors"
+                className="font-semibold text-cyan-600 hover:text-cyan-700 transition-colors"
               >
                 Sign in
               </button>
@@ -605,20 +442,14 @@ const Signup = () => {
         </div>
 
         {/* Footer */}
-        <div className="mt-8 text-center">
+        <div className="mt-6 text-center">
           <p className="text-xs text-gray-500">
             By registering, you agree to our{" "}
-            <a
-              href="#"
-              className="text-blue-600 hover:text-blue-500 font-medium"
-            >
+            <a href="#" className="text-cyan-600 hover:text-cyan-700 font-medium">
               Terms of Service
             </a>{" "}
             and{" "}
-            <a
-              href="#"
-              className="text-blue-600 hover:text-blue-500 font-medium"
-            >
+            <a href="#" className="text-cyan-600 hover:text-cyan-700 font-medium">
               Privacy Policy
             </a>
           </p>
@@ -629,57 +460,3 @@ const Signup = () => {
 };
 
 export default Signup;
-
-// Stateless InputField placed at module scope so it doesn't get recreated on every render.
-// Accepts value and onChange to avoid closing over parent state which can cause
-// remounts and focus loss when Signup re-renders.
-export const InputField = ({
-  icon: Icon,
-  label,
-  name,
-  type = "text",
-  placeholder,
-  required = false,
-  accept,
-  value,
-  onChange,
-}) => (
-  <div className="relative">
-    <label className="block text-sm font-medium text-gray-700 mb-2">
-      {label}
-    </label>
-    <div className="relative">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <Icon className="h-5 w-5 text-gray-400" />
-      </div>
-      {type === "file" ? (
-        <input
-          name={name}
-          type={type}
-          placeholder={placeholder}
-          onChange={onChange}
-          required={required}
-          accept={accept}
-          className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-        />
-      ) : (
-        <input
-          name={name}
-          type={type}
-          placeholder={placeholder}
-          value={value || ""}
-          onChange={(e) => {
-            if (onChange) {
-              onChange(e);
-            } else {
-              console.warn(`No onChange handler provided for input: ${name}`);
-            }
-          }}
-          required={required}
-          autoComplete={name === "password" ? "new-password" : "on"}
-          className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-        />
-      )}
-    </div>
-  </div>
-);
