@@ -734,11 +734,11 @@ export default function Nav({ navigation: navProp }) {
     >
       <div className="max-w-4xl mx-auto px-6">
         <div className="flex items-center justify-between py-8 ml-10">
-          <div className="flex items-center ">
+          <div className="flex  ">
             <div className="relative">
               <div className="w-32  flex items-center justify-center">
-                <Logo />
-              <img className="" src="logo.png" alt="" />
+                <Logo className="h-15 w-15 " />
+              <img className="mb-3" src="logo.png" alt="" />
               </div>
             </div>
             <div>
@@ -830,7 +830,7 @@ export default function Nav({ navigation: navProp }) {
           </div>
         )}
 
-        <div className="mt-8 bg-white rounded-3xl p-8 shadow-2xl border-2 border-violet-200">
+        <div className=" bg-white rounded-3xl p-8 shadow-2xl border-2 border-violet-200">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-2xl px-5 py-4 border-2 border-violet-200">

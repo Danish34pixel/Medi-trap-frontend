@@ -7,6 +7,7 @@ import {
   tokenOverlapScore,
 } from "./utils/normalizeMatching";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Phone, MapPin, Eye } from "lucide-react";
 
 const Screen = ({ navigation: navProp }) => {
   const navigate = (() => {
@@ -543,95 +544,114 @@ const Screen = ({ navigation: navProp }) => {
     const [c1, c2] = generateHealthColor(index);
     return (
       <article
-        key={section._id || index}
-        className="bg-white rounded-3xl shadow-lg border-0 overflow-hidden mb-6 mx-6 transform hover:scale-105 hover:shadow-2xl transition-all duration-300"
-        onClick={() => setFullscreenStockist(index)}
-        role="button"
-      >
-        {section.image ? (
-          <div className="relative h-52 w-full">
-            <img
-              src={section.image}
-              alt={section.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+      key={section._id || index}
+      className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden mb-6 mx-6 transform hover:scale-105 hover:shadow-2xl transition-all duration-300 backdrop-blur-sm" // Added backdrop-blur-sm for a softer look
+      onClick={() => setFullscreenStockist(index)}
+      role="button"
+    >
+      {section.image ? (
+        <div className="relative h-52 w-full">
+          <img
+            src={section.image}
+            alt={section.title}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-gray-900/20 to-transparent" /> {/* Subtle dark gradient */}
+        </div>
+      ) : (
+        <div
+          className="relative h-52 w-full flex items-center justify-center p-4 rounded-b-2xl" // Added padding for the content
+          style={{ background: `linear-gradient(135deg, ${c1 || '#00C4B3'}, ${c2 || '#007BFF'})` }} // Using default vibrant colors
+        >
+          <div className="absolute inset-0 opacity-20" style={{ background: `linear-gradient(135deg, ${c1 || '#00C4B3'}, ${c2 || '#007BFF'})`, filter: 'blur(30px)' }}></div> {/* Background blur effect for depth */}
+          <div className="relative z-10 text-6xl font-extrabold font-poppins text-white drop-shadow-lg opacity-90">
+            {section.title?.charAt(0)}
           </div>
-        ) : (
-          <div
-            className="relative h-52 w-full flex items-center justify-center"
-            style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
-          >
-            <div className="text-5xl font-extrabold text-white/90 drop-shadow-lg">
-              {section.title?.charAt(0)}
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-            <div className="absolute top-4 right-4 w-16 h-16 bg-white/10 rounded-full blur-xl"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" /> {/* Lighter overlay */}
+          {/* Decorative elements for the background feel */}
+          <div className="absolute top-4 right-4 w-16 h-16 bg-white/10 rounded-full blur-xl"></div>
+          <div className="absolute bottom-4 left-4 w-10 h-10 bg-white/10 rounded-full blur-xl"></div>
+        </div>
+      )}
+
+      <div className="p-8">
+        <h3 className="text-2xl font-poppins font-bold text-gray-800 mb-4 tracking-tight">
+          {section.title}
+        </h3>
+
+        {/* Phone Number */}
+        <div className="flex items-start gap-4 text-base font-inter text-gray-700 mb-3">
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
+            <Phone className="text-base" />
           </div>
-        )}
-
-        <div className="p-8">
-          <h3 className="text-xl font-bold text-slate-800 mb-4">
-            {section.title}
-          </h3>
-
-          <div className="flex items-start gap-4 text-base text-slate-600 mb-3">
-            <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center">
-              <span className="text-sm">📞</span>
-            </div>
-            <div className="flex-1 font-medium">{section.phone || "-"}</div>
-          </div>
-
-          <div className="flex items-start gap-4 text-base text-slate-600 mb-6">
-            <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center">
-              <span className="text-sm">📍</span>
-            </div>
-            <div className="flex-1 font-medium">{section.address || "-"}</div>
-          </div>
-
-          <div className="mb-6">
-            <div className="text-base text-slate-700 font-semibold mb-4">
-              Company
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {section.items.slice(0, 2).map((it, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-3 bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl px-4 py-3 border border-blue-100"
-                >
-                  <span className="text-lg">{getHealthIcon(it)}</span>
-                  <span className="text-slate-700 text-sm font-semibold">
-                    {it}
-                  </span>
-                </div>
-              ))}
-              {section.items.length > 2 && (
-                <div className="bg-gradient-to-r from-slate-100 to-slate-200 rounded-2xl px-4 py-3">
-                  <span className="text-slate-600 text-sm font-semibold">
-                    +{section.items.length - 2} more
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-base pt-4 border-t border-slate-100">
-            <div className="bg-gradient-to-r from-emerald-100 to-green-100 rounded-2xl px-4 py-2 border border-emerald-200">
-              <span className="text-emerald-700 font-bold">
-                {section.Medicines
-                  ? `${section.Medicines.length} medicines`
-                  : "0 medicines"}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-cyan-600">
-              <span className="text-base font-bold">View details</span>
-              <div className="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center">
-                <span className="text-lg">🔍</span>
-              </div>
-            </div>
+          <div className="flex-1 font-medium pt-0.5">
+            {section.phone || "N/A"}
           </div>
         </div>
-      </article>
+
+        {/* Address */}
+        <div className="flex items-start gap-4 text-base font-inter text-gray-700 mb-6">
+          <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 shadow-sm">
+            <MapPin className="text-base" />
+          </div>
+          <div className="flex-1 font-medium pt-0.5">
+            {section.address || "N/A"}
+          </div>
+        </div>
+
+        {/* Company Items / Services */}
+        <div className="mb-6">
+          <div className="text-base font-poppins text-gray-700 font-semibold mb-3">
+            Services
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {section.items.slice(0, 2).map((it, idx) => (
+              <div
+                key={idx}
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-teal-50 rounded-full px-4 py-2 border border-blue-100 shadow-sm"
+              >
+                <span className="text-base text-blue-600">
+                  {getHealthIcon(it)}
+                </span>
+                <span className="text-gray-700 text-sm font-medium font-inter">
+                  {it}
+                </span>
+              </div>
+            ))}
+            {section.items.length > 2 && (
+              <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-full px-4 py-2 shadow-sm">
+                <span className="text-gray-600 text-sm font-medium font-inter">
+                  +{section.items.length - 2} more
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer with Medicines Count and View Details */}
+        <div className="flex items-center justify-between text-base pt-6 border-t border-gray-100 mt-6">
+          <div className="bg-gradient-to-r from-lime-100 to-green-100 rounded-full px-4 py-2 border border-lime-200 shadow-sm">
+            <span className="text-lime-700 font-bold font-poppins text-sm">
+              {section.Medicines
+                ? `${section.Medicines.length} medicines`
+                : "0 medicines"}
+            </span>
+          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent card click from triggering twice
+              setFullscreenStockist(index); // Re-trigger or navigate
+            }}
+            className="flex items-center gap-3 text-purple-600 hover:text-purple-700 transition-colors duration-200 group"
+          >
+            <span className="text-base font-bold font-inter">View details</span>
+              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shadow-sm group-hover:scale-110 transition-transform duration-200">
+              <Eye className="text-lg" />
+            </div>
+          </button>
+        </div>
+      </div>
+    </article>
     );
   };
 
