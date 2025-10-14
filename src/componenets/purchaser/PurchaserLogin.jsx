@@ -23,22 +23,13 @@ const PurchaserLogin = () => {
       if (res && res.token && res.user) {
         localStorage.setItem("token", res.token);
         localStorage.setItem("user", JSON.stringify(res.user));
-        // Fetch the Purchaser by email to get the correct ID
-        try {
-          const purchaserRes = await postJson("/purchaser/find-by-email", {
-            email,
-          });
-          const purchaser =
-            purchaserRes.data || purchaserRes.purchaser || purchaserRes;
-          const purchaserId = purchaser._id || purchaser.id;
-          if (purchaserId) {
-            navigate(`/purchaser/${purchaserId}`);
-            return;
-          }
-        } catch (e) {
-          // fallback: go to dashboard or error
+        // Redirect to purchaser details using user._id
+        const purchaserId = res.user._id || res.user.id;
+        if (purchaserId) {
+          navigate(`/purchaser/${purchaserId}`);
+          return;
         }
-        navigate("/dashboard");
+        setError("Could not find purchaser ID in login response.");
       } else {
         setError("Invalid response from server. Please try again.");
       }
