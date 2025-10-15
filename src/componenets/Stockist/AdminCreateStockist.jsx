@@ -50,9 +50,7 @@ const FileUploadCard = ({ label, onChange, hasFile, fileName }) => (
         className="hidden"
       />
       <div className="relative bg-gradient-to-br from-cyan-400 to-cyan-500 rounded-3xl p-6 text-center cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300 group">
-        <div className="text-3xl mb-2">
-          {hasFile ? "✅" : "📸"}
-        </div>
+        <div className="text-3xl mb-2">{hasFile ? "✅" : "📸"}</div>
         <p className="text-sm font-semibold text-white">
           {hasFile ? (
             <span>{fileName}</span>
@@ -60,7 +58,9 @@ const FileUploadCard = ({ label, onChange, hasFile, fileName }) => (
             <>
               <span>Tap to upload</span>
               <br />
-              <span className="text-xs font-normal opacity-90">PNG, JPG up to 5MB</span>
+              <span className="text-xs font-normal opacity-90">
+                PNG, JPG up to 5MB
+              </span>
             </>
           )}
         </p>
@@ -227,7 +227,7 @@ export default function MedTrapStockistForm() {
 
   return (
     <div className="min-h-screen bg-gray-100 py-2 md:py-6 px-2 md:px-4 flex items-center justify-center">
-      <div className="w-full max-w-md mx-auto bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden" style={{ minHeight: 'calc(100vh - 32px)', height: 'auto', maxHeight: { md: '800px' } }}>
+      <div className="w-full max-w-md mx-auto bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden min-h-[calc(100vh-32px)] md:max-h-[800px]">
         {/* Logo */}
         <div className="pt-6 pb-2 text-center">
           <Logo className="h-12 w-auto mx-auto" />
@@ -236,21 +236,21 @@ export default function MedTrapStockistForm() {
         {/* Header */}
         <div className="bg-white px-4 md:px-6 pb-4 md:pb-6">
           <div className="flex items-center justify-between mb-4 md:mb-6">
-            <button 
+            <button
               onClick={prevStep}
               disabled={currentStep === 1}
               className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${
-                currentStep === 1 
-                  ? 'bg-gray-100 text-gray-300' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                currentStep === 1
+                  ? "bg-gray-100 text-gray-300"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
               ←
             </button>
-            <h1 className="text-lg font-bold text-gray-800">Stockist Registration</h1>
-            <div className="w-10 h-10 rounded-2xl  flex items-center justify-center text-white shadow-lg">
-              
-            </div>
+            <h1 className="text-lg font-bold text-gray-800">
+              Stockist Registration
+            </h1>
+            <div className="w-10 h-10 rounded-2xl  flex items-center justify-center text-white shadow-lg"></div>
           </div>
 
           {/* Progress Pills */}
@@ -275,7 +275,9 @@ export default function MedTrapStockistForm() {
               <div className="flex items-center gap-3 mb-2">
                 <div className="text-3xl">⚕️</div>
                 <div>
-                  <h2 className="text-white font-bold text-lg">MedTrap Partner</h2>
+                  <h2 className="text-white font-bold text-lg">
+                    MedTrap Partner
+                  </h2>
                   <p className="text-cyan-100 text-xs">
                     {currentStep === 1 && "Basic Information"}
                     {currentStep === 2 && "Professional Details"}
@@ -288,14 +290,7 @@ export default function MedTrapStockistForm() {
         </div>
 
         {/* Scrollable Form Content */}
-        <div className="px-4 md:px-6 pb-4 md:pb-6 overflow-y-auto" style={{ 
-          height: 'auto',
-          maxHeight: 'calc(100vh - 340px)',
-          '@media (min-width: 768px)': {
-            height: 'calc(100vh - 420px)',
-            maxHeight: '380px'
-          }
-        }}>
+        <div className="px-4 md:px-6 pb-4 md:pb-6 overflow-y-auto max-h-[calc(100vh-340px)] md:h-[calc(100vh-420px)] md:max-h-[380px]">
           {/* Step 1: Basic Information */}
           {currentStep === 1 && (
             <div>

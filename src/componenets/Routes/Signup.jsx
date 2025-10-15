@@ -60,7 +60,6 @@ const Signup = () => {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
-  
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -70,7 +69,6 @@ const Signup = () => {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
-
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -113,7 +111,12 @@ const Signup = () => {
       }
       if (data.success) {
         setMessage("Registration successful! You can now log in.");
-        setTimeout(() => navigate("/login"), 2000);
+        // Persist pending user id so verification/approval flows can pick it up
+        try {
+          const id = data.user?._id || data.user?.id || null;
+          if (id) localStorage.setItem("pendingUserId", String(id));
+        } catch (e) {}
+        setTimeout(() => navigate("/medical-middle"), 2000);
       } else {
         throw new Error("Invalid response format from server");
       }
@@ -250,7 +253,9 @@ const Signup = () => {
             <Logo className="w-16 h-16" alt="MedTrap Logo" />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">MedTrap</h1>
-          <p className="text-sm text-gray-600 mt-1">Healthcare Management System</p>
+          <p className="text-sm text-gray-600 mt-1">
+            Healthcare Management System
+          </p>
         </div>
 
         {/* Registration Form */}
@@ -259,148 +264,145 @@ const Signup = () => {
             <h2 className="text-xl font-bold text-gray-800 mb-1">
               Create Account
             </h2>
-            <p className="text-sm text-gray-600">
-              Register your medical store
-            </p>
+            <p className="text-sm text-gray-600">Register your medical store</p>
           </div>
 
-          
           {/* Medical store signup form (only option) */}
-            <>
-              <InputField
-                icon={Building2}
-                label="Medical Store Name"
-                name="medicalName"
-                placeholder="Enter store name"
-                value={form.medicalName}
-                onChange={handleChange}
-                required
-              />
-              <InputField
-                icon={User}
-                label="Owner Name"
-                name="ownerName"
-                placeholder="Enter owner's name"
-                value={form.ownerName}
-                onChange={handleChange}
-                required
-              />
-              <InputField
-                icon={MapPin}
-                label="Address"
-                name="address"
-                placeholder="Complete address"
-                value={form.address}
-                onChange={handleChange}
-                required
-              />
-              <InputField
-                icon={Mail}
-                label="Email Address"
-                name="email"
-                type="email"
-                placeholder="your@email.com"
-                value={form.email}
-                onChange={handleChange}
-                required
-              />
-              <InputField
-                icon={Phone}
-                label="Contact Number"
-                name="contactNo"
-                type="tel"
-                placeholder="Phone number"
-                value={form.contactNo}
-                onChange={handleChange}
-                required
-              />
-              <InputField
-                icon={Shield}
-                label="Drug License Number"
-                name="drugLicenseNo"
-                placeholder="License number"
-                value={form.drugLicenseNo}
-                onChange={handleChange}
-                required
-              />
+          <>
+            <InputField
+              icon={Building2}
+              label="Medical Store Name"
+              name="medicalName"
+              placeholder="Enter store name"
+              value={form.medicalName}
+              onChange={handleChange}
+              required
+            />
+            <InputField
+              icon={User}
+              label="Owner Name"
+              name="ownerName"
+              placeholder="Enter owner's name"
+              value={form.ownerName}
+              onChange={handleChange}
+              required
+            />
+            <InputField
+              icon={MapPin}
+              label="Address"
+              name="address"
+              placeholder="Complete address"
+              value={form.address}
+              onChange={handleChange}
+              required
+            />
+            <InputField
+              icon={Mail}
+              label="Email Address"
+              name="email"
+              type="email"
+              placeholder="your@email.com"
+              value={form.email}
+              onChange={handleChange}
+              required
+            />
+            <InputField
+              icon={Phone}
+              label="Contact Number"
+              name="contactNo"
+              type="tel"
+              placeholder="Phone number"
+              value={form.contactNo}
+              onChange={handleChange}
+              required
+            />
+            <InputField
+              icon={Shield}
+              label="Drug License Number"
+              name="drugLicenseNo"
+              placeholder="License number"
+              value={form.drugLicenseNo}
+              onChange={handleChange}
+              required
+            />
 
-              {/* File Upload */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Drug License Image
-                </label>
-                <div
-                  className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
-                    dragActive
-                      ? "border-cyan-400 bg-cyan-50"
-                      : "border-gray-200 hover:border-cyan-300"
-                  }`}
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                >
-                  <input
-                    name="drugLicenseImage"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleChange}
-                    required
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                  <Upload className="mx-auto h-10 w-10 text-gray-400 mb-2" />
-                  <div>
-                    <p className="text-sm text-gray-600">
-                      {form.drugLicenseImage ? (
-                        <span className="text-cyan-600 font-medium">
-                          ✓ {form.drugLicenseImage.name}
-                        </span>
-                      ) : (
-                        <>
-                          <span className="font-medium text-cyan-600">
-                            Tap to upload
-                          </span>{" "}
-                          or drag and drop
-                        </>
-                      )}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      PNG, JPG, GIF up to 10MB
-                    </p>
-                  </div>
+            {/* File Upload */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Drug License Image
+              </label>
+              <div
+                className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
+                  dragActive
+                    ? "border-cyan-400 bg-cyan-50"
+                    : "border-gray-200 hover:border-cyan-300"
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                <input
+                  name="drugLicenseImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleChange}
+                  required
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <Upload className="mx-auto h-10 w-10 text-gray-400 mb-2" />
+                <div>
+                  <p className="text-sm text-gray-600">
+                    {form.drugLicenseImage ? (
+                      <span className="text-cyan-600 font-medium">
+                        ✓ {form.drugLicenseImage.name}
+                      </span>
+                    ) : (
+                      <>
+                        <span className="font-medium text-cyan-600">
+                          Tap to upload
+                        </span>{" "}
+                        or drag and drop
+                      </>
+                    )}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    PNG, JPG, GIF up to 10MB
+                  </p>
                 </div>
               </div>
+            </div>
 
-              <InputField
-                icon={Lock}
-                label="Password"
-                name="password"
-                type="password"
-                placeholder="Create password"
-                value={form.password}
-                onChange={handleChange}
-                required
-              />
+            <InputField
+              icon={Lock}
+              label="Password"
+              name="password"
+              type="password"
+              placeholder="Create password"
+              value={form.password}
+              onChange={handleChange}
+              required
+            />
 
-              <button
-                onClick={handleSubmit}
-                disabled={isLoading}
-                className={`w-full py-4 rounded-2xl font-bold text-white shadow-md transition-all ${
-                  isLoading
-                    ? "bg-gray-300 cursor-not-allowed"
-                    : "bg-gradient-to-r from-cyan-500 to-cyan-600 hover:shadow-lg active:scale-98"
-                }`}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    Creating Account...
-                  </div>
-                ) : (
-                  "Create Account"
-                )}
-              </button>
-            </>
+            <button
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className={`w-full py-4 rounded-2xl font-bold text-white shadow-md transition-all ${
+                isLoading
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-gradient-to-r from-cyan-500 to-cyan-600 hover:shadow-lg active:scale-98"
+              }`}
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Creating Account...
+                </div>
+              ) : (
+                "Create Account"
+              )}
+            </button>
+          </>
 
           {message && (
             <div
@@ -445,11 +447,17 @@ const Signup = () => {
         <div className="mt-6 text-center">
           <p className="text-xs text-gray-500">
             By registering, you agree to our{" "}
-            <a href="#" className="text-cyan-600 hover:text-cyan-700 font-medium">
+            <a
+              href="#"
+              className="text-cyan-600 hover:text-cyan-700 font-medium"
+            >
               Terms of Service
             </a>{" "}
             and{" "}
-            <a href="#" className="text-cyan-600 hover:text-cyan-700 font-medium">
+            <a
+              href="#"
+              className="text-cyan-600 hover:text-cyan-700 font-medium"
+            >
               Privacy Policy
             </a>
           </p>

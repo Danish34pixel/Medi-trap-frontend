@@ -19,9 +19,39 @@ const UserAdmin = () => {
     try {
       // Build full backend URL
       const build = (path) => apiUrl(path);
-      const res = await fetch(build("/api/user"));
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || "Failed to load users");
+      // Primary attempt uses apiUrl (which is relative in dev so Vite proxy should forward it).
+      let res = await fetch(build("/api/user"), { credentials: "include" });
+      let json = {};
+      try {
+        json = await res.json();
+      } catch (err) {
+        // ignore JSON parse errors for non-JSON responses
+        json = {};
+      }
+
+      // If Vite dev server responded 404, try hitting the backend directly (dev fallback).
+      if (
+        res.status === 404 &&
+        (import.meta.env.MODE === "development" ||
+          typeof window !== "undefined")
+      ) {
+        // Only fallback to a local backend to avoid accidentally calling the
+        // production API (which will reject localhost origins via CORS).
+        const envUrl = import.meta.env.VITE_API_URL || "";
+        const isLocalEnv =
+          /^https?:\/\/(localhost|127(?:\.0\.0\.1)?)(:?\d*)?/i.test(envUrl);
+        const fallbackBase = isLocalEnv ? envUrl : "http://localhost:5000";
+        const fallbackUrl = `${fallbackBase.replace(/\/+$/, "")}/api/user`;
+        try {
+          res = await fetch(fallbackUrl, { credentials: "include" });
+          json = await res.json().catch(() => ({}));
+        } catch (e) {
+          // fallback failed, continue to error handling below
+        }
+      }
+
+      if (!res.ok)
+        throw new Error(json.message || `Failed to load users (${res.status})`);
       let fetched = json.data || [];
 
       // Apply local overrides so approved state persists across refresh

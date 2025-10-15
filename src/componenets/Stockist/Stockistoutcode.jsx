@@ -198,6 +198,8 @@ export default function PharmacyStockist() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const routeId = searchParams.get("id") || null;
+  // track auth token so we can render a minimal UI when user is logged out
+  const [tokenPresent, setTokenPresent] = useState(!!getCookie("token"));
   const [stockist, setStockist] = useState(null);
   const [companiesList, setCompaniesList] = useState([]);
   const [medicinesList, setMedicinesList] = useState([]);
@@ -415,6 +417,24 @@ export default function PharmacyStockist() {
     loadStockistData();
   }, [loadStockistData]);
 
+  // update token presence when storage changes or window regains focus
+  useEffect(() => {
+    const checkToken = () => setTokenPresent(!!getCookie("token"));
+    const onStorage = (e) => {
+      if (e.key === "token" || e.key === null) checkToken();
+    };
+    const onFocus = () => checkToken();
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", onFocus);
+    // also poll once in case history navigation changed cookies (some browsers)
+    const t = setInterval(checkToken, 1000);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", onFocus);
+      clearInterval(t);
+    };
+  }, []);
+
   const handleRefresh = () => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
@@ -424,19 +444,24 @@ export default function PharmacyStockist() {
   const handleLogout = () => {
     try {
       // Clear local storage user object
-      try { localStorage.removeItem('user'); } catch (e) {}
+      try {
+        localStorage.removeItem("user");
+      } catch (e) {}
       // Clear token cookie by setting expiry in the past
       try {
-        document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        document.cookie =
+          "token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
       } catch (e) {}
       // Optionally clear other keys
-      try { localStorage.removeItem('token'); } catch (e) {}
+      try {
+        localStorage.removeItem("token");
+      } catch (e) {}
     } finally {
       // navigate to login
       try {
-        navigate('/login');
+        navigate("/stockist-login");
       } catch {
-        window.location.href = '/login';
+        window.location.href = "/stockist-login";
       }
     }
   };
@@ -465,7 +490,8 @@ export default function PharmacyStockist() {
       icon: Building2,
       color: "text-orange-600",
       bgColor: "bg-gradient-to-br from-orange-50 to-amber-50",
-      activeColor: "bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500",
+      activeColor:
+        "bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500",
       hoverEffect: "hover:shadow-orange-200",
     },
     {
@@ -474,7 +500,8 @@ export default function PharmacyStockist() {
       icon: Users,
       color: "text-purple-600",
       bgColor: "bg-gradient-to-br from-purple-50 to-fuchsia-50",
-      activeColor: "bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500",
+      activeColor:
+        "bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500",
       hoverEffect: "hover:shadow-purple-200",
     },
     {
@@ -483,7 +510,8 @@ export default function PharmacyStockist() {
       icon: Package,
       color: "text-emerald-600",
       bgColor: "bg-gradient-to-br from-emerald-50 to-green-50",
-      activeColor: "bg-gradient-to-r from-emerald-500 via-green-500 to-lime-500",
+      activeColor:
+        "bg-gradient-to-r from-emerald-500 via-green-500 to-lime-500",
       hoverEffect: "hover:shadow-emerald-200",
     },
   ];
@@ -590,6 +618,36 @@ export default function PharmacyStockist() {
       </div>
     );
 
+  // If token is missing (user logged out), show a minimal focused login card
+  if (!tokenPresent) {
+    return (
+      <div className="min-h-screen p-4 lg:p-8 bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 flex items-center justify-center">
+        <div className="max-w-md w-full">
+          <div className="p-8 bg-white rounded-3xl shadow-2xl border-2 border-gray-100 text-center">
+            <h3 className="text-xl font-black text-gray-900 mb-3">
+              You're logged out
+            </h3>
+            <p className="text-sm text-gray-600 mb-6">
+              To view this page please sign in again.
+            </p>
+            <button
+              onClick={() => {
+                try {
+                  navigate("/stockist-login");
+                } catch {
+                  window.location.href = "/stockist-login";
+                }
+              }}
+              className="w-full py-3.5 bg-gradient-to-r from-cyan-400 to-cyan-500 text-white rounded-2xl font-bold shadow-lg hover:shadow-2xl"
+            >
+              Go to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="min-h-screen p-2 lg:p-8 bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 overflow-x-hidden"
@@ -628,8 +686,18 @@ export default function PharmacyStockist() {
                 className="md:hidden w-12 h-12 rounded-2xl bg-gradient-to-r from-red-500 to-rose-500 flex items-center justify-center text-white hover:shadow-2xl transition-all"
                 aria-label="Logout"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1" />
+                <svg
+                  className="w-5 h-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1"
+                  />
                 </svg>
               </button>
             </div>
@@ -704,30 +772,34 @@ export default function PharmacyStockist() {
           <div className="p-6 border-b-2 border-gray-100">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
               {/* Tabs */}
-              <div className="flex gap-2 overflow-x-auto hide-scrollbar py-2">
-                {TAB_CONFIG.map(({ key, label, icon: Icon, color, bgColor, activeColor }) => (
-                  <button
-                    key={key}
-                    onClick={() => setActiveTab(key)}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all whitespace-nowrap text-sm ${
-                      activeTab === key
-                        ? `${activeColor} text-white`
-                        : `${bgColor} ${color}`
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span className="font-medium">{label}</span>
-                    {filteredData[key].length > 0 && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+              <div className="flex gap-2 flex-wrap py-2">
+                {TAB_CONFIG.map(
+                  ({ key, label, icon: Icon, color, bgColor, activeColor }) => (
+                    <button
+                      key={key}
+                      onClick={() => setActiveTab(key)}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all whitespace-nowrap text-sm ${
                         activeTab === key
-                          ? "bg-white/20 text-white"
-                          : "bg-white text-gray-600"
-                      }`}>
-                        {filteredData[key].length}
-                      </span>
-                    )}
-                  </button>
-                ))}
+                          ? `${activeColor} text-white`
+                          : `${bgColor} ${color}`
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="font-medium">{label}</span>
+                      {filteredData[key].length > 0 && (
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full ${
+                            activeTab === key
+                              ? "bg-white/20 text-white"
+                              : "bg-white text-gray-600"
+                          }`}
+                        >
+                          {filteredData[key].length}
+                        </span>
+                      )}
+                    </button>
+                  )
+                )}
               </div>
 
               {/* Actions */}
@@ -773,8 +845,6 @@ export default function PharmacyStockist() {
                     }`}
                   />
                 </button>
-                
-                
               </div>
             </div>
           </div>

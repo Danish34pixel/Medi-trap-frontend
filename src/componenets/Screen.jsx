@@ -544,114 +544,131 @@ const Screen = ({ navigation: navProp }) => {
     const [c1, c2] = generateHealthColor(index);
     return (
       <article
-      key={section._id || index}
-      className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden mb-6 mx-6 transform hover:scale-105 hover:shadow-2xl transition-all duration-300 backdrop-blur-sm" // Added backdrop-blur-sm for a softer look
-      onClick={() => setFullscreenStockist(index)}
-      role="button"
-    >
-      {section.image ? (
-        <div className="relative h-52 w-full">
-          <img
-            src={section.image}
-            alt={section.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-gray-900/20 to-transparent" /> {/* Subtle dark gradient */}
-        </div>
-      ) : (
-        <div
-          className="relative h-52 w-full flex items-center justify-center p-4 rounded-b-2xl" // Added padding for the content
-          style={{ background: `linear-gradient(135deg, ${c1 || '#00C4B3'}, ${c2 || '#007BFF'})` }} // Using default vibrant colors
-        >
-          <div className="absolute inset-0 opacity-20" style={{ background: `linear-gradient(135deg, ${c1 || '#00C4B3'}, ${c2 || '#007BFF'})`, filter: 'blur(30px)' }}></div> {/* Background blur effect for depth */}
-          <div className="relative z-10 text-6xl font-extrabold font-poppins text-white drop-shadow-lg opacity-90">
-            {section.title?.charAt(0)}
+        key={section._id || index}
+        className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden mb-6 mx-6 transform hover:scale-105 hover:shadow-2xl transition-all duration-300 backdrop-blur-sm" // Added backdrop-blur-sm for a softer look
+        onClick={() => setFullscreenStockist(index)}
+        role="button"
+      >
+        {section.image ? (
+          <div className="relative h-52 w-full">
+            <img
+              src={section.image}
+              alt={section.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-gray-900/20 to-transparent" />{" "}
+            {/* Subtle dark gradient */}
           </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" /> {/* Lighter overlay */}
-          {/* Decorative elements for the background feel */}
-          <div className="absolute top-4 right-4 w-16 h-16 bg-white/10 rounded-full blur-xl"></div>
-          <div className="absolute bottom-4 left-4 w-10 h-10 bg-white/10 rounded-full blur-xl"></div>
-        </div>
-      )}
-
-      <div className="p-8">
-        <h3 className="text-2xl font-poppins font-bold text-gray-800 mb-4 tracking-tight">
-          {section.title}
-        </h3>
-
-        {/* Phone Number */}
-        <div className="flex items-start gap-4 text-base font-inter text-gray-700 mb-3">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
-            <Phone className="text-base" />
-          </div>
-          <div className="flex-1 font-medium pt-0.5">
-            {section.phone || "N/A"}
-          </div>
-        </div>
-
-        {/* Address */}
-        <div className="flex items-start gap-4 text-base font-inter text-gray-700 mb-6">
-          <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 shadow-sm">
-            <MapPin className="text-base" />
-          </div>
-          <div className="flex-1 font-medium pt-0.5">
-            {section.address || "N/A"}
-          </div>
-        </div>
-
-        {/* Company Items / Services */}
-        <div className="mb-6">
-          <div className="text-base font-poppins text-gray-700 font-semibold mb-3">
-            Services
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {section.items.slice(0, 2).map((it, idx) => (
-              <div
-                key={idx}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-teal-50 rounded-full px-4 py-2 border border-blue-100 shadow-sm"
-              >
-                <span className="text-base text-blue-600">
-                  {getHealthIcon(it)}
-                </span>
-                <span className="text-gray-700 text-sm font-medium font-inter">
-                  {it}
-                </span>
-              </div>
-            ))}
-            {section.items.length > 2 && (
-              <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-full px-4 py-2 shadow-sm">
-                <span className="text-gray-600 text-sm font-medium font-inter">
-                  +{section.items.length - 2} more
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Footer with Medicines Count and View Details */}
-        <div className="flex items-center justify-between text-base pt-6 border-t border-gray-100 mt-6">
-          <div className="bg-gradient-to-r from-lime-100 to-green-100 rounded-full px-4 py-2 border border-lime-200 shadow-sm">
-            <span className="text-lime-700 font-bold font-poppins text-sm">
-              {section.Medicines
-                ? `${section.Medicines.length} medicines`
-                : "0 medicines"}
-            </span>
-          </div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent card click from triggering twice
-              setFullscreenStockist(index); // Re-trigger or navigate
-            }}
-            className="flex items-center gap-3 text-purple-600 hover:text-purple-700 transition-colors duration-200 group"
+        ) : (
+          <div
+            className="relative h-52 w-full flex items-center justify-center p-4 rounded-b-2xl" // Added padding for the content
+            style={{
+              background: `linear-gradient(135deg, ${c1 || "#00C4B3"}, ${
+                c2 || "#007BFF"
+              })`,
+            }} // Using default vibrant colors
           >
-            <span className="text-base font-bold font-inter">View details</span>
-              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shadow-sm group-hover:scale-110 transition-transform duration-200">
-              <Eye className="text-lg" />
+            <div
+              className="absolute inset-0 opacity-20"
+              style={{
+                background: `linear-gradient(135deg, ${c1 || "#00C4B3"}, ${
+                  c2 || "#007BFF"
+                })`,
+                filter: "blur(30px)",
+              }}
+            ></div>{" "}
+            {/* Background blur effect for depth */}
+            <div className="relative z-10 text-6xl font-extrabold font-poppins text-white drop-shadow-lg opacity-90">
+              {section.title?.charAt(0)}
             </div>
-          </button>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />{" "}
+            {/* Lighter overlay */}
+            {/* Decorative elements for the background feel */}
+            <div className="absolute top-4 right-4 w-16 h-16 bg-white/10 rounded-full blur-xl"></div>
+            <div className="absolute bottom-4 left-4 w-10 h-10 bg-white/10 rounded-full blur-xl"></div>
+          </div>
+        )}
+
+        <div className="p-8">
+          <h3 className="text-2xl font-poppins font-bold text-gray-800 mb-4 tracking-tight">
+            {section.title}
+          </h3>
+
+          {/* Phone Number */}
+          <div className="flex items-start gap-4 text-base font-inter text-gray-700 mb-3">
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
+              <Phone className="text-base" />
+            </div>
+            <div className="flex-1 font-medium pt-0.5">
+              {section.phone || "N/A"}
+            </div>
+          </div>
+
+          {/* Address */}
+          <div className="flex items-start gap-4 text-base font-inter text-gray-700 mb-6">
+            <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 shadow-sm">
+              <MapPin className="text-base" />
+            </div>
+            <div className="flex-1 font-medium pt-0.5">
+              {section.address || "N/A"}
+            </div>
+          </div>
+
+          {/* Company Items / Services */}
+          <div className="mb-6">
+            <div className="text-base font-poppins text-gray-700 font-semibold mb-3">
+              Services
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {section.items.slice(0, 2).map((it, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-teal-50 rounded-full px-4 py-2 border border-blue-100 shadow-sm"
+                >
+                  <span className="text-base text-blue-600">
+                    {getHealthIcon(it)}
+                  </span>
+                  <span className="text-gray-700 text-sm font-medium font-inter">
+                    {it}
+                  </span>
+                </div>
+              ))}
+              {section.items.length > 2 && (
+                <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-full px-4 py-2 shadow-sm">
+                  <span className="text-gray-600 text-sm font-medium font-inter">
+                    +{section.items.length - 2} more
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer with Medicines Count and View Details */}
+          <div className="flex items-center justify-between text-base pt-6 border-t border-gray-100 mt-6">
+            <div className="bg-gradient-to-r from-lime-100 to-green-100 rounded-full px-4 py-2 border border-lime-200 shadow-sm">
+              <span className="text-lime-700 font-bold font-poppins text-sm">
+                {section.Medicines
+                  ? `${section.Medicines.length} medicines`
+                  : "0 medicines"}
+              </span>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent card click from triggering twice
+                setFullscreenStockist(index); // Re-trigger or navigate
+              }}
+              className="flex items-center gap-3 text-purple-600 hover:text-purple-700 transition-colors duration-200 group"
+            >
+              <span className="text-base font-bold font-inter">
+                View details
+              </span>
+              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shadow-sm group-hover:scale-110 transition-transform duration-200">
+                <Eye className="text-lg" />
+              </div>
+            </button>
+          </div>
         </div>
-      </div>
-    </article>
+      </article>
     );
   };
 
@@ -675,120 +692,148 @@ const Screen = ({ navigation: navProp }) => {
     const [color1, color2] = generateHealthColor(idx || 0);
 
     return (
-       <div className="min-h-screen bg-slate-50 font-sans">
-      {/* --- Sticky Header --- */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-slate-200">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between">
-            {/* Back Button */}
-           
-            {/* Title */}
-            <div className="text-center">
-              <div className="text-lg font-bold text-slate-800">
-                {currentSection.title}
-              </div>
-            </div>
-            {/* Favorite Button */}
-            
-          </div>
-        </div>
-      </div>
+      <div className="min-h-screen bg-slate-50 font-sans">
+        {/* --- Sticky Header --- */}
+        <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-slate-200">
+          <div className="px-4 py-3">
+            <div className="flex items-center justify-between">
+              {/* Back Button */}
 
-      {/* --- Main Content Body --- */}
-      <div className="p-4 space-y-6 pb-24">
-        {/* --- Supplier Info Card --- */}
-        <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-5">
-          <div className="flex items-start gap-4">
-            <div className="relative">
-              {currentSection.image ? (
-                <img src={currentSection.image} alt={currentSection.title} className="w-20 h-20 object-cover rounded-xl"/>
-              ) : (
-                <div className="w-20 h-20 rounded-xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${color1}, ${color2})` }}>
-                  <span className="text-3xl font-bold text-white">{currentSection.title?.charAt(0)}</span>
+              {/* Title */}
+              <div className="text-center">
+                <div className="text-lg font-bold text-slate-800">
+                  {currentSection.title}
                 </div>
-              )}
-              <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center border-2 border-white">
-                <span className="text-white text-xs">✓</span>
               </div>
-            </div>
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-slate-800 mb-1">{currentSection.title}</h1>
-              <p className="text-slate-500 text-sm mb-2">{currentSection.address}</p>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-orange-100 text-orange-600 rounded-full px-2 py-0.5 text-xs font-semibold">
-                  <span>⭐</span>
-                  <span>4.8</span>
-                </div>
-                <div className="text-slate-400 text-sm">(209 Reviews)</div>
-              </div>
+              {/* Favorite Button */}
             </div>
           </div>
         </div>
 
-        {/* --- Quick Actions (Call/Message) --- */}
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            onClick={() => makePhoneCall(currentSection.phone)}
-            className="bg-cyan-500 text-white py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 hover:bg-cyan-600 transform hover:-translate-y-0.5 transition-all"
-          >
-            <span className="text-xl">📞</span>
-            <span>Call Now</span>
-          </button>
-          <button className="bg-orange-500 text-white py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 hover:bg-orange-600 transform hover:-translate-y-0.5 transition-all">
+        {/* --- Main Content Body --- */}
+        <div className="p-4 space-y-6 pb-24">
+          {/* --- Supplier Info Card --- */}
+          <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-5">
+            <div className="flex items-start gap-4">
+              <div className="relative">
+                {currentSection.image ? (
+                  <img
+                    src={currentSection.image}
+                    alt={currentSection.title}
+                    className="w-20 h-20 object-cover rounded-xl"
+                  />
+                ) : (
+                  <div
+                    className="w-20 h-20 rounded-xl flex items-center justify-center"
+                    style={{
+                      background: `linear-gradient(135deg, ${color1}, ${color2})`,
+                    }}
+                  >
+                    <span className="text-3xl font-bold text-white">
+                      {currentSection.title?.charAt(0)}
+                    </span>
+                  </div>
+                )}
+                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center border-2 border-white">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h1 className="text-xl font-bold text-slate-800 mb-1">
+                  {currentSection.title}
+                </h1>
+                <p className="text-slate-500 text-sm mb-2">
+                  {currentSection.address}
+                </p>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 bg-orange-100 text-orange-600 rounded-full px-2 py-0.5 text-xs font-semibold">
+                    <span>⭐</span>
+                    <span>4.8</span>
+                  </div>
+                  <div className="text-slate-400 text-sm">(209 Reviews)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* --- Quick Actions (Call/Message) --- */}
+          <div className="grid gap-4">
+            <button
+              onClick={() => makePhoneCall(currentSection.phone)}
+              className="bg-cyan-500 text-white py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 hover:bg-cyan-600 transform hover:-translate-y-0.5 transition-all"
+            >
+              <span className="text-xl">📞</span>
+              <span>Call Now</span>
+            </button>
+            {/* <button className="bg-orange-500 text-white py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 hover:bg-orange-600 transform hover:-translate-y-0.5 transition-all">
             <span className="text-xl">💬</span>
             <span>Message</span>
-          </button>
-        </div>
-
-        {/* --- Companies Section --- */}
-        <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-5">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">Partner Companies</h3>
-          <div className="space-y-3">
-            {currentSection.items.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl">
-                <div className="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center">
-                  <span className="text-lg text-cyan-600">{getHealthIcon(item)}</span>
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-slate-700">{item}</div>
-                </div>
-                <div className="text-slate-400 text-2xl">›</div>
-              </div>
-            ))}
+          </button> */}
           </div>
-        </div>
 
-        {/* --- Available Medicines Section --- */}
-        {currentSection.Medicines && currentSection.Medicines.length > 0 && (
+          {/* --- Companies Section --- */}
           <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-slate-800">Medicines In Stock</h3>
-              <div className="bg-cyan-100 text-cyan-700 rounded-full px-3 py-1 text-xs font-bold">
-                {currentSection.Medicines.length} items
-              </div>
-            </div>
-            <div className="space-y-2">
-              {currentSection.Medicines.slice(0, 5).map((medicine, idx) => (
-                <div key={idx} className="flex items-center gap-4 p-3 border-b border-slate-100 last:border-b-0">
-                  <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                    <span className="text-lg text-orange-600">💊</span>
+            <h3 className="text-lg font-bold text-slate-800 mb-4">
+              Partner Companies
+            </h3>
+            <div className="space-y-3">
+              {currentSection.items.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center">
+                    <span className="text-lg text-cyan-600">
+                      {getHealthIcon(item)}
+                    </span>
                   </div>
                   <div className="flex-1">
-                    <div className="font-semibold text-slate-700">{medicine}</div>
-                    <div className="text-sm text-slate-500">Available</div>
+                    <div className="font-semibold text-slate-700">{item}</div>
                   </div>
+                  <div className="text-slate-400 text-2xl">›</div>
                 </div>
               ))}
-              {currentSection.Medicines.length > 5 && (
-                <button className="w-full mt-3 p-3 bg-slate-100 rounded-xl text-slate-700 font-semibold hover:bg-slate-200 transition-all">
-                  View All {currentSection.Medicines.length} Medicines
-                </button>
-              )}
             </div>
           </div>
-        )}
+
+          {/* --- Available Medicines Section --- */}
+          {currentSection.Medicines && currentSection.Medicines.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-slate-800">
+                  Medicines In Stock
+                </h3>
+                <div className="bg-cyan-100 text-cyan-700 rounded-full px-3 py-1 text-xs font-bold">
+                  {currentSection.Medicines.length} items
+                </div>
+              </div>
+              <div className="space-y-2">
+                {currentSection.Medicines.slice(0, 5).map((medicine, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-4 p-3 border-b border-slate-100 last:border-b-0"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                      <span className="text-lg text-orange-600">💊</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-slate-700">
+                        {medicine}
+                      </div>
+                      <div className="text-sm text-slate-500">Available</div>
+                    </div>
+                  </div>
+                ))}
+                {currentSection.Medicines.length > 5 && (
+                  <button className="w-full mt-3 p-3 bg-slate-100 rounded-xl text-slate-700 font-semibold hover:bg-slate-200 transition-all">
+                    View All {currentSection.Medicines.length} Medicines
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
     );
   };
 
@@ -811,7 +856,7 @@ const Screen = ({ navigation: navProp }) => {
             </div>
             <div className="text-sm font-medium">Demand</div>
           </button>
-          
+
           <button
             className="flex flex-col items-center text-slate-400"
             onClick={() => navigation.navigate("/profile")}
