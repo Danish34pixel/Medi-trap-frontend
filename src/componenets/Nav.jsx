@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import API_BASE, { apiUrl } from "./config/api";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { getCookie } from "./utils/cookies";
 import {
   medicineReferencesStockist,
@@ -35,6 +36,11 @@ export default function Nav({ navigation: navProp }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedStockists, setSelectedStockists] = useState([]);
   const [showAllResults, setShowAllResults] = useState(false);
+  // pagination state for supplier results (server-driven like Screen.jsx)
+  const [page, setPage] = useState(1);
+  const limit = 10;
+  const [pageLoading, setPageLoading] = useState(false);
+  const [totalPages, setTotalPages] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [userToken, setUserToken] = useState(null);
@@ -69,9 +75,9 @@ export default function Nav({ navigation: navProp }) {
     (async () => {
       try {
         const [resStockist, resMedicine, resCompany] = await Promise.all([
-          fetch(apiUrl(`/api/stockist`)),
-          fetch(apiUrl(`/api/medicine`)),
-          fetch(apiUrl(`/api/company`)),
+          fetch(apiUrl("/api/stockist")),
+          fetch(apiUrl("/api/medicine")),
+          fetch(apiUrl("/api/company")),
         ]);
         const [jsonStockist, jsonMedicine, jsonCompany] = await Promise.all([
           resStockist.json(),
@@ -257,7 +263,7 @@ export default function Nav({ navigation: navProp }) {
               title: s.name,
               phone: s.phone,
               address: s.address
-                ? `${s.address.street || ""}, ${s.address.city || ""}`
+                ? `${s.address.street || ""}${s.address.city ? ", " + s.address.city : ""}`
                 : "",
               items,
               Medicines: meds,
@@ -271,6 +277,181 @@ export default function Nav({ navigation: navProp }) {
     })();
     return () => (mounted = false);
   }, []);
+
+  // Fetch a page of stockists from server when showing all suppliers
+  const fetchStockistsPage = async (p = page) => {
+    setPageLoading(true);
+    try {
+      const [resStockist, resMedicine, resCompany] = await Promise.all([
+        fetch(apiUrl(`/api/stockist?page=${p}&limit=${limit}`)),
+        fetch(apiUrl("/api/medicine")),
+        fetch(apiUrl("/api/company")),
+      ]);
+
+      const [jsonStockist, jsonMedicine, jsonCompany] = await Promise.all([
+        resStockist.json(),
+        resMedicine.json(),
+        resCompany.json(),
+      ]);
+
+      const medicines = (jsonMedicine && jsonMedicine.data) || [];
+      const companies = (jsonCompany && jsonCompany.data) || [];
+
+      const data = (jsonStockist && jsonStockist.data) || [];
+
+      // map each stockist to the normalized display shape (title, items, Medicines, etc.)
+      const mapped = data.map((s) => {
+        let medsForStockist = medicines
+          .filter((m) => medicineReferencesStockist(m, s._id))
+          .map((m) => medicineDisplayName(m))
+          .filter(Boolean);
+
+        if ((!medsForStockist || medsForStockist.length === 0) && medicines.length > 0) {
+          const stockistNames = new Set((s.Medicines || s.medicines || s.items || []).map((x) => String(x).toLowerCase()));
+          const fallback = medicines
+            .filter((m) => {
+              const name = medicineDisplayName(m) || "";
+              if (!name) return false;
+              if (nameMatchesStockistItems(name, s)) return true;
+              const lname = name.toLowerCase();
+              for (const n of stockistNames) {
+                if (!n) continue;
+                if (n.includes(lname) || lname.includes(n)) return true;
+              }
+              return false;
+            })
+            .map((m) => medicineDisplayName(m))
+            .filter(Boolean);
+          if (fallback.length > 0) medsForStockist = fallback;
+        }
+
+        const companyIds = new Set(
+          medicines
+            .filter((m) =>
+              Array.isArray(m.stockists) ? m.stockists.some((st) => String(st.stockist || st).includes(String(s._id))) : false
+            )
+            .map((m) => (m.company && (m.company._id || m.company) ? String(m.company._id || m.company) : null))
+            .filter(Boolean)
+        );
+
+        let companiesForStockist = companies
+          .filter((c) => companyIds.has(String(c._id)))
+          .map((c) => (c.name ? c.name : c.shortName || ""))
+          .filter(Boolean);
+
+        const deepScanCompanyReferences = (obj, sid) => {
+          if (!obj) return false;
+          const target = String(sid);
+          const seen = new Set();
+          const walk = (value) => {
+            if (value == null) return false;
+            if (seen.has(value)) return false;
+            if (typeof value === "string" || typeof value === "number") return String(value) === target;
+            if (Array.isArray(value)) { for (const item of value) if (walk(item)) return true; return false; }
+            if (typeof value === "object") {
+              if (seen.has(value)) return false;
+              seen.add(value);
+              for (const k of Object.keys(value)) if (walk(value[k])) return true;
+              return false;
+            }
+            return false;
+          };
+          return walk(obj);
+        };
+
+        const reverseCompanies = companies
+          .filter((c) => deepScanCompanyReferences(c, s._id))
+          .map((c) => (c.name ? c.name : c.shortName || ""))
+          .filter(Boolean);
+
+        companiesForStockist = Array.from(new Set([...companiesForStockist, ...reverseCompanies]));
+
+        const companyIdsFromStockist = new Set(
+          (s.companies || s.items || [])
+            .map((c) => {
+              if (!c) return null;
+              if (typeof c === "string") return String(c);
+              if (c._id) return String(c._id);
+              if (c.id) return String(c.id);
+              return null;
+            })
+            .filter(Boolean)
+        );
+
+        if ((!medsForStockist || medsForStockist.length === 0) && companyIdsFromStockist.size > 0) {
+          const byCompany = medicines
+            .filter((m) => {
+              const comp = m.company && (m.company._id || m.company);
+              return comp && companyIdsFromStockist.has(String(comp));
+            })
+            .map((m) => medicineDisplayName(m))
+            .filter(Boolean);
+          if (byCompany.length > 0) medsForStockist = [...new Set([...(medsForStockist || []), ...byCompany])];
+        }
+
+        const explicitItems = (Array.isArray(s.companies) ? s.companies : [])
+          .map((c) => {
+            if (typeof c === "string") {
+              const found = companies.find((co) => String(co._id) === c || co.id === c);
+              return found ? found.name || found.shortName || c : c;
+            }
+            if (c && (c.name || c.shortName)) return c.name || c.shortName;
+            return "";
+          })
+          .filter(Boolean);
+
+        const items = Array.from(new Set([...(explicitItems || []), ...(companiesForStockist || [])]));
+
+        let meds = [];
+        if (Array.isArray(s.medicines) && s.medicines.length > 0) {
+          meds = s.medicines
+            .map((m) => {
+              if (typeof m === "string") return m;
+              if (m && (m.name || m.brandName)) return m.name || m.brandName;
+              try {
+                const candidateId = m && (m._id || m.id || m);
+                if (candidateId && medicines && medicines.length > 0) {
+                  const found = medicines.find((md) => String(md._id) === String(candidateId) || String(md._id) === String(candidateId._id || candidateId.id || candidateId));
+                  if (found) return medicineDisplayName(found);
+                }
+              } catch (e) {}
+              return "";
+            })
+            .filter(Boolean);
+        } else {
+          meds = (medsForStockist || []).slice();
+        }
+
+        return {
+          _id: s._id,
+          title: s.name,
+          phone: s.phone,
+          address: s.address ? `${s.address.street || ""}${s.address.city ? ", " + s.address.city : ""}` : "",
+          image: (s.logo && s.logo.url) || null,
+          items,
+          Medicines: meds,
+        };
+      });
+
+      setSelectedStockists(mapped);
+
+      const tp = jsonStockist.totalPages || jsonStockist.pages || (jsonStockist.totalStockists && Math.ceil(jsonStockist.totalStockists / limit));
+      if (tp != null) setTotalPages(Number(tp)); else setTotalPages(null);
+      if (data.length === 0 && p > 1) setPage((cur) => Math.max(1, cur - 1));
+    } catch (e) {
+      console.warn("Nav: failed to fetch stockists page", e);
+    } finally {
+      setPageLoading(false);
+    }
+  };
+
+  // trigger server fetch when showing all stockists with server pagination
+  useEffect(() => {
+    if (filterType === "stockist" && showAllResults) {
+      fetchStockistsPage(page);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterType, showAllResults, page]);
 
   useEffect(() => {
     const token = getCookie("token");
@@ -309,7 +490,10 @@ export default function Nav({ navigation: navProp }) {
 
     const allItems = getAllItems(newType);
     if (newType === "stockist") {
-      setSelectedStockists(sectionData);
+      // switch to server-paginated stockist mode
+      setSelectedStockists([]); // clear while we fetch
+      setPage(1);
+      setShowAllResults(true);
     } else if (newType === "company") {
       const companyStockists = [];
       const norm = (s) =>
@@ -343,18 +527,6 @@ export default function Nav({ navigation: navProp }) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
-    }
-
-    if (filterType === "company") {
-      const norm = (s) =>
-        String(s || "")
-          .toLowerCase()
-          .trim();
-      sectionData.forEach((section) =>
-        section.items?.forEach((item) => {
-          if (norm(item).includes(q)) resultSet.add(norm(item));
-        })
-      );
     } else if (filterType === "stockist") {
       sectionData.forEach((section) => {
         if (section.title.toLowerCase().includes(q))
@@ -464,13 +636,13 @@ export default function Nav({ navigation: navProp }) {
   const filterOptions = [
     { value: "medicine", label: "Medicine", icon: "💊" },
     { value: "company", label: "Company", icon: "🏥" },
-    { value: "stockist", label: "Supplier", icon: "⚕️" },
+    { value: "stockist", label: "Supplier", icon: "⚕" },
   ];
 
   const navLinks = [
     { label: "Home", icon: "🏠", path: "/" },
    
-    { label: "Saved", icon: "�", path: "/saved" },
+    { label: "Saved", icon: " ", path: "/saved" },
     { label: "Profile", icon: "👤", path: "/profile" },
   ];
 
@@ -510,24 +682,35 @@ export default function Nav({ navigation: navProp }) {
     // eslint-disable-next-line
   }, [sectionData]);
 
+  // Derived display list: prefer server-provided selectedStockists, but
+  // if empty (or server failed) fall back to slicing local sectionData so
+  // users still see results. This ensures the UI isn't blank if server
+  // pagination isn't available.
+  const effectiveLimit = limit || 10;
+  const fallbackTotalPages = sectionData && sectionData.length ? Math.ceil(sectionData.length / effectiveLimit) : 0;
+  const effectiveTotalPages = totalPages != null ? totalPages : fallbackTotalPages;
+  const displayedStockists = (filterType === "stockist" && showAllResults && selectedStockists && selectedStockists.length === 0 && !pageLoading)
+    ? (sectionData || []).slice((page - 1) * effectiveLimit, page * effectiveLimit)
+    : selectedStockists;
+
   const getHealthIcon = (item) => {
     const healthIcons = {
-      cardiovascular: "❤️",
+      cardiovascular: "❤",
       diabetes: "🩺",
       pain: "💊",
       mental: "🧠",
       pediatric: "👶",
       emergency: "🚨",
-      chronic: "⚕️",
-      preventive: "🛡️",
-      oncology: "🎗️",
+      chronic: "⚕",
+      preventive: "🛡",
+      oncology: "🎗",
       respiratory: "🫁",
       dermatology: "🧴",
       orthopedic: "🦴",
       pharmacy: "💊",
       hospital: "🏥",
       clinic: "🏥",
-      medical: "⚕️",
+      medical: "⚕",
       health: "🩺",
       care: "💊",
       medicine: "💉",
@@ -541,7 +724,7 @@ export default function Nav({ navigation: navProp }) {
       nutrition: "🍎",
       wellness: "🌱",
       fitness: "💪",
-      rehabilitation: "🏃‍♂️",
+      rehabilitation: "🏃‍♂",
     };
 
     const itemLower = String(item).toLowerCase();
@@ -563,7 +746,7 @@ export default function Nav({ navigation: navProp }) {
       ref={(el) => {
         if (el && item?._id) cardRefs.current[item._id] = el;
       }}
-      className={`bg-white rounded-2xl shadow-lg border border-slate-100 p-4 transition-all duration-300 mb-5 ${openCardId === item._id ? 'ring-2 ring-cyan-400' : 'shadow-md'}`}
+  className={`bg-white rounded-2xl shadow-lg border border-slate-100 p-4 transition-all duration-300 mb-5 ${openCardId === item._id ? 'ring-2 ring-cyan-400' : 'shadow-md'}`}
     >
       {/* --- Card Header --- */}
       <div className="flex items-start gap-4 mb-4">
@@ -575,13 +758,13 @@ export default function Nav({ navigation: navProp }) {
           <p className="text-sm text-slate-500">{item.address}</p>
         </div>
         <button
-            onClick={() => {
-              try {
-                navigation.navigate(`/stockist/${item._id}`);
-              } catch (e) {
-                window.location.href = `/stockist/${item._id}`;
-              }
-            }}
+                onClick={() => {
+                try {
+                  navigation.navigate(`/stockist/${item._id}`);
+                } catch (e) {
+                  window.location.href = `/stockist/${item._id}`;
+                }
+              }}
             className="text-cyan-500 font-bold text-2xl h-8 w-8 flex items-center justify-center rounded-full hover:bg-cyan-50"
         >
           ›
@@ -930,7 +1113,7 @@ export default function Nav({ navigation: navProp }) {
                             ? "💊"
                             : filterType === "company"
                             ? "🏥"
-                            : "⚕️"}
+                            : "⚕"}
                         </span>
                       </div>
                       <div className="flex-1">
@@ -1034,9 +1217,39 @@ export default function Nav({ navigation: navProp }) {
               </div>
             </div>
 
-            <div>
-              {selectedStockists.map((s, i) => renderStockistCard(s, i))}
+           <div>
+              {displayedStockists.map((s, i) => renderStockistCard(s, i))}
             </div>
+
+            {/* Pagination Controls - bottom of results (styled like Screen.jsx) */}
+            {filterType === "stockist" && showAllResults && effectiveTotalPages > 1 && (
+              <div className="px-6 py-6 flex justify-center items-center">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1 || pageLoading}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full mr-4 border-0 ${page <= 1 || pageLoading ? "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none" : "bg-gradient-to-br from-cyan-500 to-blue-500 text-white font-bold shadow-xl hover:from-cyan-600 hover:to-blue-600 transform hover:-translate-y-0.5 transition-all"}`}
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className={`w-5 h-5 ${page <= 1 || pageLoading ? "text-gray-400" : "text-white"}`} />
+                  <span className="text-sm">Prev</span>
+                </button>
+
+                <div className="px-3 py-2 rounded-full bg-white text-cyan-700 font-semibold shadow-sm border border-cyan-50 flex items-center">
+                  <span className="text-sm">Page {page}{effectiveTotalPages ? ` of ${effectiveTotalPages}` : ""}</span>
+                </div>
+
+                <button
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={pageLoading || (effectiveTotalPages != null && page >= effectiveTotalPages)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full ml-4 border-0 ${pageLoading || (effectiveTotalPages != null && page >= effectiveTotalPages) ? "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none" : "bg-gradient-to-br from-cyan-500 to-blue-500 text-white font-bold shadow-xl hover:from-cyan-600 hover:to-blue-600 transform hover:-translate-y-0.5 transition-all"}`}
+                  aria-label="Next page"
+                >
+                  <span className="text-sm">Next</span>
+                  <ChevronRight className={`w-5 h-5 ${pageLoading || (effectiveTotalPages != null && page >= effectiveTotalPages) ? "text-gray-400" : "text-white"}`} />
+                </button>
+              </div>
+            )}
+            
           </div>
         )}
 

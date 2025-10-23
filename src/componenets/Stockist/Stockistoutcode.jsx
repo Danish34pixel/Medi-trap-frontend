@@ -287,11 +287,9 @@ export default function PharmacyStockist() {
       const token = getCookie("token");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      const res = await fetch(apiUrl("/api/stockist"), { headers });
-      const json = await res.json().catch(() => ({}));
-      const list = json?.data || [];
-
-      let target = null;
+      // Try to avoid fetching the entire stockist list when we can identify
+      // the current user's stockist. Parse stored user from localStorage
+      // early so we can attempt a single-stockist fetch via /api/stockist/:id.
       let storedUser = null;
       try {
         storedUser =
@@ -302,7 +300,44 @@ export default function PharmacyStockist() {
 
       if (storedUser && storedUser.user) storedUser = storedUser.user;
 
-      const userIds = new Set();
+      // prefer explicit route id, else try stored user ids
+      const candidateIds = [];
+      if (routeId && routeId !== "me") candidateIds.push(routeId);
+      if (storedUser) {
+        [storedUser._id, storedUser.id, storedUser.userId]
+          .filter(Boolean)
+          .forEach((v) => candidateIds.push(String(v)));
+      }
+
+      let list = [];
+      // attempt to fetch a single stockist if we have any candidate id
+      if (candidateIds.length > 0) {
+        for (const idToFetch of candidateIds) {
+          try {
+            const singleRes = await fetch(apiUrl(`/api/stockist/${idToFetch}`), {
+              headers,
+            });
+            const singleJson = await singleRes.json().catch(() => ({}));
+            if (singleJson && singleJson.data) {
+              list = [singleJson.data];
+              break;
+            }
+          } catch (e) {
+            // ignore and try next candidate
+          }
+        }
+      }
+
+      // fallback: if we couldn't fetch a single stockist, fetch the list
+      if (list.length === 0) {
+        const res = await fetch(apiUrl("/api/stockist"), { headers });
+        const json = await res.json().catch(() => ({}));
+        list = json?.data || [];
+      }
+
+      let target = null;
+
+  const userIds = new Set();
       const userEmails = new Set();
       const userPhones = new Set();
       if (storedUser) {
@@ -656,8 +691,7 @@ export default function PharmacyStockist() {
       <div className="max-w-7xl mx-auto">
         {/* Header Card */}
         <div className="bg-gradient-to-br from-white to-violet-50 rounded-3xl shadow-2xl p-8 border-2 border-violet-100">
-          <div className="flex items-center gap-6">
-            <Avatar name={displayName} size={80} />
+          <div className="flex items-center ">
             <div className="flex-1">
               <h1 className="text-2xl font-black bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 bg-clip-text text-transparent mb-1">
                 {displayName}

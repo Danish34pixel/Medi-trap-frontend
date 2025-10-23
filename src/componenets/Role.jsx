@@ -22,7 +22,7 @@ export default function SelectRolePage() {
     {
       id: "Stockist",
       name: "Stockist",
-      icon: "/WhatsApp Image 2025-09-30 at 15.26.30_9f12fc65.jpg",
+      icon: "/stockist-logo.jpg",
       gradient: "from-emerald-400 to-teal-500",
       bgGlow: "bg-emerald-500/10",
       description: "Manage inventory",
@@ -31,7 +31,7 @@ export default function SelectRolePage() {
     {
       id: "Purchaser",
       name: "Purchaser",
-      icon: "/WhatsApp Image 2025-09-30 at 15.26.31_55e2f48c.jpg",
+      icon: "/purchaser-logo.jpg",
       gradient: "from-blue-400 to-indigo-500",
       bgGlow: "bg-blue-500/10",
       description: "Handle procurement",
@@ -40,7 +40,7 @@ export default function SelectRolePage() {
     {
       id: "Medical Owner",
       name: "Medical Owner",
-      icon: "/WhatsApp Image 2025-09-30 at 15.26.30_99a6071d.jpg",
+      icon: "/medical-owner.jpg",
       gradient: "from-orange-400 to-red-500",
       bgGlow: "bg-orange-500/10",
       description: "Clinic management",

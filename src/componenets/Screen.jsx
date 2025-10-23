@@ -7,7 +7,7 @@ import {
   tokenOverlapScore,
 } from "./utils/normalizeMatching";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Phone, MapPin, Eye } from "lucide-react";
+import { Phone, MapPin, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 
 const Screen = ({ navigation: navProp }) => {
   const navigate = (() => {
@@ -39,6 +39,10 @@ const Screen = ({ navigation: navProp }) => {
   const [fullscreenStockist, setFullscreenStockist] = useState(null); // index for fullscreen modal
   const [isAdmin, setIsAdmin] = useState(false);
   const [sectionData, setSectionData] = useState([]);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [totalPages, setTotalPages] = useState(null);
+  const [pageLoading, setPageLoading] = useState(false);
   // debug UI removed: rawResponses and showDebug state intentionally discarded
   const [unmatchedMedicines, setUnmatchedMedicines] = useState([]);
 
@@ -46,10 +50,11 @@ const Screen = ({ navigation: navProp }) => {
     let mounted = true;
     (async () => {
       try {
+        setPageLoading(true);
         const [resStockist, resMedicine, resCompany] = await Promise.all([
-          fetch(apiUrl(`/api/stockist`)),
-          fetch(apiUrl(`/api/medicine`)),
-          fetch(apiUrl(`/api/company`)),
+          fetch(apiUrl(`/api/stockist?page=${page}&limit=${limit}`)),
+          fetch(apiUrl("/api/medicine")),
+          fetch(apiUrl("/api/company")),
         ]);
 
         const [jsonStockist, jsonMedicine, jsonCompany] = await Promise.all([
@@ -64,6 +69,11 @@ const Screen = ({ navigation: navProp }) => {
         // (debug data removed in production UI)
 
         if (mounted && jsonStockist && jsonStockist.data) {
+          // extract pagination info if available
+          try {
+            const tp = jsonStockist.totalPages || jsonStockist.pages || (jsonStockist.totalStockists && Math.ceil(jsonStockist.totalStockists / limit));
+            if (tp != null) setTotalPages(Number(tp));
+          } catch (e) {}
           const mapped = jsonStockist.data.map((s) => {
             let medsForStockist = medicines
               .filter((m) => medicineReferencesStockist(m, s._id))
@@ -212,7 +222,7 @@ const Screen = ({ navigation: navProp }) => {
 
             // Build medicines list for the stockist.
             // If the stockist provides a list of medicines by id/object, try to
-            // resolve them against the fetched `medicines` array so we show names.
+            // resolve them against the fetched medicines array so we show names.
             let meds = [];
             if (Array.isArray(s.medicines) && s.medicines.length > 0) {
               meds = s.medicines
@@ -264,6 +274,11 @@ const Screen = ({ navigation: navProp }) => {
 
           // loaded stockists -> mapped.length
           setSectionData(mapped);
+
+          // if backend returned an empty array for a page > 1, step back one page
+          if (jsonStockist.data.length === 0 && page > 1) {
+            setPage((p) => Math.max(1, p - 1));
+          }
 
           // compute unmatched medicines (those that don't match any stockist)
           try {
@@ -340,12 +355,14 @@ const Screen = ({ navigation: navProp }) => {
         }
       } catch (err) {
         // failed to load stockists (errors are intentionally silent in UI)
+      } finally {
+        setPageLoading(false);
       }
     })();
     return () => {
       mounted = false;
     };
-  }, [location && location.key]);
+  }, [location && location.key, page]);
 
   // check admin from localStorage
   useEffect(() => {
@@ -381,15 +398,15 @@ const Screen = ({ navigation: navProp }) => {
     // Map common business categories to health-related icons
     const healthIcons = {
       // Medicine categories
-      cardiovascular: "❤️",
+      cardiovascular: "❤",
       diabetes: "🩺",
       pain: "💊",
       mental: "🧠",
       pediatric: "👶",
       emergency: "🚨",
-      chronic: "⚕️",
-      preventive: "🛡️",
-      oncology: "🎗️",
+      chronic: "⚕",
+      preventive: "🛡",
+      oncology: "🎗",
       respiratory: "🫁",
       dermatology: "🧴",
       orthopedic: "🦴",
@@ -398,7 +415,7 @@ const Screen = ({ navigation: navProp }) => {
       pharmacy: "💊",
       hospital: "🏥",
       clinic: "🏥",
-      medical: "⚕️",
+      medical: "⚕",
       health: "🩺",
       care: "💊",
       medicine: "💉",
@@ -412,7 +429,7 @@ const Screen = ({ navigation: navProp }) => {
       nutrition: "🍎",
       wellness: "🌱",
       fitness: "💪",
-      rehabilitation: "🏃‍♂️",
+      rehabilitation: "🏃‍♂",
     };
 
     const itemLower = String(item).toLowerCase();
@@ -443,7 +460,7 @@ const Screen = ({ navigation: navProp }) => {
         </div>
         <div className="flex gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-md">
-            <span className="text-white text-lg">❤️</span>
+            <span className="text-white text-lg">❤</span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-white/70 backdrop-blur-sm flex items-center justify-center shadow-md border border-white/50">
             <span className="text-slate-600 text-lg">♡</span>
@@ -589,7 +606,7 @@ const Screen = ({ navigation: navProp }) => {
           </div>
         )}
 
-        <div className="p-8">
+        <div className="p-8 ">
           <h3 className="text-2xl font-poppins font-bold text-gray-800 mb-4 tracking-tight">
             {section.title}
           </h3>
@@ -644,12 +661,10 @@ const Screen = ({ navigation: navProp }) => {
           </div>
 
           {/* Footer with Medicines Count and View Details */}
-          <div className="flex items-center justify-between text-base pt-6 border-t border-gray-100 mt-6">
+            <div className="flex items-center justify-between text-base pt-6 border-t border-gray-100 mt-6">
             <div className="bg-gradient-to-r from-lime-100 to-green-100 rounded-full px-4 py-2 border border-lime-200 shadow-sm">
               <span className="text-lime-700 font-bold font-poppins text-sm">
-                {section.Medicines
-                  ? `${section.Medicines.length} medicines`
-                  : "0 medicines"}
+                {section.Medicines ? `${section.Medicines.length} medicines` : "0 medicines"}
               </span>
             </div>
             <button
@@ -676,9 +691,55 @@ const Screen = ({ navigation: navProp }) => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/30">
       <ListHeader />
 
-      {/* debug panel removed */}
+      
 
-      <div className="pb-32">{sectionData.map((s, i) => renderCard(s, i))}</div>
+      
+
+      <div className="pb-40">{sectionData.map((s, i) => renderCard(s, i))}</div>
+
+      {/* --- Pagination controls (bottom) placed after cards --- */}
+      <div className="px-6 py-6  -mt-40 flex justify-center items-center">
+        {/* Prev button - gradient pill */}
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page <= 1 || pageLoading}
+          className={
+            (page <= 1 || pageLoading)
+              ? "flex items-center  px-4 py-2 rounded-full mr-4 border-0 bg-gray-100 text-gray-400 cursor-not-allowed shadow-none"
+              : "flex items-center px-4 py-2 rounded-full mr-4 border-0 bg-gradient-to-br from-cyan-500 to-blue-500 text-white font-bold shadow-xl hover:from-cyan-600 hover:to-blue-600 transform hover:-translate-y-0.5 transition-all"
+          }
+        >
+          <ChevronLeft className={
+            (page <= 1 || pageLoading) ? "w-5 h-5 text-gray-400" : "w-5 h-5 text-white"
+          } />
+          <span className="text-sm">Prev</span>
+        </button>
+
+        {/* Page indicator - white pill */}
+        <div className="px-4 py-2 rounded-full bg-white text-cyan-700 font-semibold shadow-sm border border-cyan-50 flex items-center">
+          <span className="text-sm">Page {page}{totalPages ? ` of ${totalPages}` : ""}</span>
+        </div>
+
+        {/* Next button - gradient pill */}
+        <button
+          onClick={() => setPage((p) => p + 1)}
+          disabled={pageLoading || (totalPages != null && page >= totalPages)}
+          className={
+            (pageLoading || (totalPages != null && page >= totalPages))
+              ? "flex items-center  px-4 py-2 rounded-full ml-4 border-0 bg-gray-100 text-gray-400 cursor-not-allowed shadow-none"
+              : "flex items-center  px-4 py-2 rounded-full ml-4 border-0 bg-gradient-to-br from-cyan-500 to-blue-500 text-white font-bold shadow-xl hover:from-cyan-600 hover:to-blue-600 transform hover:-translate-y-0.5 transition-all"
+          }
+        >
+          <span className="text-sm">Next</span>
+          <ChevronRight className={
+            (pageLoading || (totalPages != null && page >= totalPages)) ? "w-5 h-5 text-gray-400" : "w-5 h-5 text-white"
+          } />
+        </button>
+      </div>
+
+      <div className="h-40"></div>
+
+      
     </div>
   );
 
@@ -710,8 +771,8 @@ const Screen = ({ navigation: navProp }) => {
           </div>
         </div>
 
-        {/* --- Main Content Body --- */}
-        <div className="p-4 space-y-6 pb-24">
+  {/* --- Main Content Body --- */}
+  <div className="p-4 space-y-6 pb-32">
           {/* --- Supplier Info Card --- */}
           <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-5">
             <div className="flex items-start gap-4">
@@ -832,6 +893,9 @@ const Screen = ({ navigation: navProp }) => {
               </div>
             </div>
           )}
+
+          
+        
         </div>
       </div>
     );
