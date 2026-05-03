@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    {
+      "source": "/favicon.ico",
+      "destination": "/gemini_generated_image_hnxythhnxythhnxy-removebg-preview.png"
+    },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
