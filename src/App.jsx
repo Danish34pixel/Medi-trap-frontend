@@ -71,6 +71,8 @@ const App = () => {
         <Route path="/purchaserLogin" element={<PurchaserLogin />} />
         <Route path="/purchasermiddle" element={<PurchserVerfifcation />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/privacy-policy/*" element={<PrivacyPolicy />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   );
