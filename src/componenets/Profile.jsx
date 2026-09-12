@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API_BASE, { apiUrl } from "./config/api";
-import { getCookie, removeCookie } from "./utils/cookies";
+import { getCookie } from "./utils/cookies";
+import { logout } from "./utils/authFlow";
 import {
   ArrowLeft,
   Box,
@@ -40,7 +41,7 @@ const Profile = () => {
         // If there's no token and no stored user, force the user to login
         if (!tokenAtRequest) {
           if (!storedUser) {
-            navigate("/login");
+            navigate("/login", { replace: true });
             return;
           }
           // otherwise rely on storedUser already set in state
@@ -92,14 +93,7 @@ const Profile = () => {
   }, []);
 
   const handleLogout = () => {
-    // Clear stored auth and redirect to login
-    try {
-      removeCookie("token");
-      localStorage.removeItem("user");
-    } catch (e) {
-      // ignore
-    }
-    navigate("/login");
+    logout(navigate);
   };
 
   const Pill = ({ imageUrl }) => {
@@ -163,13 +157,13 @@ const Profile = () => {
   const licenseImg = normalizeImageUrl(user?.licenseImageUrl || user?.drugLicenseImage || user?.licenseImage || null);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 lg:px-8 lg:py-12">
+      <div className="max-w-2xl lg:max-w-5xl mx-auto">
         {/* Header Section */}
-        <div className="relative text-center mb-8 mt-2">
+        <div className="relative text-center mb-8 lg:mb-10 mt-2">
           <button
             onClick={() => navigate(-1)}
-            className="absolute left-0 top-0 p-2.5 rounded-full bg-slate-200 hover:bg-slate-300 transition-colors"
+            className="absolute left-0 top-0 p-2.5 rounded-full bg-slate-200 hover:bg-slate-300 transition-colors shadow-sm"
             aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5 text-slate-900" />
@@ -180,7 +174,7 @@ const Profile = () => {
               imageUrl={profileImg}
             />
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent mb-2">
             Your Profile
           </h1>
           <p className="text-gray-600 font-medium">
@@ -223,15 +217,15 @@ const Profile = () => {
         )}
 
         {user && (
-          <div className="space-y-6">
+          <div className="space-y-6 lg:space-y-8">
             {/* Store Information Card */}
-            <div className="bg-white rounded-3xl shadow-xl p-6 border-2 border-gray-100">
+            <div className="bg-white rounded-3xl shadow-xl p-6 lg:p-8 border-2 border-gray-100">
               <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
                 <Box className="w-6 h-6 text-cyan-500" />
                 Store Information
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 p-5 rounded-2xl border-2 border-cyan-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 p-5 lg:p-6 rounded-2xl border-2 border-cyan-200 flex flex-col justify-between">
                   <div className="flex items-center gap-2 mb-2">
                     <Home className="w-5 h-5 text-cyan-600" />
                     <span className="text-gray-600 text-sm font-semibold">
@@ -243,7 +237,7 @@ const Profile = () => {
                   </p>
                 </div>
 
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-5 rounded-2xl border-2 border-orange-200">
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-5 lg:p-6 rounded-2xl border-2 border-orange-200 flex flex-col justify-between">
                   <div className="flex items-center gap-2 mb-2">
                     <User className="w-5 h-5 text-orange-600" />
                     <span className="text-gray-600 text-sm font-semibold">
@@ -255,7 +249,7 @@ const Profile = () => {
                   </p>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-5 rounded-2xl border-2 border-purple-200">
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-5 lg:p-6 rounded-2xl border-2 border-purple-200 flex flex-col justify-between">
                   <div className="flex items-center gap-2 mb-2">
                     <Mail className="w-5 h-5 text-purple-600" />
                     <span className="text-gray-600 text-sm font-semibold">
@@ -267,7 +261,7 @@ const Profile = () => {
                   </p>
                 </div>
 
-                <div className="bg-gradient-to-br from-green-50 to-green-100 p-5 rounded-2xl border-2 border-green-200">
+                <div className="bg-gradient-to-br from-green-50 to-green-100 p-5 lg:p-6 rounded-2xl border-2 border-green-200 flex flex-col justify-between">
                   <div className="flex items-center gap-2 mb-2">
                     <Phone className="w-5 h-5 text-green-600" />
                     <span className="text-gray-600 text-sm font-semibold">
@@ -279,14 +273,14 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Address and License Card */}
-            <div className="bg-white rounded-3xl shadow-xl p-6 border-2 border-gray-100">
+            {/* Address and License Card (Side-by-Side 2-Column Grid on Desktop) */}
+            <div className="bg-white rounded-3xl shadow-xl p-6 lg:p-8 border-2 border-gray-100">
               <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
                 <MapPin className="w-6 h-6 text-cyan-500" />
                 Location & License
               </h2>
-              <div className="space-y-4">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-2xl border-2 border-blue-200">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-5 lg:p-6 rounded-2xl border-2 border-blue-200 flex flex-col justify-between">
                   <div className="flex items-center gap-2 mb-2">
                     <Map className="w-5 h-5 text-blue-600" />
                     <span className="text-gray-600 text-sm font-semibold">
@@ -296,7 +290,7 @@ const Profile = () => {
                   <p className="text-gray-900 font-bold">{addressFormatted}</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-5 rounded-2xl border-2 border-amber-200">
+                <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-5 lg:p-6 rounded-2xl border-2 border-amber-200 flex flex-col justify-between">
                   <div className="flex items-center gap-2 mb-2">
                     <FileText className="w-5 h-5 text-amber-600" />
                     <span className="text-gray-600 text-sm font-semibold">Drug License Number</span>
@@ -306,21 +300,21 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Drug License Image Card */}
-            <div className="bg-white rounded-3xl shadow-xl p-6 border-2 border-gray-100">
+            {/* Drug License Image Card (Centered & Bounded Preview Frame on Desktop) */}
+            <div className="bg-white rounded-3xl shadow-xl p-6 lg:p-8 border-2 border-gray-100">
               <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <ImageIcon className="w-6 h-6 text-cyan-500" />
                 Drug License
               </h2>
-              <div className="border-3 border-dashed border-gray-200 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
+              <div className="max-w-xl mx-auto border-2 border-dashed border-gray-300 rounded-2xl overflow-hidden bg-slate-50 p-3 shadow-inner flex items-center justify-center">
                 {licenseImg ? (
                   <img
                     src={licenseImg}
                     alt="Drug License"
-                    className="w-full h-64 object-contain bg-white"
+                    className="w-full h-64 lg:h-80 object-contain rounded-xl bg-white shadow-sm"
                   />
                 ) : (
-                  <div className="h-64 flex flex-col items-center justify-center text-gray-400">
+                  <div className="h-64 lg:h-80 flex flex-col items-center justify-center text-gray-400">
                     <ImageIcon className="w-16 h-16 mb-3 text-gray-300" />
                     <p className="text-center font-semibold text-gray-500">No image uploaded</p>
                     <p className="text-sm text-gray-400 mt-1">Upload your drug license</p>
@@ -329,17 +323,15 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Quick Actions Card */}
-            <div className="bg-white rounded-3xl shadow-xl p-6 border-2 border-gray-100">
-              <h2 className="text-lg font-bold text-gray-800 mb-4">
+            {/* Quick Actions Card (Auto-width Action Button on Desktop) */}
+            <div className="bg-white rounded-3xl shadow-xl p-6 lg:p-8 border-2 border-gray-100">
+              <h2 className="text-lg font-bold text-gray-800 mb-4 text-center lg:text-left">
                 Quick Actions
               </h2>
-              <div className="space-y-3">
-                {/* Edit profile action removed per request */}
-
+              <div className="flex justify-center lg:justify-start">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-5 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
+                  className="w-full lg:w-auto lg:px-10 flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-5 py-3.5 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
                 >
                   <LogOut className="w-5 h-5" />
                   <span>Logout</span>

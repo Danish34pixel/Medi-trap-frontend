@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { apiUrl } from "../config/api";
+import { postJson } from "../config/api";
 import { useNavigate } from "react-router-dom";
 import {
   Mail,
@@ -10,6 +10,17 @@ import {
   EyeOff,
 } from "lucide-react";
 import Logo from "../Logo";
+import {
+  applyAuthResult,
+  isTrialExpiredResponse,
+  handleTrialExpired,
+  goToPayment,
+  loadRememberedIdentifier,
+  saveRememberedIdentifier,
+} from "../utils/authFlow";
+import PaymentRequiredModal from "../ui/PaymentRequiredModal";
+
+const ROLE = "medicalOwner";
 
 // The InputField component is now a separate, reusable component.
 // It receives all necessary state and handlers as props.
@@ -86,9 +97,17 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [trialExpired, setTrialExpired] = useState(false);
+  const [accountStatus, setAccountStatus] = useState(null);
 
   useEffect(() => {
     setIsVisible(true);
+    const saved = loadRememberedIdentifier(ROLE);
+    if (saved) {
+      setForm((f) => ({ ...f, email: saved }));
+      setRememberMe(true);
+    }
   }, []);
 
   const handleChange = (e) => {
@@ -97,30 +116,39 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
+    if (!form.email || !form.password) {
+      setMessage("Please enter your credentials to continue.");
+      return;
+    }
     setIsLoading(true);
     setMessage("");
 
     try {
-      const response = await fetch(apiUrl(`/api/auth/login`), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.email, password: form.password, role: "medicalOwner" }),
+      const data = await postJson("/auth/login", {
+        email: form.email,
+        password: form.password,
+        role: ROLE,
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed");
+      if (data.success === false) {
+        if (isTrialExpiredResponse(false, data)) {
+          setAccountStatus(handleTrialExpired(data, { requestedRole: ROLE }));
+          setTrialExpired(true);
+          return;
+        }
+        setMessage(data.message || "Login failed");
+        return;
       }
 
-      if (data.success && data.token && data.user) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        setMessage("Login successful!");
-        setTimeout(() => navigate("/dashboard"), 700);
-      } else {
-        throw new Error("Invalid response format from server");
-      }
+      saveRememberedIdentifier(ROLE, form.email, rememberMe);
+      setMessage("Login successful!");
+      applyAuthResult(data, { requestedRole: ROLE, navigate });
     } catch (err) {
+      if (err.body && isTrialExpiredResponse(false, err.body)) {
+        setAccountStatus(handleTrialExpired(err.body, { requestedRole: ROLE }));
+        setTrialExpired(true);
+        return;
+      }
       setMessage(err.message || "Login failed. Please check your credentials.");
     } finally {
       setIsLoading(false);
@@ -222,6 +250,8 @@ const Login = () => {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-all duration-200 hover:scale-110"
                   />
                   <label
@@ -318,6 +348,13 @@ const Login = () => {
           </div>
         </div>
       </div>
+
+      <PaymentRequiredModal
+        open={trialExpired}
+        accountStatus={accountStatus}
+        onGoToPayment={() => goToPayment(navigate, accountStatus)}
+        onClose={() => setTrialExpired(false)}
+      />
     </>
   );
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { apiUrl } from "../config/api";
 import { getCookie } from "../utils/cookies";
+import { logout } from "../utils/authFlow";
 import {
   ArrowLeft,
   Search,
@@ -477,36 +478,16 @@ export default function PharmacyStockist() {
   };
 
   const handleLogout = () => {
-    try {
-      // Clear local storage user object
-      try {
-        localStorage.removeItem("user");
-      } catch (e) {}
-      // Clear token cookie by setting expiry in the past
-      try {
-        document.cookie =
-          "token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-      } catch (e) {}
-      // Optionally clear other keys
-      try {
-        localStorage.removeItem("token");
-      } catch (e) {}
-    } finally {
-      // navigate to login
-      try {
-        navigate("/stockist-login");
-      } catch {
-        window.location.href = "/stockist-login";
-      }
-    }
+    logout(navigate);
   };
 
   const qrDataUrl = useMemo(() => {
     if (!stockist?._id) return null;
     const shareUrl = `${window.location.origin}/stockist/${stockist._id}`;
-    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-      shareUrl
-    )}`;
+    const qrApiBase =
+      import.meta.env.VITE_QR_API_URL ||
+      "https://api.qrserver.com/v1/create-qr-code/";
+    return `${qrApiBase}?size=200x200&data=${encodeURIComponent(shareUrl)}`;
   }, [stockist]);
 
   const TAB_CONFIG = [

@@ -32,6 +32,8 @@ import UserAdmin from "./componenets/Routes/UserAdmin";
 import PrivacyPolicy from "./componenets/Routes/PrivacyPolicy";
 import PurchaserLogin from "./componenets/purchaser/PurchaserLogin";
 import PurchserVerfifcation from "./componenets/purchaser/PurchserVerfifcation";
+import PublicRoute from "./componenets/Routes/PublicRoute";
+import PaymentPending from "./componenets/Routes/PaymentPending";
 
 const App = () => {
   return (
@@ -39,10 +41,24 @@ const App = () => {
       <Routes>
         <Route path="/" element={<RoleSelector />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route
+          path="/signup"
+          element={
+            <PublicRoute>
+              <Signup />
+            </PublicRoute>
+          }
+        />
         <Route path="/CompanyResult" element={<CompanyResult />} />
         <Route path="/company/:id/products" element={<CompanyProducts />} />
         <Route path="/MedicineRes" element={<MedicineRes />} />
@@ -72,6 +88,7 @@ const App = () => {
         <Route path="/user-admin" element={<UserAdmin />} />
         <Route path="/purchaserLogin" element={<PurchaserLogin />} />
         <Route path="/purchasermiddle" element={<PurchserVerfifcation />} />
+        <Route path="/payment-pending" element={<PaymentPending />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/privacy-policy/*" element={<PrivacyPolicy />} />
         <Route path="*" element={<Navigate to="/" replace />} />

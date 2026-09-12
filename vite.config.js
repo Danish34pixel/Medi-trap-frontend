@@ -10,18 +10,18 @@ export default defineConfig(({ command, mode }) => {
     plugins: [react(), tailwindcss()],
     server: isDev
       ? {
-          proxy: {
-            // Proxy API calls during development to the local backend
-            // so calling `/api/*` from the Vite app forwards to
-            // http://localhost:5000 (where the Backend server runs).
-            "/api": {
-              target: "http://localhost:5000",
-              changeOrigin: true,
-              secure: false,
-              rewrite: (path) => path.replace(/^\/api/, "/api"),
-            },
+        proxy: {
+          // Proxy API calls during development to the local backend
+          // so calling `/api/*` from the Vite app forwards to
+          // http://localhost:5002 (where the Backend server runs).
+          "/api": {
+            target: "http://localhost:5002",
+            changeOrigin: true,
+            secure: false,
+            rewrite: (path) => path.replace(/^\/api/, "/api"),
           },
-        }
+        },
+      }
       : undefined,
     // Production build optimizations: split large vendor libraries into separate chunks
     build: {

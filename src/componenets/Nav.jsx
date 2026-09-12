@@ -912,11 +912,33 @@ export default function Nav({ navigation: navProp }) {
       className="bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50"
       style={{ opacity: navOpacity, transition: "opacity 300ms ease-out" }}
     >
-      <div className="max-w-4xl mx-auto px-6">
+      <div className="max-w-4xl lg:max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex items-center justify-between py-8">
           <Logo className="h-14 w-14" />
 
-          <div className="flex items-center gap-3">
+          {/* Desktop Top Navbar Links */}
+          <nav className="hidden lg:flex items-center gap-4">
+            <button
+              onClick={() => navigation.navigate("/")}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white hover:bg-violet-100 text-gray-800 font-bold transition-all shadow-sm hover:shadow-md"
+            >
+              <span>🏠</span> Home
+            </button>
+            <button
+              onClick={() => navigation.navigate("/demand")}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white hover:bg-violet-100 text-gray-800 font-bold transition-all shadow-sm hover:shadow-md"
+            >
+              <span>📋</span> Demand
+            </button>
+            <button
+              onClick={() => navigation.navigate("/profile")}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white hover:bg-violet-100 text-gray-800 font-bold transition-all shadow-sm hover:shadow-md"
+            >
+              <span>👤</span> Profile
+            </button>
+          </nav>
+
+          <div className="flex items-center gap-3 lg:hidden">
             <button
               onClick={() => setIsMenuOpen(true)}
               className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center border-2 border-violet-200 hover:shadow-2xl hover:scale-110 transition-all duration-200"
@@ -1205,7 +1227,7 @@ export default function Nav({ navigation: navProp }) {
               </div>
             </div>
 
-           <div>
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
               {displayedStockists.map((s, i) => renderStockistCard(s, i))}
             </div>
 

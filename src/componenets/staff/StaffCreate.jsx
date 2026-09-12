@@ -42,6 +42,8 @@ export default function StaffCreate() {
   const [stockistsList, setStockistsList] = useState([]);
   const [selectedStockist, setSelectedStockist] = useState("");
   const [loading, setLoading] = useState(false);
+  const [contactError, setContactError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const navigate = useNavigate();
 
   React.useEffect(() => {
@@ -134,9 +136,21 @@ export default function StaffCreate() {
     }
   };
 
+  const CONTACT_REGEX = /^\d{10}$/;
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   const submit = async (e) => {
     e.preventDefault();
     if (!image || !aadhar) return alert("Please attach image and aadhar card.");
+
+    const isContactValid = CONTACT_REGEX.test(form.contact);
+    setContactError(isContactValid ? "" : "Enter a valid 10-digit phone number");
+
+    const isEmailValid = !form.email || EMAIL_REGEX.test(form.email);
+    setEmailError(isEmailValid ? "" : "Enter a valid email address");
+
+    if (!isContactValid || !isEmailValid) return;
+
     setLoading(true);
     try {
       const token = getCookie("token");
@@ -269,13 +283,13 @@ export default function StaffCreate() {
             </div>
           </div>
         ) : (
-          <div className="w-full max-w-2xl">
-            <div className="bg-white rounded-4xl shadow-card-lg p-6 sm:p-8">
-              <div className="text-center mb-8">
+          <div className="w-full max-w-2xl lg:max-w-4xl">
+            <div className="bg-white rounded-4xl shadow-card-lg p-6 sm:p-8 lg:p-12">
+              <div className="text-center mb-8 lg:mb-10">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-role-staff-from to-role-staff-to flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-200">
                   <UserPlus className="w-8 h-8 text-white" />
                 </div>
-                <h1 className="text-2xl sm:text-[28px] font-extrabold text-slate-800">
+                <h1 className="text-2xl sm:text-[28px] lg:text-3xl font-extrabold text-slate-800">
                   Add Team Member
                 </h1>
                 <p className="text-sm text-slate-500 mt-2 px-4">
@@ -283,9 +297,9 @@ export default function StaffCreate() {
                 </p>
               </div>
 
-              <form onSubmit={submit} className="space-y-5">
+              <form onSubmit={submit} className="space-y-5 lg:space-y-6">
                 {user && user.role === "admin" && (
-                  <div>
+                  <div className="w-full">
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                       Assign to Stockist
                     </label>
@@ -307,52 +321,62 @@ export default function StaffCreate() {
                   </div>
                 )}
 
-                {/* --- Form Fields --- */}
-                <Input
-                  label="Full Name"
-                  icon={User}
-                  placeholder="e.g., John Doe"
-                  value={form.fullName}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, fullName: e.target.value }))
-                  }
-                  required
-                />
+                {/* --- Form Fields Grid (2-column on desktop) --- */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6">
+                  <Input
+                    label="Full Name"
+                    icon={User}
+                    placeholder="Enter full name"
+                    value={form.fullName}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, fullName: e.target.value }))
+                    }
+                    required
+                  />
 
-                <Input
-                  label="Contact Number"
-                  icon={Phone}
-                  placeholder="e.g., 9876543210"
-                  value={form.contact}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, contact: e.target.value }))
-                  }
-                  required
-                />
+                  <Input
+                    label="Contact Number"
+                    icon={Phone}
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="Enter 10-digit phone number"
+                    value={form.contact}
+                    error={contactError}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                      setForm((f) => ({ ...f, contact: digits }));
+                      if (contactError) setContactError("");
+                    }}
+                    required
+                  />
 
-                <Input
-                  label="Email Address"
-                  icon={Mail}
-                  type="email"
-                  placeholder="e.g., john.doe@example.com"
-                  value={form.email}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, email: e.target.value }))
-                  }
-                />
+                  <Input
+                    label="Email Address"
+                    icon={Mail}
+                    type="email"
+                    placeholder="Enter email address"
+                    value={form.email}
+                    error={emailError}
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, email: e.target.value }));
+                      if (emailError) setEmailError("");
+                    }}
+                  />
 
-                <Input
-                  label="Address"
-                  icon={MapPin}
-                  placeholder="Enter full address"
-                  value={form.address}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, address: e.target.value }))
-                  }
-                />
+                  <Input
+                    label="Address"
+                    icon={MapPin}
+                    placeholder="Enter full address"
+                    value={form.address}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, address: e.target.value }))
+                    }
+                  />
+                </div>
 
                 {/* --- File Uploads --- */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 pt-2">
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                       Profile Photo
@@ -411,7 +435,7 @@ export default function StaffCreate() {
                 </div>
 
                 {/* --- Submit Button --- */}
-                <div className="pt-4">
+                <div className="pt-4 lg:pt-6">
                   <button
                     type="submit"
                     disabled={loading}

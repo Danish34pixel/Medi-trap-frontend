@@ -2,8 +2,18 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Shield, ArrowLeft } from "lucide-react";
 import Logo from "../Logo";
-import { apiUrl } from "../config/api";
-import { setCookie } from "../utils/cookies";
+import { postJson } from "../config/api";
+import {
+  applyAuthResult,
+  isTrialExpiredResponse,
+  handleTrialExpired,
+  goToPayment,
+  loadRememberedIdentifier,
+  saveRememberedIdentifier,
+} from "../utils/authFlow";
+import PaymentRequiredModal from "../ui/PaymentRequiredModal";
+
+const ROLE = "staff";
 
 /**
  * Recreates Nebula's app/Staff/staff-login.jsx (violet/purple gradient,
@@ -17,11 +27,11 @@ export default function StaffLogin() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [trialExpired, setTrialExpired] = useState(false);
+  const [accountStatus, setAccountStatus] = useState(null);
 
   useEffect(() => {
-    const saved =
-      localStorage.getItem("rememberedStaffEmail") ||
-      localStorage.getItem("rememberedEmail");
+    const saved = loadRememberedIdentifier(ROLE);
     if (saved) {
       setEmail(saved);
       setRememberMe(true);
@@ -37,34 +47,26 @@ export default function StaffLogin() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch(apiUrl("/api/auth/login"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role: "staff" }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data.message || "Login failed");
+      const data = await postJson("/auth/login", { email, password, role: ROLE });
+
+      if (data.success === false) {
+        if (isTrialExpiredResponse(false, data)) {
+          setAccountStatus(handleTrialExpired(data, { requestedRole: ROLE }));
+          setTrialExpired(true);
+          return;
+        }
+        setError(data.message || "Login failed");
+        return;
       }
 
-      const token = data.accessToken || data.token;
-      if (token) {
-        localStorage.setItem("token", token);
-        setCookie("token", token, 7);
-      }
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
-
-      if (rememberMe) {
-        localStorage.setItem("rememberedStaffEmail", email);
-      } else {
-        localStorage.removeItem("rememberedStaffEmail");
-      }
-
-      const staffId = data?.user?._id || data?.user?.id;
-      navigate(staffId ? `/staff/${staffId}` : "/profile");
+      saveRememberedIdentifier(ROLE, email, rememberMe);
+      applyAuthResult(data, { requestedRole: ROLE, navigate });
     } catch (err) {
+      if (err.body && isTrialExpiredResponse(false, err.body)) {
+        setAccountStatus(handleTrialExpired(err.body, { requestedRole: ROLE }));
+        setTrialExpired(true);
+        return;
+      }
       setError(err.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
@@ -201,6 +203,13 @@ export default function StaffLogin() {
           </div>
         </div>
       </div>
+
+      <PaymentRequiredModal
+        open={trialExpired}
+        accountStatus={accountStatus}
+        onGoToPayment={() => goToPayment(navigate, accountStatus)}
+        onClose={() => setTrialExpired(false)}
+      />
     </div>
   );
 }

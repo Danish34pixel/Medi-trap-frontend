@@ -443,7 +443,7 @@ const Screen = ({ navigation: navProp }) => {
 
   // ----- Render helpers -----
   const ListHeader = () => (
-    <div className="px-6 pt-8 pb-6 bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50">
+    <div className="px-6 lg:px-8 pt-8 pb-6 bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg">
@@ -468,13 +468,13 @@ const Screen = ({ navigation: navProp }) => {
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 rounded-3xl p-8 mb-8 shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 rounded-3xl p-8 lg:p-10 mb-8 shadow-2xl relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="absolute top-4 right-4 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
         <div className="absolute bottom-4 left-4 w-16 h-16 bg-white/10 rounded-full blur-lg"></div>
         <div className="relative flex items-center justify-between">
           <div>
-            <h1 className="text-white text-2xl font-bold mb-3">
+            <h1 className="text-white text-2xl lg:text-3xl font-bold mb-3">
               Find Your Medical Partners
             </h1>
             <p className="text-cyan-100 text-base leading-relaxed">
@@ -491,7 +491,7 @@ const Screen = ({ navigation: navProp }) => {
               </div>
             </div>
           </div>
-          <div className="text-6xl opacity-90 filter drop-shadow-lg">💊</div>
+          <div className="text-6xl lg:text-7xl opacity-90 filter drop-shadow-lg">💊</div>
         </div>
       </div>
 
@@ -507,35 +507,6 @@ const Screen = ({ navigation: navProp }) => {
       )}
 
       <div className="mb-8">
-        {/* <h3 className="text-xl font-bold text-slate-800 mb-6">Quick Actions</h3> */}
-        {/* <div className="grid grid-cols-2 gap-6">
-          <div className="bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-3xl p-6 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
-                <span className="text-3xl">📋</span>
-              </div>
-              <div>
-                <div className="text-white font-bold text-base">
-                  Order Refills
-                </div>
-                <div className="text-cyan-100 text-sm">
-                  Quick reorder system
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl p-6 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
-                <span className="text-3xl">💬</span>
-              </div>
-              <div>
-                <div className="text-white font-bold text-base">Consult</div>
-                <div className="text-orange-100 text-sm">Expert advice</div>
-              </div>
-            </div>
-          </div>
-        </div> */}
       </div>
 
       <div className="flex items-center justify-between mb-6">
@@ -562,7 +533,7 @@ const Screen = ({ navigation: navProp }) => {
     return (
       <article
         key={section._id || index}
-        className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden mb-6 mx-6 transform hover:scale-105 hover:shadow-2xl transition-all duration-300 backdrop-blur-sm" // Added backdrop-blur-sm for a softer look
+        className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden mb-6 mx-2 lg:mx-0 lg:mb-0 flex flex-col justify-between h-full transform hover:-translate-y-1 lg:hover:scale-[1.02] hover:shadow-2xl transition-all duration-300 backdrop-blur-sm"
         onClick={() => setFullscreenStockist(index)}
         role="button"
       >
@@ -573,17 +544,16 @@ const Screen = ({ navigation: navProp }) => {
               alt={section.title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-gray-900/20 to-transparent" />{" "}
-            {/* Subtle dark gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-gray-900/20 to-transparent" />
           </div>
         ) : (
           <div
-            className="relative h-52 w-full flex items-center justify-center p-4 rounded-b-2xl" // Added padding for the content
+            className="relative h-52 w-full flex items-center justify-center p-4 rounded-b-2xl"
             style={{
               background: `linear-gradient(135deg, ${c1 || "#00C4B3"}, ${
                 c2 || "#007BFF"
               })`,
-            }} // Using default vibrant colors
+            }}
           >
             <div
               className="absolute inset-0 opacity-20"
@@ -593,90 +563,82 @@ const Screen = ({ navigation: navProp }) => {
                 })`,
                 filter: "blur(30px)",
               }}
-            ></div>{" "}
-            {/* Background blur effect for depth */}
+            ></div>
             <div className="relative z-10 text-6xl font-extrabold font-poppins text-white drop-shadow-lg opacity-90">
               {section.title?.charAt(0)}
             </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />{" "}
-            {/* Lighter overlay */}
-            {/* Decorative elements for the background feel */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
             <div className="absolute top-4 right-4 w-16 h-16 bg-white/10 rounded-full blur-xl"></div>
             <div className="absolute bottom-4 left-4 w-10 h-10 bg-white/10 rounded-full blur-xl"></div>
           </div>
         )}
 
-        <div className="p-8 ">
-          <h3 className="text-2xl font-poppins font-bold text-gray-800 mb-4 tracking-tight">
-            {section.title}
-          </h3>
+        <div className="p-8 flex-1 flex flex-col justify-between">
+          <div>
+            <h3 className="text-2xl font-poppins font-bold text-gray-800 mb-4 tracking-tight">
+              {section.title}
+            </h3>
 
-          {/* Phone Number */}
-          <div className="flex items-start gap-4 text-base font-inter text-gray-700 mb-3">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
-              <Phone className="text-base" />
+            {/* Phone Number */}
+            <div className="flex items-start gap-4 text-base font-inter text-gray-700 mb-3">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
+                <Phone className="text-base" />
+              </div>
+              <div className="flex-1 font-medium pt-0.5">
+                {section.phone || "N/A"}
+              </div>
             </div>
-            <div className="flex-1 font-medium pt-0.5">
-              {section.phone || "N/A"}
-            </div>
-          </div>
 
-          {/* Address */}
-          <div className="flex items-start gap-4 text-base font-inter text-gray-700 mb-6">
-            <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 shadow-sm">
-              <MapPin className="text-base" />
+            {/* Address */}
+            <div className="flex items-start gap-4 text-base font-inter text-gray-700 mb-6">
+              <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 shadow-sm">
+                <MapPin className="text-base" />
+              </div>
+              <div className="flex-1 font-medium pt-0.5">
+                {section.address || "N/A"}
+              </div>
             </div>
-            <div className="flex-1 font-medium pt-0.5">
-              {section.address || "N/A"}
-            </div>
-          </div>
 
-          {/* Company Items / Services */}
-          <div className="mb-6">
-            <div className="text-base font-poppins text-gray-700 font-semibold mb-3">
-              Company
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {section.items.slice(0, 2).map((it, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-teal-50 rounded-full px-4 py-2 border border-blue-100 shadow-sm"
-                >
-                  <span className="text-base text-blue-600">
-                    {getHealthIcon(it)}
-                  </span>
-                  <span className="text-gray-700 text-sm font-medium font-inter">
-                    {it}
-                  </span>
-                </div>
-              ))}
-              {section.items.length > 2 && (
-                <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-full px-4 py-2 shadow-sm">
-                  <span className="text-gray-600 text-sm font-medium font-inter">
+            {/* Company Items / Services */}
+            <div className="mb-6">
+              <div className="text-base font-poppins text-gray-700 font-semibold mb-3">
+                Company
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {section.items.slice(0, 2).map((it, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-teal-50 rounded-full px-4 py-2 border border-blue-100 shadow-sm"
+                  >
+                    <span className="text-base text-blue-600">
+                      {getHealthIcon(it)}
+                    </span>
+                    <span className="text-gray-700 text-sm font-medium font-inter">
+                      {it}
+                    </span>
+                  </div>
+                ))}
+                {section.items.length > 2 && (
+                  <div className="flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2 text-xs font-semibold text-gray-600">
                     +{section.items.length - 2} more
-                  </span>
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Footer with Medicines Count and View Details */}
-            <div className="flex items-center justify-between text-base pt-6 border-t border-gray-100 mt-6">
-            <div className="bg-gradient-to-r from-lime-100 to-green-100 rounded-full px-4 py-2 border border-lime-200 shadow-sm">
-              <span className="text-lime-700 font-bold font-poppins text-sm">
-                {section.Medicines ? `${section.Medicines.length} medicines` : "0 medicines"}
-              </span>
+          <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+            <div className="text-sm font-medium text-slate-500">
+              View Details
             </div>
             <button
               onClick={(e) => {
-                e.stopPropagation(); // Prevent card click from triggering twice
-                setFullscreenStockist(index); // Re-trigger or navigate
+                e.stopPropagation();
+                setFullscreenStockist(index);
               }}
-              className="flex items-center gap-3 text-purple-600 hover:text-purple-700 transition-colors duration-200 group"
+              className="p-2 rounded-full hover:bg-slate-100 transition-colors group"
+              aria-label="View Details"
             >
-              <span className="text-base font-bold font-inter">
-                View details
-              </span>
               <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shadow-sm group-hover:scale-110 transition-transform duration-200">
                 <Eye className="text-lg" />
               </div>
@@ -689,13 +651,11 @@ const Screen = ({ navigation: navProp }) => {
 
   const renderMainView = () => (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/30">
-      <ListHeader />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ListHeader />
 
-      
-
-      
-
-      <div className="pb-40">{sectionData.map((s, i) => renderCard(s, i))}</div>
+        <div className="pb-40 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">{sectionData.map((s, i) => renderCard(s, i))}</div>
+      </div>
 
       {/* --- Pagination controls (bottom) placed after cards --- */}
       <div className="px-6 py-6  -mt-40 flex justify-center items-center">
@@ -753,171 +713,166 @@ const Screen = ({ navigation: navProp }) => {
     const [color1, color2] = generateHealthColor(idx || 0);
 
     return (
-      <div className="min-h-screen bg-slate-50 font-sans">
-        {/* --- Sticky Header --- */}
-        <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-slate-200">
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-3">
-              {/* Close Button */}
-              <button
-                onClick={() => setFullscreenStockist(null)}
-                className="p-2 rounded-full hover:bg-slate-100 transition-colors"
-                aria-label="Close"
-              >
-                <X className="w-5 h-5 text-slate-800" />
-              </button>
+      <div className="min-h-screen bg-slate-50 font-sans lg:flex lg:items-center lg:justify-center lg:p-8">
+        <div className="w-full lg:max-w-3xl lg:bg-white lg:rounded-3xl lg:shadow-2xl lg:border lg:border-slate-200 lg:overflow-hidden">
+          {/* --- Sticky Header --- */}
+          <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-slate-200">
+            <div className="px-4 lg:px-6 py-3.5">
+              <div className="flex items-center gap-3">
+                {/* Close Button */}
+                <button
+                  onClick={() => setFullscreenStockist(null)}
+                  className="p-2 rounded-full hover:bg-slate-100 transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5 text-slate-800" />
+                </button>
 
-              {/* Title */}
-              <div className="flex-1 text-center mr-9">
-                <div className="text-lg font-bold text-slate-800">
-                  {currentSection.title}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-  {/* --- Main Content Body --- */}
-  <div className="p-4 space-y-6 pb-32">
-          {/* --- Supplier Info Card --- */}
-          <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-5">
-            <div className="flex items-start gap-4">
-              <div className="relative">
-                {currentSection.image ? (
-                  <img
-                    src={currentSection.image}
-                    alt={currentSection.title}
-                    className="w-20 h-20 object-cover rounded-xl"
-                  />
-                ) : (
-                  <div
-                    className="w-20 h-20 rounded-xl flex items-center justify-center"
-                    style={{
-                      background: `linear-gradient(135deg, ${color1}, ${color2})`,
-                    }}
-                  >
-                    <span className="text-3xl font-bold text-white">
-                      {currentSection.title?.charAt(0)}
-                    </span>
+                {/* Title */}
+                <div className="flex-1 text-center mr-9">
+                  <div className="text-lg font-bold text-slate-800">
+                    {currentSection.title}
                   </div>
-                )}
-                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center border-2 border-white">
-                  <span className="text-white text-xs">✓</span>
-                </div>
-              </div>
-              <div className="flex-1">
-                <h1 className="text-xl font-bold text-slate-800 mb-1">
-                  {currentSection.title}
-                </h1>
-                <p className="text-slate-500 text-sm mb-2">
-                  {currentSection.address}
-                </p>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 bg-orange-100 text-orange-600 rounded-full px-2 py-0.5 text-xs font-semibold">
-                    <span>⭐</span>
-                    <span>4.8</span>
-                  </div>
-                  <div className="text-slate-400 text-sm">(209 Reviews)</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* --- Quick Actions (Call/Message) --- */}
-          <div className="grid gap-4">
-            <button
-              onClick={() => makePhoneCall(currentSection.phone)}
-              className="bg-cyan-500 text-white py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 hover:bg-cyan-600 transform hover:-translate-y-0.5 transition-all"
-            >
-              <span className="text-xl">📞</span>
-              <span>Call Now</span>
-            </button>
-            {/* <button className="bg-orange-500 text-white py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 hover:bg-orange-600 transform hover:-translate-y-0.5 transition-all">
-            <span className="text-xl">💬</span>
-            <span>Message</span>
-          </button> */}
-          </div>
-
-          {/* --- Companies Section --- */}
-          <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-5">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">
-              Partner Companies
-            </h3>
-            {currentSection.items && currentSection.items.length > 0 ? (
-              <div className="space-y-3">
-                {currentSection.items.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center">
-                      <span className="text-lg text-cyan-600">
-                        {getHealthIcon(item)}
+          {/* --- Main Content Body --- */}
+          <div className="p-4 sm:p-6 lg:p-8 space-y-6 pb-32 lg:pb-8">
+            {/* --- Supplier Info Card & Call Action (Side-by-Side Flex on Desktop) --- */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-5 lg:p-6 lg:flex lg:items-center lg:justify-between lg:gap-6">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="relative shrink-0">
+                  {currentSection.image ? (
+                    <img
+                      src={currentSection.image}
+                      alt={currentSection.title}
+                      className="w-20 h-20 lg:w-24 lg:h-24 object-cover rounded-xl shadow-sm"
+                    />
+                  ) : (
+                    <div
+                      className="w-20 h-20 lg:w-24 lg:h-24 rounded-xl flex items-center justify-center shadow-sm"
+                      style={{
+                        background: `linear-gradient(135deg, ${color1}, ${color2})`,
+                      }}
+                    >
+                      <span className="text-3xl lg:text-4xl font-bold text-white">
+                        {currentSection.title?.charAt(0)}
                       </span>
                     </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-slate-700">{item}</div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-slate-300" />
+                  )}
+                  <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center border-2 border-white">
+                    <span className="text-white text-xs">✓</span>
                   </div>
-                ))}
+                </div>
+                <div className="flex-1">
+                  <h1 className="text-xl lg:text-2xl font-bold text-slate-800 mb-1">
+                    {currentSection.title}
+                  </h1>
+                  <p className="text-slate-500 text-sm mb-2">
+                    {currentSection.address}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 bg-orange-100 text-orange-600 rounded-full px-2.5 py-0.5 text-xs font-semibold">
+                      <span>⭐</span>
+                      <span>4.8</span>
+                    </div>
+                    <div className="text-slate-400 text-sm">(209 Reviews)</div>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <div className="flex items-center gap-2 bg-slate-50 rounded-xl p-3">
-                <Info className="w-4 h-4 text-slate-500" />
-                <span className="text-sm font-medium text-slate-500">
-                  No partner companies linked for this stockist yet.
-                </span>
+
+              {/* Call Button on Desktop: auto width, fixed padding, cleanly aligned */}
+              <div className="mt-4 lg:mt-0 shrink-0">
+                <button
+                  onClick={() => makePhoneCall(currentSection.phone)}
+                  className="w-full lg:w-auto bg-cyan-500 text-white px-8 py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 hover:bg-cyan-600 transform hover:-translate-y-0.5 transition-all"
+                >
+                  <span className="text-xl">📞</span>
+                  <span>Call Now</span>
+                </button>
+              </div>
+            </div>
+
+            {/* --- Companies Section --- */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-5 lg:p-6">
+              <h3 className="text-lg font-bold text-slate-800 mb-4">
+                Partner Companies
+              </h3>
+              {currentSection.items && currentSection.items.length > 0 ? (
+                <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
+                  {currentSection.items.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-4 p-3.5 bg-slate-50 rounded-xl hover:bg-slate-100/80 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center shrink-0">
+                        <span className="text-lg text-cyan-600">
+                          {getHealthIcon(item)}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-slate-700 truncate">{item}</div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-slate-300 shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 bg-slate-50 rounded-xl p-4">
+                  <Info className="w-4 h-4 text-slate-500 shrink-0" />
+                  <span className="text-sm font-medium text-slate-500">
+                    No partner companies linked for this stockist yet.
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* --- Available Medicines Section --- */}
+            {currentSection.Medicines && currentSection.Medicines.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-5 lg:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-slate-800">
+                    Medicines In Stock
+                  </h3>
+                  <div className="bg-cyan-100 text-cyan-700 rounded-full px-3 py-1 text-xs font-bold">
+                    {currentSection.Medicines.length} items
+                  </div>
+                </div>
+                <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
+                  {currentSection.Medicines.slice(0, 6).map((medicine, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
+                        <span className="text-lg text-orange-600">💊</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-slate-700 truncate">
+                          {medicine}
+                        </div>
+                        <div className="text-xs text-slate-500">Available</div>
+                      </div>
+                    </div>
+                  ))}
+                  {currentSection.Medicines.length > 6 && (
+                    <button className="col-span-full w-full mt-3 p-3 bg-slate-100 rounded-xl text-slate-700 font-semibold hover:bg-slate-200 transition-all">
+                      View All {currentSection.Medicines.length} Medicines
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
-
-          {/* --- Available Medicines Section --- */}
-          {currentSection.Medicines && currentSection.Medicines.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-slate-800">
-                  Medicines In Stock
-                </h3>
-                <div className="bg-cyan-100 text-cyan-700 rounded-full px-3 py-1 text-xs font-bold">
-                  {currentSection.Medicines.length} items
-                </div>
-              </div>
-              <div className="space-y-2">
-                {currentSection.Medicines.slice(0, 5).map((medicine, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-4 p-3 border-b border-slate-100 last:border-b-0"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                      <span className="text-lg text-orange-600">💊</span>
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-slate-700">
-                        {medicine}
-                      </div>
-                      <div className="text-sm text-slate-500">Available</div>
-                    </div>
-                  </div>
-                ))}
-                {currentSection.Medicines.length > 5 && (
-                  <button className="w-full mt-3 p-3 bg-slate-100 rounded-xl text-slate-700 font-semibold hover:bg-slate-200 transition-all">
-                    View All {currentSection.Medicines.length} Medicines
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          
-        
         </div>
       </div>
     );
   };
 
   const renderBottomNavigation = () => (
-    <div className="fixed bottom-8 left-6 right-6 z-50">
+    <div className="fixed bottom-8 left-6 right-6 z-50 lg:hidden">
       <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/50">
         <div className="flex justify-around py-6">
           <button

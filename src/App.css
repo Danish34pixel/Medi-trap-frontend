@@ -31,3 +31,12 @@
   --shadow-card: 0 4px 10px rgb(0 0 0 / 0.08);
   --shadow-card-lg: 0 10px 25px rgb(0 0 0 / 0.12);
 }
+
+/* Hide scrollbar while preserving scroll functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

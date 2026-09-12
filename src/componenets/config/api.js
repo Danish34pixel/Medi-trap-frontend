@@ -142,7 +142,7 @@
 
 // Remote backend (use the requested Render URL by default or override with env)
 const REMOTE_API =
-  import.meta.env.VITE_REMOTE_API || "https://medi-trap-backend-2.onrender.com";
+  import.meta.env.VITE_REMOTE_API || "https://api.medi-trap.com";
 
 // Local/dev fallback (used only in development)
 const DEV_FALLBACK =
@@ -228,9 +228,42 @@ export const apiUrl = (path = "") => {
 
 //   return body;
 // };
+// Port of the RN app's tryRefreshAccessToken (APP_WIRING_REFERENCE.md §4):
+// POSTs the stored refresh token to /api/auth/refresh for a new access token.
+const tryRefreshAccessToken = async () => {
+  const refreshToken = localStorage.getItem("refreshToken");
+  if (!refreshToken) return null;
+  try {
+    const res = await fetch(apiUrl("/auth/refresh"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    const newToken = data && (data.accessToken || data.token);
+    if (newToken) localStorage.setItem("token", newToken);
+    return newToken || null;
+  } catch (e) {
+    return null;
+  }
+};
+
+const clearAuthStorage = () => {
+  try {
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+  } catch (e) {}
+};
+
+// Central authenticated request helper (LOGIC_REFERENCE §1.4/§8,
+// APP_WIRING_REFERENCE §4): attaches Authorization: Bearer {token}; on a 401
+// (not already a retry) tries a token refresh and retries once; if refresh
+// fails, clears auth storage (effective logout) and throws.
 export const fetchJson = async (path, options = {}) => {
   const url = apiUrl(path);
-  const token = localStorage.getItem("token"); // grab token
+  const token = localStorage.getItem("token");
 
   const opts = {
     headers: {
@@ -242,24 +275,20 @@ export const fetchJson = async (path, options = {}) => {
   };
 
   const res = await fetch(url, opts);
+
+  if (res.status === 401 && !options._isRetry) {
+    const newToken = await tryRefreshAccessToken();
+    if (newToken) {
+      return fetchJson(path, { ...options, _isRetry: true });
+    }
+    clearAuthStorage();
+  }
+
   const text = await res.text();
   const isJson = res.headers.get("content-type")?.includes("application/json");
   const body = text && isJson ? JSON.parse(text) : text;
 
   if (!res.ok) {
-    // If 401, clear any stored auth state to avoid repeated invalid requests
-    try {
-      if (res.status === 401) {
-        console.warn(
-          "API: 401 received - clearing stored token/user for re-login"
-        );
-        try {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-        } catch (e) {}
-      }
-    } catch (e) {}
-
     const err = new Error(body?.message || `Request failed ${res.status}`);
     err.status = res.status;
     err.body = body;

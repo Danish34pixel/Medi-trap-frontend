@@ -1,9 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, Shield } from "lucide-react";
 import Logo from "../Logo";
-import { apiUrl } from "../config/api";
-import { setCookie, removeCookie, getCookie } from "../utils/cookies";
+import { postJson } from "../config/api";
+import {
+  applyAuthResult,
+  isTrialExpiredResponse,
+  handleTrialExpired,
+  goToPayment,
+  loadRememberedIdentifier,
+  saveRememberedIdentifier,
+} from "../utils/authFlow";
+import PaymentRequiredModal from "../ui/PaymentRequiredModal";
+
+const ROLE = "stockist";
 
 export default function StockistLogin() {
   const navigate = useNavigate();
@@ -13,99 +23,47 @@ export default function StockistLogin() {
   const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [trialExpired, setTrialExpired] = useState(false);
+  const [accountStatus, setAccountStatus] = useState(null);
+
+  useEffect(() => {
+    const saved = loadRememberedIdentifier(ROLE);
+    if (saved) {
+      setEmail(saved);
+      setRememberMe(true);
+    }
+  }, []);
 
   async function submit(e) {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      const res = await fetch(apiUrl("/api/auth/login"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role: "stockist" }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError((data && data.message) || "Login failed");
-        setLoading(false);
+      const data = await postJson("/auth/login", { email, password, role: ROLE });
+
+      if (data.success === false) {
+        if (isTrialExpiredResponse(false, data)) {
+          setAccountStatus(handleTrialExpired(data, { requestedRole: ROLE }));
+          setTrialExpired(true);
+          return;
+        }
+        setError(data.message || "Login failed");
         return;
       }
 
-      // Clear any previous auth state first to avoid races where another
-      // component reads an old token and overwrites the stored user/profile.
-      try {
-        removeCookie("token");
-        localStorage.removeItem("user");
-      } catch (e) {}
-
-      // Store the new auth values once. Token stored in cookie (client-side).
-      if (data.token) {
-        console.debug(
-          "Login: storing token (cookie) ->",
-          data.token && data.token.slice(0, 16) + "..."
-        );
-        setCookie("token", data.token, 7);
-      }
-      if (data.user) {
-        console.debug("Login: storing user ->", data.user && data.user.email);
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
-
-      // Log for debugging: show which user is stored and token snippet
-      try {
-        console.log(
-          "Login: stored user ->",
-          JSON.parse(localStorage.getItem("user"))
-        );
-        console.log(
-          "Login: current token (cookie) ->",
-          (getCookie("token") || "(none)").slice(0, 16) + "..."
-        );
-      } catch (e) {
-        console.warn("Login: could not parse stored user", e);
-      }
-
-      // If the authenticated user is a stockist and not yet approved, send them to verification
-      try {
-        const storedUser =
-          data.user || JSON.parse(localStorage.getItem("user") || "null");
-        const isStockist =
-          storedUser &&
-          (storedUser.role === "stockist" ||
-            storedUser.roleType === "stockist");
-        const isApproved = storedUser && storedUser.approved;
-        if (isStockist && !isApproved) {
-          navigate("/stockist-outcode");
-          setTimeout(() => window.location.reload(), 120);
-        } else {
-          // Force a reload so all components re-read localStorage and show the new account
-          navigate("/stockist-outcode");
-          setTimeout(() => window.location.reload(), 120);
-        }
-      } catch (e) {
-        navigate("/stockist-outcode");
-        setTimeout(() => window.location.reload(), 120);
-      }
+      saveRememberedIdentifier(ROLE, email, rememberMe);
+      applyAuthResult(data, { requestedRole: ROLE, navigate });
     } catch (err) {
-      setError("Network error");
+      if (err.body && isTrialExpiredResponse(false, err.body)) {
+        setAccountStatus(handleTrialExpired(err.body, { requestedRole: ROLE }));
+        setTrialExpired(true);
+        return;
+      }
+      setError((err && err.body && err.body.message) || err.message || "Network error");
     } finally {
       setLoading(false);
     }
   }
-
-  // Diagnostic: log resolved API base & call runtime debug endpoint
-  React.useEffect(() => {
-    // Only run diagnostics in development to avoid noisy 404s in other envs
-    if (!import.meta.env.DEV) return;
-    try {
-      const loginUrl = apiUrl("/api/auth/login");
-      console.log("Resolved login URL:", loginUrl);
-      // Removed /debug/runtime fetch to avoid noisy 404s when that endpoint
-      // is not present on the backend.
-    } catch (e) {
-      console.warn("apiUrl diagnostic failed", e);
-    }
-  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -245,6 +203,13 @@ export default function StockistLogin() {
           </div>
         </div>
       </div>
+
+      <PaymentRequiredModal
+        open={trialExpired}
+        accountStatus={accountStatus}
+        onGoToPayment={() => goToPayment(navigate, accountStatus)}
+        onClose={() => setTrialExpired(false)}
+      />
     </div>
   );
 }

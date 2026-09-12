@@ -215,8 +215,9 @@ export default function PurchaserSignup() {
 
       // If signup returned a token, persist it so subsequent requests are authenticated
       try {
-        if (created && created.token) {
-          localStorage.setItem("token", created.token);
+        const authToken = created && (created.accessToken || created.token);
+        if (authToken) {
+          localStorage.setItem("token", authToken);
         }
       } catch (e) {}
       // Persist pending purchaser id so verification page can poll purchaser approval

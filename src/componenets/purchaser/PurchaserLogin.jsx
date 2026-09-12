@@ -1,14 +1,37 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, User, Eye, EyeOff, AlertCircle } from "lucide-react";
 import Logo from "../Logo";
 import { postJson } from "../config/api";
+import {
+  applyAuthResult,
+  isTrialExpiredResponse,
+  handleTrialExpired,
+  goToPayment,
+  loadRememberedIdentifier,
+  saveRememberedIdentifier,
+} from "../utils/authFlow";
+import PaymentRequiredModal from "../ui/PaymentRequiredModal";
+
+const ROLE = "purchaser";
 
 const PurchaserLogin = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [trialExpired, setTrialExpired] = useState(false);
+  const [accountStatus, setAccountStatus] = useState(null);
+
+  useEffect(() => {
+    const saved = loadRememberedIdentifier(ROLE);
+    if (saved) {
+      setEmail(saved);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -18,22 +41,26 @@ const PurchaserLogin = () => {
     }
     setError("");
     try {
-      // Call backend login endpoint
-  const res = await postJson("/auth/login", { email, password, role: "purchaser" });
-      if (res && res.token && res.user) {
-        localStorage.setItem("token", res.token);
-        localStorage.setItem("user", JSON.stringify(res.user));
-        // Redirect to purchaser details using user._id
-        const purchaserId = res.user._id || res.user.id;
-        if (purchaserId) {
-          navigate(`/purchaser/${purchaserId}`);
+      const data = await postJson("/auth/login", { email, password, role: ROLE });
+
+      if (data.success === false) {
+        if (isTrialExpiredResponse(false, data)) {
+          setAccountStatus(handleTrialExpired(data, { requestedRole: ROLE }));
+          setTrialExpired(true);
           return;
         }
-        setError("Could not find purchaser ID in login response.");
-      } else {
-        setError("Invalid response from server. Please try again.");
+        setError(data.message || "Login failed");
+        return;
       }
+
+      saveRememberedIdentifier(ROLE, email, rememberMe);
+      applyAuthResult(data, { requestedRole: ROLE, navigate });
     } catch (err) {
+      if (err.body && isTrialExpiredResponse(false, err.body)) {
+        setAccountStatus(handleTrialExpired(err.body, { requestedRole: ROLE }));
+        setTrialExpired(true);
+        return;
+      }
       if (err && err.body && err.body.message) {
         setError(err.body.message);
       } else {
@@ -41,8 +68,6 @@ const PurchaserLogin = () => {
       }
     }
   };
-
-  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex items-center justify-center px-4 py-8">
@@ -124,6 +149,8 @@ const PurchaserLogin = () => {
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-2 focus:ring-blue-400"
                 />
                 <span className="text-gray-600">Remember me</span>
@@ -161,6 +188,13 @@ const PurchaserLogin = () => {
           </div>
         </div>
       </div>
+
+      <PaymentRequiredModal
+        open={trialExpired}
+        accountStatus={accountStatus}
+        onGoToPayment={() => goToPayment(navigate, accountStatus)}
+        onClose={() => setTrialExpired(false)}
+      />
     </div>
   );
 };

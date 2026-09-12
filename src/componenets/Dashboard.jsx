@@ -33,14 +33,14 @@ export default function Dashboard() {
       {/* Nav and Screen are expected to be React components (web). 
           They will receive a `navigation` prop similar to React Native. */}
       <Nav navigation={navigation} />
-      {/* Special 'Add Admin' button for a specific email */}
+      {/* Admin Panel button: belt-and-braces fallback for any admin user
+          landing on /dashboard instead of /adminpanel (LOGIC_REFERENCE.md §1). */}
       {(() => {
         try {
           const userStr = localStorage.getItem("user");
           if (!userStr) return null;
           const user = JSON.parse(userStr);
-          const email = (user && (user.email || "")).toString().toLowerCase();
-          if (email === "danishkhaannn34@gmail.com") {
+          if (user && user.role === "admin") {
             return (
               <div className="p-6">
                 <button
@@ -55,7 +55,7 @@ export default function Dashboard() {
                   }}
                   className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 py-2 rounded"
                 >
-                  Add Admin
+                  Admin Panel
                 </button>
               </div>
             );

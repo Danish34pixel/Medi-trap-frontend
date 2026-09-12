@@ -60,7 +60,7 @@ export default function SelectRolePage() {
   const handleRoleSelect = (roleId) => {
     localStorage.setItem("selectedRole", roleId);
     if (roleId === "Purchaser") {
-      navigate("/purchaser-signup");
+      navigate("/purchaserLogin");
     } else if (roleId === "Stockist") {
       // Open stockist login by default for stockist role
       navigate("/stockist-login");
