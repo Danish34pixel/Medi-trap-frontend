@@ -5,14 +5,16 @@ import {
   Users,
   Plus,
   CheckCircle2,
-  Heart,
-  Pill,
   ShieldCheck,
-  UserCheck,
-  ArrowLeft,
+  Search,
+  X,
 } from "lucide-react";
 import axios from "axios";
 import { apiUrl } from "./config/api";
+import PageHeader from "./ui/PageHeader";
+import Card from "./ui/Card";
+import Input from "./ui/Input";
+import Btn from "./stockistComponents/Btn";
 
 export default function AdminCreateCompany() {
   const [form, setForm] = useState({ name: "", stockists: [] });
@@ -66,6 +68,15 @@ export default function AdminCreateCompany() {
     (stockist.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
     (stockist.location || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const selectAllFiltered = () => {
+    const ids = filteredStockists.map((s) => s._id).filter(Boolean);
+    setForm((f) => ({ ...f, stockists: [...new Set([...f.stockists, ...ids])] }));
+  };
+
+  const clearAllStockists = () => {
+    setForm((f) => ({ ...f, stockists: [] }));
+  };
 
   const submit = async (e) => {
     e && e.preventDefault();
@@ -204,171 +215,158 @@ export default function AdminCreateCompany() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-teal-50/50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-100">
-        <div className="max-w-md mx-auto px-6 py-4">
-          <div className="flex ml-25 items-center justify-between">
-            
-            <h1 className="text-lg font-semibold text-gray-800">
-              Create Company
-            </h1>
-            <div className="w-8"></div> {/* Spacer */}
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      <PageHeader
+        title="Create Company"
+        subtitle="Register a new pharmaceutical company"
+        role="slate"
+        showBack
+      />
 
-      <div className="max-w-md mx-auto px-6 py-6 space-y-6">
+      <div className="max-w-md mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Welcome Card */}
-        <div className="bg-gradient-to-r from-teal-400 to-teal-500 rounded-3xl p-6 text-white shadow-lg">
+        <div className="bg-gradient-to-r from-role-stockist-from to-role-stockist-to rounded-3xl p-6 text-white shadow-card-lg">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-xl font-bold mb-1">Your Health Hub</h2>
-              <p className="text-teal-100 text-sm">Register New Company</p>
+              <h2 className="text-xl font-bold mb-1">Meditrap Admin</h2>
+              <p className="text-white/85 text-sm">New Company Registration</p>
             </div>
             <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-sm">
               <Building2 size={24} className="text-white" />
             </div>
           </div>
-          <div className="flex items-center gap-2 text-teal-100 text-sm">
+          <div className="flex items-center gap-2 text-white/70 text-sm">
             <ShieldCheck size={16} />
-            <span>Secure & Verified Platform</span>
+            <span>Secure Cloud Infrastructure Enabled</span>
           </div>
         </div>
 
         {/* Company Details Card */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-orange-100 rounded-xl">
-                <Building2 size={20} className="text-orange-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800">
-                Company Details
-              </h3>
+        <Card padding="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-orange-100 rounded-xl">
+              <Building2 size={20} className="text-orange-600" />
             </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Company Name *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter company name"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-200"
-                  value={form.name}
-                  onChange={(e) => setField("name", e.target.value)}
-                  required
-                />
-              </div>
-            </div>
+            <h3 className="text-lg font-semibold text-gray-800">
+              Identity Details
+            </h3>
           </div>
-        </div>
 
-        
+          <Input
+            label="Legal Company Name *"
+            placeholder="e.g. Medico Global"
+            value={form.name}
+            onChange={(e) => setField("name", e.target.value)}
+            required
+          />
+        </Card>
 
         {/* Stockists Assignment */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-teal-100 rounded-xl">
-                  <Users size={20} className="text-teal-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    Assign Stockists
-                  </h3>
-                  <p className="text-xs text-gray-500">
-                    Optional - Select partners
-                  </p>
-                </div>
+        <Card padding="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-teal-100 rounded-xl">
+                <Users size={20} className="text-teal-600" />
               </div>
-              <div className="bg-teal-50 px-3 py-1 rounded-full">
-                <span className="text-xs font-medium text-teal-600">
-                  {form.stockists.length} selected
-                </span>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Partner Stockists
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Link partners to this company
+                </p>
               </div>
             </div>
-
-            {/* Search Bar */}
-            <div className="mb-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search stockists by name, email or location..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-gray-800 
-                    placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-400 
-                    focus:border-transparent transition-all duration-200"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 
-                      hover:text-gray-600 focus:outline-none"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-3 max-h-80 overflow-y-auto">
-              {stockistsList.length === 0 ? (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-center">
-                  <p className="text-yellow-700 text-sm font-medium">No stockists found.</p>
-                </div>
-              ) : filteredStockists.length === 0 ? (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-center">
-                  <p className="text-yellow-700 text-sm font-medium">No matching stockists found.</p>
-                </div>
-              ) : (
-                filteredStockists.map((stockist) => (
-                  <StockistCard
-                    key={stockist._id}
-                    stockist={stockist}
-                    isSelected={form.stockists.includes(stockist._id)}
-                    onToggle={() => toggleStockist(stockist._id)}
-                  />
-                ))
-              )}
+            <div className="bg-teal-50 px-3 py-1 rounded-full">
+              <span className="text-xs font-medium text-teal-600">
+                {form.stockists.length} selected
+              </span>
             </div>
           </div>
-        </div>
 
-        
+          <div className="flex items-center gap-3 mb-4">
+            <button
+              type="button"
+              onClick={selectAllFiltered}
+              className="text-xs font-bold text-teal-600 hover:text-teal-700"
+            >
+              Select All
+            </button>
+            <span className="w-1 h-1 rounded-full bg-gray-300" />
+            <button
+              type="button"
+              onClick={clearAllStockists}
+              className="text-xs font-bold text-red-500 hover:text-red-600"
+            >
+              Clear All
+            </button>
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative mb-4">
+            <Input
+              icon={Search}
+              placeholder="Find partner..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={searchQuery ? "pr-10" : ""}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                type="button"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {stockistsList.length === 0 ? (
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-center">
+                <p className="text-yellow-700 text-sm font-medium">No stockists found.</p>
+              </div>
+            ) : filteredStockists.length === 0 ? (
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-center">
+                <p className="text-yellow-700 text-sm font-medium">No matching stockists found.</p>
+              </div>
+            ) : (
+              filteredStockists.map((stockist) => (
+                <StockistCard
+                  key={stockist._id}
+                  stockist={stockist}
+                  isSelected={form.stockists.includes(stockist._id)}
+                  onToggle={() => toggleStockist(stockist._id)}
+                />
+              ))
+            )}
+          </div>
+        </Card>
 
         {/* Submit Button */}
         <div className="pb-6">
-          <button
+          <Btn
             type="submit"
+            variant="stockist"
             onClick={submit}
-            className={`w-full font-semibold py-4 px-6 rounded-2xl transition-all duration-300 shadow-lg ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-teal-400 to-teal-500 hover:from-teal-500 hover:to-teal-600 active:scale-95 shadow-teal-500/25"
-            } text-white`}
             disabled={loading}
+            className="w-full py-4"
           >
             {loading ? (
-              <div className="flex items-center justify-center gap-3">
+              <>
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 <span>Creating Company...</span>
-              </div>
+              </>
             ) : (
-              <div className="flex items-center justify-center gap-3">
+              <>
                 <Plus size={20} />
                 <span>CREATE COMPANY</span>
-              </div>
+              </>
             )}
-          </button>
+          </Btn>
         </div>
       </div>
-
-      
     </div>
   );
 }

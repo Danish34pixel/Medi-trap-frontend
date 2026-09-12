@@ -21,7 +21,7 @@ export default function SelectRolePage() {
   const roles = [
     {
       id: "Stockist",
-      name: "Stockist",
+      name: "Stockist (Wholeseller)",
       icon: "/stockist-logo.jpg",
       gradient: "from-emerald-400 to-teal-500",
       bgGlow: "bg-emerald-500/10",
@@ -39,12 +39,21 @@ export default function SelectRolePage() {
     },
     {
       id: "Medical Owner",
-      name: "Medical Owner",
+      name: "Medical (Retailer)",
       icon: "/medical-owner.jpg",
       gradient: "from-orange-400 to-red-500",
       bgGlow: "bg-orange-500/10",
       description: "Clinic management",
       color: "orange",
+    },
+    {
+      id: "Staff",
+      name: "Staff",
+      icon: "/staff-logo.png",
+      gradient: "from-role-staff-from to-role-staff-to",
+      bgGlow: "bg-purple-500/10",
+      description: "Staff access",
+      color: "purple",
     },
   ];
 
@@ -59,7 +68,7 @@ export default function SelectRolePage() {
       // show sign-in page first for Medical Owner
       navigate("/login");
     } else if (roleId === "Staff") {
-      navigate("/staffs");
+      navigate("/staff-login");
     } else {
       navigate("/dashboard");
     }
@@ -79,7 +88,7 @@ export default function SelectRolePage() {
         <div className="absolute bottom-1/4 left-1/3 w-1.5 h-1.5 bg-purple-400/30 rounded-full animate-bounce delay-1100"></div>
       </div>
 
-      <div className="relative bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 p-10 w-full max-w-2xl">
+      <div className="relative bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 p-10 w-full max-w-4xl">
         {/* Enhanced Header */}
         <div className="text-center mb-14">
           <div className="mt-8 mb-6 transform hover:scale-105 transition-transform duration-300">
@@ -93,7 +102,7 @@ export default function SelectRolePage() {
         </div>
 
         {/* Enhanced Role Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-14">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-14">
           {roles.map((role, index) => {
             const IconComponent = role.icon;
             const isActive = (isHovered === role.id) || (selectedRole === role.id);

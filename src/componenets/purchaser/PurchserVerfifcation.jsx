@@ -2,10 +2,12 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiUrl } from "../config/api";
+import { Shield, XCircle, Check, Info } from "lucide-react";
 
 const PurchserVerfifcation = () => {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
+  const [approvalCount, setApprovalCount] = useState(0);
   const [message, setMessage] = useState(
     "Thanks for registering. Your documents are under verification. We will notify you once your account is approved."
   );
@@ -162,6 +164,11 @@ const PurchserVerfifcation = () => {
             }
 
             if (res2.ok && json2 && json2.data) {
+              // Track how many of the (up to 3) selected stockists have
+              // approved so far, mirroring the animated progress dots on
+              // the Nebula app's equivalent screen.
+              const count = json2.data.approvals || 0;
+              setApprovalCount(count);
               if (json2.data.status === "approved") {
                 try {
                   localStorage.removeItem("pendingPurchasingRequestId");
@@ -186,19 +193,86 @@ const PurchserVerfifcation = () => {
     };
   }, [navigate]);
 
+  const isFailed =
+    message === "Document verification failed" ||
+    message === "Verification record not found. Please contact support.";
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-white p-6 rounded-xl shadow-lg text-center">
-        <h1 className="text-2xl font-bold mb-4">
-          {message === "Document verification failed"
-            ? "Verification Failed"
-            : "Documents under verification"}
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <div className="w-full max-w-md bg-white/90 backdrop-blur-sm rounded-4xl shadow-card-lg border border-white/60 p-8 text-center">
+        <div
+          className={`w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center ${
+            isFailed
+              ? "bg-gradient-to-br from-red-100 to-red-200"
+              : "bg-gradient-to-br from-teal-50 to-teal-100"
+          }`}
+        >
+          {isFailed ? (
+            <XCircle className="w-10 h-10 text-red-500" />
+          ) : (
+            <Shield className="w-10 h-10 text-teal-600" />
+          )}
+        </div>
+
+        <h1
+          className={`text-xl font-bold mb-4 ${
+            isFailed ? "text-red-700" : "text-slate-800"
+          }`}
+        >
+          {isFailed ? "Verification Failed" : "Awaiting Stockist Approval"}
         </h1>
-        <p className="text-gray-600 mb-4">{message}</p>
-        {message !== "Document verification failed" && (
-          <p className="text-sm text-gray-400">
-            You can close this page and wait for an email or login later.
-          </p>
+
+        <p className="text-slate-500 text-[15px] leading-relaxed mb-8">
+          {message}
+        </p>
+
+        {!isFailed && (
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors ${
+                  i < approvalCount
+                    ? "bg-teal-600 border-teal-600"
+                    : "bg-slate-200 border-slate-300"
+                }`}
+              >
+                {i < approvalCount && <Check className="w-3.5 h-3.5 text-white" />}
+              </div>
+            ))}
+            <p className="w-full text-center text-sm font-semibold text-slate-500 mt-1">
+              {approvalCount} of 3 stockists approved
+            </p>
+          </div>
+        )}
+
+        {checking && !isFailed && (
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-7 h-7 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs font-medium text-slate-400">
+              Checking status...
+            </p>
+          </div>
+        )}
+
+        {!isFailed && (
+          <div className="mt-10 flex items-start gap-2.5 bg-slate-50 rounded-2xl p-4 text-left">
+            <Info className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+            <p className="flex-1 text-xs text-slate-500 italic">
+              You can close this page and come back. We'll unlock your
+              account once all 3 stockists approve.
+            </p>
+          </div>
+        )}
+
+        {isFailed && (
+          <button
+            type="button"
+            onClick={() => navigate("/purchaser-signup")}
+            className="mt-5 bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-6 rounded-xl transition"
+          >
+            Back to Signup
+          </button>
         )}
       </div>
     </div>

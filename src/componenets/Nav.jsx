@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import API_BASE, { apiUrl } from "./config/api";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Menu, X, ArrowRight } from "lucide-react";
 import { getCookie } from "./utils/cookies";
 import {
   medicineReferencesStockist,
@@ -9,8 +9,7 @@ import {
 } from "./utils/normalizeMatching";
 import { useNavigate } from "react-router-dom";
 import Logo from "./Logo";
-
-const Icon = ({ children }) => <span className="text-lg">{children}</span>;
+import Avatar from "./stockistComponents/Avatar";
 
 export default function Nav({ navigation: navProp }) {
   const navigate = (() => {
@@ -641,8 +640,7 @@ export default function Nav({ navigation: navProp }) {
 
   const navLinks = [
     { label: "Home", icon: "🏠", path: "/" },
-   
-    { label: "Saved", icon: " ", path: "/saved" },
+    { label: "Saved", icon: "⭐", path: "/saved" },
     { label: "Profile", icon: "👤", path: "/profile" },
   ];
 
@@ -750,9 +748,7 @@ export default function Nav({ navigation: navProp }) {
     >
       {/* --- Card Header --- */}
       <div className="flex items-start gap-4 mb-4">
-        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center shadow-md shadow-cyan-500/20">
-          <span className="text-white font-bold text-2xl">{item.title?.charAt(0)}</span>
-        </div>
+        <Avatar name={item.title} size={56} />
         <div className="flex-1">
           <h3 className="text-lg font-bold text-slate-800">{item.title}</h3>
           <p className="text-sm text-slate-500">{item.address}</p>
@@ -765,9 +761,10 @@ export default function Nav({ navigation: navProp }) {
                   window.location.href = `/stockist/${item._id}`;
                 }
               }}
-            className="text-cyan-500 font-bold text-2xl h-8 w-8 flex items-center justify-center rounded-full hover:bg-cyan-50"
+            className="text-cyan-500 h-8 w-8 flex items-center justify-center rounded-full hover:bg-cyan-50"
+            aria-label="View stockist"
         >
-          ›
+          <ArrowRight className="w-4 h-4" />
         </button>
       </div>
 
@@ -916,18 +913,8 @@ export default function Nav({ navigation: navProp }) {
       style={{ opacity: navOpacity, transition: "opacity 300ms ease-out" }}
     >
       <div className="max-w-4xl mx-auto px-6">
-        <div className="flex items-center justify-between py-8 ml-10">
-          <div className="flex  ">
-            <div className="relative">
-              <div className="w-32  flex items-center justify-center">
-                <Logo className="h-15 w-15 " />
-              <img className="mb-3" src="logo.png" alt="" />
-              </div>
-            </div>
-            <div>
-              
-            </div>
-          </div>
+        <div className="flex items-center justify-between py-8">
+          <Logo className="h-14 w-14" />
 
           <div className="flex items-center gap-3">
             <button
@@ -935,7 +922,7 @@ export default function Nav({ navigation: navProp }) {
               className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center border-2 border-violet-200 hover:shadow-2xl hover:scale-110 transition-all duration-200"
               aria-label="open menu"
             >
-              <Icon>☰</Icon>
+              <Menu className="w-6 h-6 text-violet-700" />
             </button>
           </div>
         </div>
@@ -950,7 +937,7 @@ export default function Nav({ navigation: navProp }) {
                   className="p-3 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 hover:shadow-lg transition-all"
                   aria-label="close menu"
                 >
-                  <Icon>✖</Icon>
+                  <X className="w-5 h-5 text-gray-700" />
                 </button>
               </div>
 
@@ -995,8 +982,9 @@ export default function Nav({ navigation: navProp }) {
                   <button
                     onClick={clearResults}
                     className="p-2 rounded-xl hover:bg-violet-100 transition-all"
+                    aria-label="clear search"
                   >
-                    <Icon>✖</Icon>
+                    <X className="w-4 h-4 text-gray-600" />
                   </button>
                 )}
               </div>
@@ -1131,7 +1119,7 @@ export default function Nav({ navigation: navProp }) {
                           {phone}
                         </div>
                       )}
-                      <div className="text-violet-600 ml-2 text-xl">→</div>
+                      <ArrowRight className="w-5 h-5 text-violet-600 ml-2" />
                     </button>
                   );
                 })}

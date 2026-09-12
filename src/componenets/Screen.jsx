@@ -7,7 +7,7 @@ import {
   tokenOverlapScore,
 } from "./utils/normalizeMatching";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Phone, MapPin, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { Phone, MapPin, Eye, ChevronLeft, ChevronRight, X, Info } from "lucide-react";
 
 const Screen = ({ navigation: navProp }) => {
   const navigate = (() => {
@@ -634,7 +634,7 @@ const Screen = ({ navigation: navProp }) => {
           {/* Company Items / Services */}
           <div className="mb-6">
             <div className="text-base font-poppins text-gray-700 font-semibold mb-3">
-              Services
+              Company
             </div>
             <div className="flex flex-wrap gap-3">
               {section.items.slice(0, 2).map((it, idx) => (
@@ -757,16 +757,22 @@ const Screen = ({ navigation: navProp }) => {
         {/* --- Sticky Header --- */}
         <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-slate-200">
           <div className="px-4 py-3">
-            <div className="flex items-center justify-between">
-              {/* Back Button */}
+            <div className="flex items-center gap-3">
+              {/* Close Button */}
+              <button
+                onClick={() => setFullscreenStockist(null)}
+                className="p-2 rounded-full hover:bg-slate-100 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5 text-slate-800" />
+              </button>
 
               {/* Title */}
-              <div className="text-center">
+              <div className="flex-1 text-center mr-9">
                 <div className="text-lg font-bold text-slate-800">
                   {currentSection.title}
                 </div>
               </div>
-              {/* Favorite Button */}
             </div>
           </div>
         </div>
@@ -837,24 +843,33 @@ const Screen = ({ navigation: navProp }) => {
             <h3 className="text-lg font-bold text-slate-800 mb-4">
               Partner Companies
             </h3>
-            <div className="space-y-3">
-              {currentSection.items.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center">
-                    <span className="text-lg text-cyan-600">
-                      {getHealthIcon(item)}
-                    </span>
+            {currentSection.items && currentSection.items.length > 0 ? (
+              <div className="space-y-3">
+                {currentSection.items.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center">
+                      <span className="text-lg text-cyan-600">
+                        {getHealthIcon(item)}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-slate-700">{item}</div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-slate-300" />
                   </div>
-                  <div className="flex-1">
-                    <div className="font-semibold text-slate-700">{item}</div>
-                  </div>
-                  <div className="text-slate-400 text-2xl">›</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 bg-slate-50 rounded-xl p-3">
+                <Info className="w-4 h-4 text-slate-500" />
+                <span className="text-sm font-medium text-slate-500">
+                  No partner companies linked for this stockist yet.
+                </span>
+              </div>
+            )}
           </div>
 
           {/* --- Available Medicines Section --- */}
@@ -905,7 +920,10 @@ const Screen = ({ navigation: navProp }) => {
     <div className="fixed bottom-8 left-6 right-6 z-50">
       <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/50">
         <div className="flex justify-around py-6">
-          <button className="flex flex-col items-center text-cyan-600">
+          <button
+            onClick={() => navigation.navigate("/")}
+            className="flex flex-col items-center text-cyan-600"
+          >
             <div className="w-14 h-14 rounded-3xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center mb-2 shadow-lg">
               <span className="text-2xl">🏠</span>
             </div>
@@ -955,13 +973,6 @@ const Screen = ({ navigation: navProp }) => {
             overflowY: "auto",
           }}
         >
-          <button
-            onClick={() => setFullscreenStockist(null)}
-            style={{ position: "absolute", top: 8, right: 24, zIndex: 10000 }}
-            className="bg-red-500 text-white rounded-full px-3 py-1 shadow-lg hover:bg-red-600"
-          >
-            Close
-          </button>
           {fullscreenStockist !== null &&
             renderDetailViewForFullscreen(fullscreenStockist)}
         </div>

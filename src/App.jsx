@@ -17,6 +17,7 @@ import PurchaserDetails from "./componenets/PurchaserDetails";
 import StaffList from "./componenets/staff/StaffList";
 import StaffCreate from "./componenets/staff/StaffCreate";
 import StaffDetails from "./componenets/staff/StaffDetails";
+import StaffLogin from "./componenets/staff/StaffLogin";
 import Demand from "./componenets/Demand";
 import StockistLogin from "./componenets/Stockist/StockistLogin";
 import Stockistoutcode from "./componenets/Stockist/Stockistoutcode";
@@ -55,6 +56,7 @@ const App = () => {
         <Route path="/adminCreateCompany" element={<AdminCreateCompany />} />
         <Route path="/adminCreateMedicine" element={<AdminCreateMedicine />} />
         <Route path="/adminCreateStaff" element={<StaffCreate />} />
+        <Route path="/staff-login" element={<StaffLogin />} />
         <Route path="/staffs" element={<StaffList />} />
         <Route path="/staff/:id" element={<StaffDetails />} />
         {/* Redirect legacy or accidental /staff/create to the admin create form */}

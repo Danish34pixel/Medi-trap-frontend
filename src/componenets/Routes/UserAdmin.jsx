@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { RefreshCw, User, Check } from "lucide-react";
 import { apiUrl } from "../config/api";
 import { getCookie, setCookie } from "../utils/cookies";
+import PageHeader from "../ui/PageHeader";
+import Card from "../ui/Card";
+import Input from "../ui/Input";
+import Btn from "../stockistComponents/Btn";
 
 const UserAdmin = () => {
   const navigate = useNavigate();
@@ -212,102 +217,129 @@ const UserAdmin = () => {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Users (Admin)</h1>
+    <div className="min-h-screen bg-slate-50">
+      <PageHeader
+        title="Purchasers (Admin)"
+        subtitle="Approve or decline purchaser registrations"
+        role="slate"
+        showBack
+        right={
+          <button
+            onClick={fetchUsers}
+            className="p-2 rounded-full hover:bg-white/15 transition-colors"
+            aria-label="Refresh"
+          >
+            <RefreshCw className="w-5 h-5" />
+          </button>
+        }
+      />
 
-      {isDev && (
-        <div className="mb-4">
-          <label className="block text-sm font-medium">Dev Admin Token</label>
-          <div className="flex items-center gap-2 mt-1">
-            <input
-              className="border px-2 py-1 flex-1"
-              value={devToken}
-              onChange={(e) => setDevToken(e.target.value)}
-            />
-            <button
-              className="px-3 py-1 bg-green-600 text-white rounded"
-              onClick={saveDevToken}
-            >
-              Save
-            </button>
+      <div className="max-w-2xl mx-auto p-4 sm:p-6">
+        {isDev && (
+          <Card padding="p-4" className="mb-4">
+            <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">
+              Dev Admin Token
+            </label>
+            <div className="flex items-center gap-2">
+              <Input
+                containerClassName="flex-1"
+                value={devToken}
+                onChange={(e) => setDevToken(e.target.value)}
+                placeholder="Paste admin token here"
+              />
+              <Btn variant="success" onClick={saveDevToken} className="shrink-0">
+                Save
+              </Btn>
+            </div>
+          </Card>
+        )}
+
+        {loading && (
+          <div className="flex justify-center py-6">
+            <div className="w-8 h-8 border-2 border-role-purchaser/30 border-t-role-purchaser rounded-full animate-spin" />
           </div>
-        </div>
-      )}
+        )}
+        {error && (
+          <div className="mb-4 text-sm text-red-600 text-center">{error}</div>
+        )}
 
-      {loading && <div>Loading...</div>}
-      {error && <div className="text-red-600">{error}</div>}
+        <div className="space-y-3 pb-10">
+          {users.map((user) => {
+            const imgSrc = user.profileImageUrl || user.licenseImageUrl || null;
+            const isApproved = Boolean(user.approved);
+            const isPending = !isApproved && !user.declined;
 
-      <div className="space-y-3">
-        {users.map((user) => {
-          const imgSrc = user.profileImageUrl || user.licenseImageUrl || null;
-          return (
-            <div
-              key={user._id}
-              className="p-4 border rounded flex items-center justify-between"
-            >
-              <div className="flex items-center gap-4">
-                {imgSrc ? (
-                  <img
-                    src={imgSrc}
-                    alt={user.name || "user"}
-                    className={`w-16 h-16 rounded-md object-cover border ${
-                      user.approved ? "opacity-50 pointer-events-none" : ""
-                    }`}
-                  />
-                ) : (
-                  <div
-                    className={`w-16 h-16 rounded-md bg-gray-100 flex items-center justify-center text-sm text-gray-500 border ${
-                      user.approved ? "opacity-50 pointer-events-none" : ""
+            return (
+              <Card key={user._id} padding="p-4">
+                <div className="flex items-start gap-4">
+                  {imgSrc ? (
+                    <img
+                      src={imgSrc}
+                      alt={user.name || "user"}
+                      className={`w-16 h-16 rounded-xl object-cover shrink-0 ${
+                        isApproved ? "opacity-50" : ""
+                      }`}
+                    />
+                  ) : (
+                    <div
+                      className={`w-16 h-16 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 ${
+                        isApproved ? "opacity-50" : ""
+                      }`}
+                    >
+                      <User className="w-6 h-6 text-slate-400" />
+                    </div>
+                  )}
+
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-slate-800 truncate">
+                      {user.title || user.name || user.companyName}
+                    </div>
+                    <div className="text-sm text-slate-500 truncate">
+                      {user.email || user.phone}
+                    </div>
+                    {isApproved && (
+                      <div className="flex items-center gap-1 mt-1 text-emerald-600 text-xs font-semibold">
+                        <Check className="w-3.5 h-3.5" />
+                        Approved
+                      </div>
+                    )}
+                  </div>
+
+                  <span
+                    className={`shrink-0 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide ${
+                      isApproved
+                        ? "bg-emerald-50 text-emerald-600"
+                        : "bg-slate-100 text-slate-400"
                     }`}
                   >
-                    No image
-                  </div>
-                )}
-
-                <div>
-                  <div className="font-semibold">
-                    {user.title || user.name || user.companyName}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {user.email || user.phone}
-                  </div>
-                  {user.status === "approved" && (
-                    <div className="text-green-600 text-sm">Approved</div>
-                  )}
+                    {isApproved ? "Approved" : "Pending"}
+                  </span>
                 </div>
-              </div>
 
-              <div className="flex gap-2">
-                {!user.approved && !user.declined && (
-                  <>
-                    <button
-                      className="px-4 py-2 bg-blue-600 text-white rounded"
+                {isPending && (
+                  <div className="flex gap-2 justify-end mt-3">
+                    <Btn
+                      variant="purchaser"
+                      className="min-w-[100px]"
                       onClick={() => approve(user._id)}
                       disabled={approving[user._id]}
                     >
                       {approving[user._id] ? "Approving..." : "Approve"}
-                    </button>
-                    <button
-                      className="px-4 py-2 bg-red-600 text-white rounded"
+                    </Btn>
+                    <Btn
+                      variant="danger"
+                      className="min-w-[100px]"
                       onClick={() => decline(user._id)}
                       disabled={declining[user._id]}
                     >
                       {declining[user._id] ? "Declining..." : "Decline"}
-                    </button>
-                  </>
+                    </Btn>
+                  </div>
                 )}
-                {user.approved && (
-                  <button
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded"
-                    disabled
-                  >
-                    Approved
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
+              </Card>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

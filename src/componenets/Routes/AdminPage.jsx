@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 // navigate not required in this component
+import { RefreshCw, Package } from "lucide-react";
 import { apiUrl, requestJson } from "../config/api";
 import { getCookie, setCookie } from "../utils/cookies";
+import PageHeader from "../ui/PageHeader";
+import Card from "../ui/Card";
+import Input from "../ui/Input";
+import Btn from "../stockistComponents/Btn";
 
 const AdminPage = () => {
   // navigate intentionally unused here
@@ -254,102 +259,125 @@ const AdminPage = () => {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Stockists (Admin)</h1>
+    <div className="min-h-screen bg-slate-50">
+      <PageHeader
+        title="Stockists (Admin)"
+        subtitle="Verify and approve supplier applications"
+        role="slate"
+        showBack
+        right={
+          <button
+            onClick={fetchStockists}
+            className="p-2 rounded-full hover:bg-white/15 transition-colors"
+            aria-label="Refresh"
+          >
+            <RefreshCw className="w-5 h-5" />
+          </button>
+        }
+      />
 
-      {isDev && (
-        <div className="mb-4">
-          <label className="block text-sm font-medium">Dev Admin Token</label>
-          <div className="flex items-center gap-2 mt-1">
-            <input
-              className="border px-2 py-1 flex-1"
-              value={devToken}
-              onChange={(e) => setDevToken(e.target.value)}
-            />
-            <button
-              className="px-3 py-1 bg-green-600 text-white rounded"
-              onClick={saveDevToken}
-            >
-              Save
-            </button>
+      <div className="max-w-2xl mx-auto p-4 sm:p-6">
+        {isDev && (
+          <Card padding="p-4" className="mb-4">
+            <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">
+              Dev Admin Token
+            </label>
+            <div className="flex items-center gap-2">
+              <Input
+                containerClassName="flex-1"
+                value={devToken}
+                onChange={(e) => setDevToken(e.target.value)}
+                placeholder="Paste admin token here"
+              />
+              <Btn variant="success" onClick={saveDevToken} className="shrink-0">
+                Save
+              </Btn>
+            </div>
+          </Card>
+        )}
+
+        {loading && (
+          <div className="flex justify-center py-6">
+            <div className="w-8 h-8 border-2 border-role-stockist/30 border-t-role-stockist rounded-full animate-spin" />
           </div>
-        </div>
-      )}
+        )}
+        {error && (
+          <div className="mb-4 text-sm text-red-600 text-center">{error}</div>
+        )}
 
-      {loading && <div>Loading...</div>}
-      {error && <div className="text-red-600">{error}</div>}
+        <div className="space-y-3 pb-10">
+          {stockists.map((s) => {
+            const imgSrc = s.profileImageUrl || s.licenseImageUrl || null;
+            const isApproved = Boolean(s.approved);
+            const isProcessing = s.status === "processing";
 
-      <div className="space-y-3">
-        {stockists.map((s) => {
-          const imgSrc = s.profileImageUrl || s.licenseImageUrl || null;
-          return (
-            <div
-              key={s._id}
-              className="p-4 border rounded flex items-center justify-between"
-            >
-              <div className="flex items-center gap-4">
-                {imgSrc ? (
-                  <img
-                    src={imgSrc}
-                    alt={s.name || "stockist"}
-                    className={`w-16 h-16 rounded-md object-cover border ${
-                      s.approved ? "opacity-50 pointer-events-none" : ""
-                    }`}
-                  />
-                ) : (
-                  <div
-                    className={`w-16 h-16 rounded-md bg-gray-100 flex items-center justify-center text-sm text-gray-500 border ${
-                      s.approved ? "opacity-50 pointer-events-none" : ""
-                    }`}
-                  >
-                    No image
-                  </div>
-                )}
+            return (
+              <Card key={s._id} padding="p-4">
+                <div className="flex items-start gap-4">
+                  {imgSrc ? (
+                    <img
+                      src={imgSrc}
+                      alt={s.name || "stockist"}
+                      className={`w-16 h-16 rounded-xl object-cover shrink-0 ${
+                        isApproved ? "opacity-50" : ""
+                      }`}
+                    />
+                  ) : (
+                    <div
+                      className={`w-16 h-16 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 ${
+                        isApproved ? "opacity-50" : ""
+                      }`}
+                    >
+                      <Package className="w-6 h-6 text-slate-400" />
+                    </div>
+                  )}
 
-                <div>
-                  <div className="font-semibold">
-                    {s.title || s.name || s.companyName}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-slate-800 truncate">
+                      {s.title || s.name || s.companyName}
+                    </div>
+                    <div className="text-sm text-slate-500 truncate">
+                      {s.email || s.phone}
+                    </div>
+                    {isApproved && (
+                      <div className="flex items-center gap-1 mt-1 text-emerald-600 text-xs font-semibold">
+                        <Package className="w-3.5 h-3.5" />
+                        Approved
+                      </div>
+                    )}
                   </div>
-                  <div className="text-sm text-gray-600">
-                    {s.email || s.phone}
-                  </div>
-                  {s.status === "approved" && (
-                    <div className="text-green-600 text-sm">Approved</div>
+
+                  {isApproved && (
+                    <span className="shrink-0 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-600">
+                      Approved
+                    </span>
                   )}
                 </div>
-              </div>
 
-              <div className="flex gap-2">
-                {s.status === "processing" && (
-                  <>
-                    <button
-                      className="px-4 py-2 bg-blue-600 text-white rounded"
+                {isProcessing && (
+                  <div className="flex gap-2 justify-end mt-3">
+                    <Btn
+                      variant="stockist"
+                      className="min-w-[100px]"
                       onClick={() => approve(s._id)}
                       disabled={approving[s._id]}
                     >
                       {approving[s._id] ? "Approving..." : "Approve"}
-                    </button>
-                    <button
-                      className="px-4 py-2 bg-red-600 text-white rounded"
+                    </Btn>
+                    <Btn
+                      variant="danger"
+                      className="min-w-[100px]"
                       onClick={() => decline(s._id)}
                       disabled={declining[s._id]}
                     >
                       {declining[s._id] ? "Declining..." : "Decline"}
-                    </button>
-                  </>
+                    </Btn>
+                  </div>
                 )}
-                {s.approved && (
-                  <button
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded"
-                    disabled
-                  >
-                    Approved
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
+              </Card>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

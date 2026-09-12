@@ -139,7 +139,7 @@ const PurchaserLogin = () => {
 
             <button
               type="submit"
-              className="w-full py-4 rounded-2xl font-semibold text-white transition shadow-lg bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-500 hover:to-cyan-600 active:scale-[0.98] mt-6"
+              className="w-full py-4 rounded-2xl font-semibold text-white transition shadow-lg bg-gradient-to-r from-role-purchaser-from to-role-purchaser-to hover:brightness-105 active:scale-[0.98] mt-6"
             >
               Sign In
             </button>

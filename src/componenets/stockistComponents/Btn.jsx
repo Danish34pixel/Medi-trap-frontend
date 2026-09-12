@@ -20,6 +20,16 @@ export default function Btn({
       "bg-gradient-to-r from-emerald-500 to-green-500 text-white hover:from-emerald-600 hover:to-green-600 shadow-lg hover:shadow-xl",
     danger:
       "bg-gradient-to-r from-red-500 to-pink-500 text-white hover:from-red-600 hover:to-pink-600 shadow-lg hover:shadow-xl",
+    // Nebula role-accent gradients — use these for actions on role-specific screens
+    // (e.g. purchaser login submit, stockist dashboard actions) to match the RN app.
+    purchaser:
+      "bg-gradient-to-r from-role-purchaser-from to-role-purchaser-to text-white hover:brightness-105 shadow-lg hover:shadow-xl",
+    stockist:
+      "bg-gradient-to-r from-role-stockist-from to-role-stockist-to text-white hover:brightness-105 shadow-lg hover:shadow-xl",
+    medical:
+      "bg-gradient-to-r from-role-medical-from to-role-medical-to text-white hover:brightness-105 shadow-lg hover:shadow-xl",
+    staff:
+      "bg-gradient-to-r from-role-staff-from to-role-staff-to text-white hover:brightness-105 shadow-lg hover:shadow-xl",
   };
 
   return (

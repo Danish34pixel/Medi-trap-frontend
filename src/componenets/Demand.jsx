@@ -5,6 +5,7 @@ import {
   Package,
   AlertTriangle,
   CheckCircle2,
+  Phone,
 } from "lucide-react";
 import API_BASE, { apiUrl } from "./config/api";
 import {
@@ -13,7 +14,8 @@ import {
   nameMatchesStockistItems,
   tokenOverlapScore,
 } from "./utils/normalizeMatching";
-import Logo from "./Logo";
+import PageHeader from "./ui/PageHeader";
+import Card from "./ui/Card";
 
 export default function Demand() {
   const [lines, setLines] = useState([{ id: Date.now(), name: "", qty: 0 }]);
@@ -23,7 +25,30 @@ export default function Demand() {
   const [debugInfo, setDebugInfo] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [focusedLineId, setFocusedLineId] = useState(null);
   const SAVE_KEY = "savedDemand";
+
+  // Autosuggest, mirroring Nebula's demand.jsx typeahead — purely additive UI
+  // over the medicines list already fetched below; does not touch the
+  // matching/grouping logic in createDemand().
+  const getSuggestions = (value) => {
+    const q = (value || "").toString().trim().toLowerCase();
+    if (q.length < 2) return [];
+    const seen = new Set();
+    const out = [];
+    for (const m of medicines || []) {
+      const name = (m?.name || m?.medicineName || m?.title || "")
+        .toString()
+        .trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (!key.includes(q) || seen.has(key)) continue;
+      seen.add(key);
+      out.push(name);
+      if (out.length >= 5) break;
+    }
+    return out;
+  };
 
   useEffect(() => {
     // fetch medicines and stockists if backend available
@@ -244,94 +269,124 @@ export default function Demand() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
-  <div className="container mx-auto max-w-2xl px-4 py-12">
-    {/* Header */}
-    <header className="text-center mb-10">
-      <Logo className="w-20 h-20 mx-auto mb-4" alt="MedTrap Logo" />
-      <p className="text-slate-500 text-lg">
-        Create a new medicine demand list for your stockists.
-      </p>
-    </header>
+  <PageHeader
+    title="Create Demand"
+    subtitle="Build a medicine request for your stockists"
+    role="slate"
+  />
+  <div className="container mx-auto max-w-2xl px-4 py-8 sm:py-12">
 
     {/* Main Form Card */}
-    <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-8">
+    <Card padding="p-6 sm:p-8" elevated className="mb-8 rounded-4xl">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl font-semibold text-slate-800">
           Medicine Requirements
         </h2>
-        <div className="text-sm font-medium text-center text-white bg-teal-500 rounded-full px-6 py-1">
+        <div className="text-sm font-medium text-center text-white bg-slate-800 rounded-full px-6 py-1">
           {lines.length} item{lines.length !== 1 ? "s" : ""}
         </div>
       </div>
 
       {/* Medicine Lines */}
       <div className="space-y-4 mb-8">
-        {lines.map((line, index) => (
-          <div
-            key={line.id}
-            className="group flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200 transition-all hover:border-teal-400 hover:bg-white"
-          >
-            <div className="flex-shrink-0 w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-sm font-bold text-slate-600">
-              {index + 1}
-            </div>
+        {lines.map((line, index) => {
+          const suggestions =
+            focusedLineId === line.id ? getSuggestions(line.name) : [];
+          return (
+          <div key={line.id} className="relative">
+            <div
+              className="group flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200 transition-all hover:border-sky-400 hover:bg-white"
+            >
+              <div className="flex-shrink-0 w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-sm font-bold text-slate-600">
+                {index + 1}
+              </div>
 
-            <div className="flex-1">
-              <input
-                value={line.name}
-                onChange={(e) =>
-                  updateLine(line.id, { name: e.target.value })
-                }
-                placeholder="Enter medicine name..."
-                className="w-full bg-transparent text-slate-800 placeholder-slate-400 focus:outline-none"
-              />
-            </div>
-
-            <div className="flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-slate-600 hidden sm:block">
-                  Qty:
-                </label>
+              <div className="flex-1">
                 <input
-                  type="number"
-                  min={0}
-                  value={line.qty}
+                  value={line.name}
                   onChange={(e) =>
-                    updateLine(line.id, {
-                      qty: Number(
-                        e.target.value === "" ? 0 : e.target.value
-                      ),
-                    })
+                    updateLine(line.id, { name: e.target.value })
                   }
-                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-center bg-white"
+                  onFocus={() => setFocusedLineId(line.id)}
+                  onBlur={() =>
+                    setTimeout(() => setFocusedLineId(null), 150)
+                  }
+                  placeholder="Enter medicine name..."
+                  className="w-full bg-transparent text-slate-800 placeholder-slate-400 focus:outline-none"
+                  autoComplete="off"
                 />
               </div>
+
+              <div className="flex-shrink-0">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-slate-600 hidden sm:block">
+                    Qty:
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={line.qty}
+                    onChange={(e) =>
+                      updateLine(line.id, {
+                        qty: Number(
+                          e.target.value === "" ? 0 : e.target.value
+                        ),
+                      })
+                    }
+                    className="w-20 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition-all text-center bg-white"
+                  />
+                </div>
+              </div>
+
+              {lines.length > 1 && (
+                <button
+                  onClick={() => removeLine(line.id)}
+                  className="flex-shrink-0 p-2 text-slate-400 hover:bg-orange-100 hover:text-orange-500 rounded-full transition-colors opacity-50 group-hover:opacity-100"
+                  title="Remove item"
+                >
+                  <Trash2 size={18} />
+                </button>
+              )}
             </div>
 
-            {lines.length > 1 && (
-              <button
-                onClick={() => removeLine(line.id)}
-                className="flex-shrink-0 p-2 text-slate-400 hover:bg-orange-100 hover:text-orange-500 rounded-full transition-colors opacity-50 group-hover:opacity-100"
-                title="Remove item"
-              >
-                <Trash2 size={18} />
-              </button>
+            {suggestions.length > 0 && (
+              <div className="absolute left-0 right-0 mt-1 z-20 bg-white border border-slate-200 rounded-xl shadow-card-lg overflow-hidden">
+                {suggestions.map((s, idx) => (
+                  <button
+                    type="button"
+                    key={`${line.id}-${idx}`}
+                    onClick={() => {
+                      updateLine(line.id, { name: s });
+                      setFocusedLineId(null);
+                    }}
+                    className={`block w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-sky-50 hover:text-sky-700 transition-colors ${
+                      idx !== suggestions.length - 1
+                        ? "border-b border-slate-100"
+                        : ""
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-4">
         <button
           onClick={addLine}
-          className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 text-slate-600 hover:text-teal-600 rounded-lg font-semibold transition-colors"
+          className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 border-2 border-dashed border-slate-300 hover:border-sky-500 hover:bg-sky-50 text-slate-600 hover:text-sky-600 rounded-lg font-semibold transition-colors"
         >
           <Plus size={18} />
           Add Item
         </button>
         <button
           onClick={createDemand}
-          className="flex w-full sm:w-auto items-center justify-center gap-2 px-8 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-semibold transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex w-full sm:w-auto items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-600 hover:to-sky-600 text-white rounded-lg font-semibold transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={loading}
         >
           {loading ? (
@@ -347,7 +402,7 @@ export default function Demand() {
           )}
         </button>
       </div>
-    </div>
+    </Card>
 
     {/* Error Display */}
     {error && (
@@ -361,9 +416,9 @@ export default function Demand() {
 
     {/* Results */}
     {result && (
-      <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+      <Card padding="p-6 sm:p-8" elevated className="rounded-4xl">
         <h3 className="text-2xl font-semibold text-slate-800 mb-6 flex items-center gap-3">
-          <CheckCircle2 className="text-teal-500" size={28} />
+          <CheckCircle2 className="text-sky-500" size={28} />
           Grouped Demand Results
         </h3>
 
@@ -383,7 +438,7 @@ export default function Demand() {
                   className={`px-6 py-4 font-semibold text-white ${
                     group === "unmatched"
                       ? "bg-gradient-to-r from-amber-500 to-orange-500"
-                      : "bg-gradient-to-r from-teal-500 to-cyan-500"
+                      : "bg-gradient-to-r from-cyan-500 to-sky-500"
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -404,10 +459,9 @@ export default function Demand() {
                             window.location.href = `tel:${stockist.phone}`;
                           }
                         }}
-                        className="flex items-center gap-2 px-3 py-2.5 bg-white text-teal-600 rounded-2xl hover:bg-teal-50 transition-all font-bold shadow-lg hover:scale-105"
+                        className="flex items-center gap-2 px-3 py-2.5 bg-white text-sky-600 rounded-2xl hover:bg-sky-50 transition-all font-bold shadow-lg hover:scale-105"
                       >
-                        <span className="text-xl">📞</span>
-                        
+                        <Phone size={16} />
                       </button>
                     )}
                   </div>
@@ -425,7 +479,7 @@ export default function Demand() {
                             {it.line.name}
                           </div>
                           {it.medicine && (
-                            <div className="text-sm text-teal-600 flex items-center gap-1.5">
+                            <div className="text-sm text-sky-600 flex items-center gap-1.5">
                               <CheckCircle2 size={14}/>
                               <span>
                                 Matches:{" "}
@@ -455,10 +509,10 @@ export default function Demand() {
             ))}
           </div>
         )}
-      </div>
+      </Card>
     )}
 
-    
+
   </div>
 </div>
   );

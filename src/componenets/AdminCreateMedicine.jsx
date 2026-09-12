@@ -4,16 +4,18 @@ import {
   Pill,
   Building2,
   Package,
-  User,
-  Mail,
-  Sparkles,
   CheckCircle2,
   Users,
-  Plus,
+  Search,
+  X,
 } from "lucide-react";
 import { apiUrl } from "./config/api";
 import { getCookie } from "./utils/cookies";
 import Logo from "./Logo";
+import PageHeader from "./ui/PageHeader";
+import Card from "./ui/Card";
+import Input from "./ui/Input";
+import Btn from "./stockistComponents/Btn";
 
 export default function AdminCreateMedicine() {
   const [form, setForm] = useState({ name: "", company: "", stockists: [] });
@@ -22,8 +24,6 @@ export default function AdminCreateMedicine() {
   const [stockistsList, setStockistsList] = useState([]);
   const [companySearch, setCompanySearch] = useState("");
   const [stockistSearch, setStockistSearch] = useState("");
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [particles, setParticles] = useState([]);
   const filteredCompanies = companies.filter((company) =>
     (company.name || "").toLowerCase().includes(companySearch.toLowerCase()) ||
     (company.email || "").toLowerCase().includes(companySearch.toLowerCase())
@@ -37,34 +37,6 @@ export default function AdminCreateMedicine() {
 
   const navigate = useNavigate();
 
-  // Track mouse movement for interactive effects
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
-
-  // Generate floating particles
-  useEffect(() => {
-    const generateParticles = () => {
-      const newParticles = [];
-      for (let i = 0; i < 12; i++) {
-        newParticles.push({
-          id: i,
-          x: Math.random() * 100,
-          y: Math.random() * 100,
-          size: Math.random() * 3 + 1,
-          opacity: Math.random() * 0.3 + 0.1,
-          duration: Math.random() * 4 + 3,
-        });
-      }
-      setParticles(newParticles);
-    };
-    generateParticles();
-  }, []);
-
   const setField = (path, value) => {
     setForm((f) => ({ ...f, [path]: value }));
   };
@@ -76,6 +48,15 @@ export default function AdminCreateMedicine() {
         ? f.stockists.filter((s) => s !== id)
         : [...f.stockists, id],
     }));
+  };
+
+  const selectAllFilteredStockists = () => {
+    const ids = filteredStockists.map((s) => s._id);
+    setForm((f) => ({ ...f, stockists: [...new Set([...f.stockists, ...ids])] }));
+  };
+
+  const clearAllStockists = () => {
+    setForm((f) => ({ ...f, stockists: [] }));
   };
 
   const submit = async (e) => {
@@ -275,280 +256,188 @@ export default function AdminCreateMedicine() {
   );
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Light gradient background */}
-      <div
-        className="absolute inset-0 transition-all duration-1000"
-        style={{
-          background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, 
-            rgba(99, 102, 241, 0.08), 
-            rgba(139, 92, 246, 0.05), 
-            rgba(168, 85, 247, 0.03), 
-            transparent 50%),
-            linear-gradient(135deg, 
-            #f8fafc 0%, 
-            #f1f5f9 25%, 
-            #e2e8f0 50%, 
-            #cbd5e1 75%, 
-            #94a3b8 100%)`,
-        }}
-      />
+    <div className="min-h-screen bg-slate-50">
+      <PageHeader title="Create Medicine" role="slate" showBack />
 
-      {/* Floating particles */}
-      {particles.map((particle) => (
-        <div
-          key={particle.id}
-          className="absolute w-1 h-1 bg-blue-400/40 rounded-full animate-ping"
-          style={{
-            left: `${particle.x}%`,
-            top: `${particle.y}%`,
-            opacity: particle.opacity,
-            animationDuration: `${particle.duration}s`,
-            animationDelay: `${particle.id * 0.2}s`,
-          }}
-        />
-      ))}
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
+        <Card padding="p-6 sm:p-8" elevated>
+          {/* Header */}
+          <div className="text-center mb-8">
+            <Logo className="w-24 h-16 mx-auto mb-2" />
+            <h1 className="text-2xl font-black text-slate-800">
+              Add New Medicine
+            </h1>
+            <p className="text-slate-500 text-sm mt-1">
+              Register medicine with company and stockist assignments
+            </p>
+          </div>
 
-      {/* Background shapes */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-blue-500/5 to-indigo-500/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
+          <div className="space-y-8">
+            {/* Medicine Name Section */}
+            <div>
+              <h2 className="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <Pill className="text-blue-500" size={18} />
+                Medicine Details
+              </h2>
+              <Input
+                label="Medicine Name"
+                placeholder="Enter medicine name"
+                value={form.name}
+                onChange={(e) => setField("name", e.target.value)}
+                required
+              />
+            </div>
 
-      <div className="relative flex items-start justify-center min-h-screen py-8 px-4">
-        <div className="w-full max-w-4xl">
-          {/* Main container */}
-          <div className="relative bg-white/80 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-2xl shadow-slate-200/50 p-8 sm:p-12">
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 blur-sm animate-pulse"></div>
-            <div className="absolute inset-[1px] rounded-3xl bg-white/90 backdrop-blur-xl"></div>
+            {/* Company Selection */}
+            <div>
+              <h2 className="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <Building2 className="text-indigo-500" size={18} />
+                Company Assignment
+              </h2>
 
-            <div className="relative z-10">
-              {/* Header */}
-              <div className="text-center mb-12 relative">
-                
-                
-                <Logo className="w-26 h-20 mx-auto mb-4" />
-
-                <h1 className="text-4xl sm:text-5xl font-black mb-4 relative">
-                  <span className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-500 bg-clip-text text-transparent">
-                    Create Medicine
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-purple-500/20 bg-clip-text text-transparent blur-sm animate-pulse delay-500"></div>
-                </h1>
-
-                <p className="text-slate-500 text-lg font-light">
-                  Add new medicine with company and stockist assignments
-                </p>
+              <div className="relative mb-4">
+                <Input
+                  icon={Search}
+                  placeholder="Find company..."
+                  value={companySearch}
+                  onChange={(e) => setCompanySearch(e.target.value)}
+                  className={companySearch ? "pr-10" : ""}
+                />
+                {companySearch && (
+                  <button
+                    onClick={() => setCompanySearch("")}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    type="button"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
               </div>
 
-              {/* Form */}
-              <div className="space-y-8">
-                {/* Medicine Name Section */}
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/3 to-indigo-500/3 rounded-3xl blur-xl"></div>
-                  <div className="relative bg-white/60 backdrop-blur-xl rounded-3xl border border-white/40 p-8 shadow-lg shadow-slate-200/20">
-                    <h2 className="text-xl font-bold text-slate-600 mb-6 flex items-center gap-3">
-                      <Pill className="text-blue-500" size={20} />
-                      Medicine Details
-                    </h2>
-
-                    <div className="group relative">
-                      <label className="block text-sm font-semibold text-slate-600 mb-3 flex items-center gap-2">
-                        <Pill size={16} className="text-blue-500" />
-                        Medicine Name
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Enter medicine name"
-                        className="w-full bg-white/90 backdrop-blur-xl border border-slate-200/50 rounded-2xl px-5 py-4 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-300 hover:border-slate-300/50 hover:bg-white group-hover:shadow-lg group-hover:shadow-blue-500/10"
-                        value={form.name}
-                        onChange={(e) => setField("name", e.target.value)}
-                        required
+              <div className="space-y-3">
+                {companies.length === 0 ? (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-center">
+                    <p className="text-yellow-700 text-sm font-medium">No companies found.</p>
+                  </div>
+                ) : filteredCompanies.length === 0 ? (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-center">
+                    <p className="text-yellow-700 text-sm font-medium">No matching companies found.</p>
+                  </div>
+                ) : (
+                  <div className="max-h-64 overflow-y-auto space-y-3">
+                    {filteredCompanies.map((company) => (
+                      <CompanyCard
+                        key={company._id}
+                        company={company}
+                        isSelected={form.company === company._id}
+                        onClick={() => setField("company", company._id)}
                       />
-                    </div>
+                    ))}
                   </div>
-                </div>
+                )}
+              </div>
+            </div>
 
-                {/* Company Selection */}
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/3 to-purple-500/3 rounded-3xl blur-xl"></div>
-                  <div className="relative bg-white/60 backdrop-blur-xl rounded-3xl border border-white/40 p-8 shadow-lg shadow-slate-200/20">
-                    <h2 className="text-xl font-bold text-slate-600 mb-6 flex items-center gap-3">
-                      <Building2 className="text-indigo-500" size={20} />
-                      Select Company
-                    </h2>
-
-                    {/* Search Bar for Company */}
-                    <div className="mb-4">
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="Search companies by name or email..."
-                          value={companySearch}
-                          onChange={(e) => setCompanySearch(e.target.value)}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-gray-800 
-                            placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 
-                            focus:border-transparent transition-all duration-200"
-                        />
-                        {companySearch && (
-                          <button
-                            onClick={() => setCompanySearch("")}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 
-                              hover:text-gray-600 focus:outline-none"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      {companies.length === 0 ? (
-                        <div className="p-6 bg-yellow-50/80 border border-yellow-200/50 rounded-2xl backdrop-blur-xl">
-                          <p className="text-yellow-700 font-medium">No companies found.</p>
-                        </div>
-                      ) : filteredCompanies.length === 0 ? (
-                        <div className="p-6 bg-yellow-50/80 border border-yellow-200/50 rounded-2xl backdrop-blur-xl">
-                          <p className="text-yellow-700 font-medium">No matching companies found.</p>
-                        </div>
-                      ) : (
-                        <>
-                          {/* Always show all companies in a scrollable area */}
-                          <div className="max-h-64 overflow-y-auto space-y-4">
-                            {filteredCompanies.map((company) => (
-                              <CompanyCard
-                                key={company._id}
-                                company={company}
-                                isSelected={form.company === company._id}
-                                onClick={() => setField("company", company._id)}
-                              />
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stockists Selection */}
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/3 to-teal-500/3 rounded-3xl blur-xl"></div>
-                  <div className="relative bg-white/60 backdrop-blur-xl rounded-3xl border border-white/40 p-8 shadow-lg shadow-slate-200/20">
-                    <h2 className="text-xl font-bold text-slate-600 mb-6 flex items-center gap-3">
-                      <Users className="text-emerald-500" size={20} />
-                      Assign to Stockists
-                      <span className="text-sm font-normal text-slate-500">
-                        (Optional)
-                      </span>
-                    </h2>
-
-                    {/* Search Bar for Stockists */}
-                    <div className="mb-4">
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="Search stockists by name, email or location..."
-                          value={stockistSearch}
-                          onChange={(e) => setStockistSearch(e.target.value)}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-gray-800 
-                            placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 
-                            focus:border-transparent transition-all duration-200"
-                        />
-                        {stockistSearch && (
-                          <button
-                            onClick={() => setStockistSearch("")}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 
-                              hover:text-gray-600 focus:outline-none"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      {stockistsList.length === 0 ? (
-                        <div className="p-6 bg-yellow-50/80 border border-yellow-200/50 rounded-2xl backdrop-blur-xl">
-                          <p className="text-yellow-700 font-medium">No stockists found.</p>
-                        </div>
-                      ) : filteredStockists.length === 0 ? (
-                        <div className="p-6 bg-yellow-50/80 border border-yellow-200/50 rounded-2xl backdrop-blur-xl">
-                          <p className="text-yellow-700 font-medium">No matching stockists found.</p>
-                        </div>
-                      ) : (
-                        <>
-                          {/* Always show all stockists in a scrollable area */}
-                          <div className="max-h-64 overflow-y-auto space-y-4">
-                            {filteredStockists.map((stockist) => (
-                              <StockistCard
-                                key={stockist._id}
-                                stockist={stockist}
-                                isSelected={form.stockists.includes(stockist._id)}
-                                onToggle={() => toggleStockist(stockist._id)}
-                              />
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    {form.stockists.length > 0 && (
-                      <div className="mt-6 p-4 bg-emerald-50/80 border border-emerald-200/50 rounded-2xl backdrop-blur-xl">
-                        <p className="text-emerald-700 font-medium">
-                          Selected {form.stockists.length} stockist
-                          {form.stockists.length === 1 ? "" : "s"}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <div className="pt-8">
+            {/* Stockists Selection */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold text-slate-700 flex items-center gap-2">
+                  <Users className="text-emerald-500" size={18} />
+                  Assign Stockists
+                  <span className="text-xs font-normal text-slate-400">
+                    (Optional)
+                  </span>
+                </h2>
+                <div className="flex items-center gap-3">
                   <button
-                    type="submit"
-                    onClick={submit}
-                    className={`group relative w-full text-white font-bold py-5 px-8 rounded-2xl transition-all duration-500 transform hover:scale-105 overflow-hidden border border-white/30 ${
-                      loading
-                        ? "bg-gradient-to-r from-blue-400/70 to-indigo-500/70 cursor-not-allowed"
-                        : "bg-gradient-to-r from-blue-500 via-indigo-600 to-blue-700 hover:shadow-2xl hover:shadow-blue-500/25"
-                    }`}
-                    disabled={loading}
+                    type="button"
+                    onClick={selectAllFilteredStockists}
+                    className="text-xs font-bold text-emerald-600 hover:text-emerald-700"
                   >
-                    {/* Animated background */}
-                    {!loading && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-                    )}
-
-                    {/* Button content */}
-                    <div className="relative flex items-center justify-center gap-3">
-                      {loading ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          <span className="text-lg tracking-wider">
-                            Creating Medicine...
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          
-                          <span className="text-lg tracking-wider">
-                            CREATE MEDICINE
-                          </span>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Glowing border effect */}
-                    {!loading && (
-                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/30 via-indigo-500/30 to-blue-500/30 blur-md -z-10 animate-pulse"></div>
-                    )}
+                    Select All
+                  </button>
+                  <span className="w-1 h-1 rounded-full bg-gray-300" />
+                  <button
+                    type="button"
+                    onClick={clearAllStockists}
+                    className="text-xs font-bold text-red-500 hover:text-red-600"
+                  >
+                    Clear
                   </button>
                 </div>
               </div>
+
+              <div className="relative mb-4">
+                <Input
+                  icon={Search}
+                  placeholder="Search available stockists..."
+                  value={stockistSearch}
+                  onChange={(e) => setStockistSearch(e.target.value)}
+                  className={stockistSearch ? "pr-10" : ""}
+                />
+                {stockistSearch && (
+                  <button
+                    onClick={() => setStockistSearch("")}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    type="button"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {stockistsList.length === 0 ? (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-center">
+                    <p className="text-yellow-700 text-sm font-medium">No stockists found.</p>
+                  </div>
+                ) : filteredStockists.length === 0 ? (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-center">
+                    <p className="text-yellow-700 text-sm font-medium">No matching stockists found.</p>
+                  </div>
+                ) : (
+                  <div className="max-h-64 overflow-y-auto space-y-3">
+                    {filteredStockists.map((stockist) => (
+                      <StockistCard
+                        key={stockist._id}
+                        stockist={stockist}
+                        isSelected={form.stockists.includes(stockist._id)}
+                        onToggle={() => toggleStockist(stockist._id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {form.stockists.length > 0 && (
+                <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-2xl">
+                  <p className="text-emerald-700 text-sm font-medium">
+                    Selected {form.stockists.length} stockist
+                    {form.stockists.length === 1 ? "" : "s"}
+                  </p>
+                </div>
+              )}
             </div>
+
+            {/* Submit Button */}
+            <Btn
+              type="submit"
+              variant="primary"
+              onClick={submit}
+              disabled={loading}
+              className="w-full py-4"
+            >
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span>Creating Medicine...</span>
+                </>
+              ) : (
+                <span>CREATE MEDICINE</span>
+              )}
+            </Btn>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

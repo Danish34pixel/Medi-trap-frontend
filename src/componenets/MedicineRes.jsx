@@ -12,6 +12,7 @@ import {
   Clock,
   X,
 } from "lucide-react";
+import Card from "./ui/Card";
 
 function MedicineRes() {
   const location = useLocation();
@@ -30,29 +31,34 @@ function MedicineRes() {
 
   if (!medicine || !stockists || stockists.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <motion.div
-          className="text-center bg-white p-8 rounded-2xl shadow-xl max-w-md mx-4"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <X size={40} className="text-red-500" />
-          </div>
-          <h1 className="text-3xl font-bold mb-4 text-gray-800">
-            No Results Found
-          </h1>
-          <p className="text-gray-600 mb-6">
-            We couldn't find any stockists for your search. Please try searching
-            for a different medicine.
-          </p>
-          <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all hover:scale-105"
-            onClick={() => window.history.back()}
+          <Card
+            padding="p-8"
+            elevated
+            className="text-center rounded-4xl max-w-md mx-4"
           >
-            Go Back
-          </button>
+            <div className="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <X size={40} className="text-red-500" />
+            </div>
+            <h1 className="text-3xl font-bold mb-4 text-slate-800">
+              No Results Found
+            </h1>
+            <p className="text-slate-500 mb-6">
+              We couldn't find any stockists for your search. Please try
+              searching for a different medicine.
+            </p>
+            <button
+              className="bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-xl shadow-card transform transition-all hover:scale-105"
+              onClick={() => window.history.back()}
+            >
+              Go Back
+            </button>
+          </Card>
         </motion.div>
       </div>
     );
@@ -64,11 +70,12 @@ function MedicineRes() {
     )
   );
 
-  // Styled stockist cards with improved layout
+  // Styled stockist cards — mirrors Nebula's stockist-card visual language
+  // (avatar circle, phone row, location row, call button) from instant-demand.jsx
   const StockistCard = ({ stockist, index }) => {
     return (
       <motion.div
-        className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300"
+        className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-card hover:shadow-card-lg transition-all duration-300 cursor-pointer"
         onClick={() => setSelectedStockist(stockist)}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -77,49 +84,52 @@ function MedicineRes() {
         whileHover={{ y: -5 }}
         whileTap={{ scale: 0.98 }}
       >
-        <div className="relative">
-          {stockist.image ? (
-            <img
-              src={stockist.image}
-              alt={stockist.title}
-              className="w-full h-48 object-cover"
-            />
-          ) : (
-            <div className="w-full h-32 bg-gradient-to-r from-blue-400 to-indigo-500 flex items-center justify-center">
-              <Store size={40} className="text-white" />
-            </div>
-          )}
-          <div className="absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded-full">
-            Stockist
-          </div>
-        </div>
-
-        <div className="p-5">
-          <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-1">
-            {stockist.title}
-          </h3>
-
-          <div className="space-y-2 mb-4">
-            {stockist.phone && (
-              <div className="flex items-center text-sm text-gray-600">
-                <Phone size={16} className="mr-2 text-blue-500" />
-                <span>{stockist.phone}</span>
-              </div>
-            )}
-            {stockist.address && (
-              <div className="flex items-center text-sm text-gray-600">
-                <MapPin size={16} className="mr-2 text-blue-500" />
-                <span className="line-clamp-1">{stockist.address}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center mt-auto pt-2 border-t border-gray-100">
-            <Pill size={16} className="mr-2 text-blue-500" />
-            <span className="text-sm font-medium text-blue-600">
-              {stockist.Medicines?.length || 0} medicine(s) available
+        <div className="p-5 flex items-start gap-4">
+          <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-sky-50 flex items-center justify-center">
+            <span className="text-xl font-bold text-sky-600">
+              {(stockist.title || "S").charAt(0).toUpperCase()}
             </span>
           </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-bold text-slate-800 mb-2 line-clamp-1">
+              {stockist.title}
+            </h3>
+
+            <div className="space-y-1.5">
+              {stockist.phone && (
+                <div className="flex items-center text-sm text-slate-500">
+                  <Phone size={14} className="mr-2 text-slate-400" />
+                  <span>{stockist.phone}</span>
+                </div>
+              )}
+              {stockist.address && (
+                <div className="flex items-center text-sm text-slate-500">
+                  <MapPin size={14} className="mr-2 text-slate-400" />
+                  <span className="line-clamp-1">{stockist.address}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {stockist.phone && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                window.location.href = `tel:${stockist.phone}`;
+              }}
+              className="flex-shrink-0 w-10 h-10 rounded-full bg-sky-50 hover:bg-sky-100 flex items-center justify-center transition-colors"
+              aria-label={`Call ${stockist.title}`}
+            >
+              <Phone size={16} className="text-sky-600" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center px-5 py-3 border-t border-slate-100 bg-slate-50/60">
+          <Pill size={14} className="mr-2 text-sky-500" />
+          <span className="text-xs font-semibold text-sky-600">
+            {stockist.Medicines?.length || 0} medicine(s) available
+          </span>
         </div>
       </motion.div>
     );
@@ -138,7 +148,7 @@ function MedicineRes() {
         onClick={() => setSelectedStockist(null)}
       >
         <motion.div
-          className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+          className="bg-white rounded-4xl shadow-card-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto"
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9 }}
@@ -161,7 +171,7 @@ function MedicineRes() {
               </button>
             </div>
           ) : (
-            <div className="relative h-40 bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
+            <div className="relative h-40 bg-gradient-to-r from-sky-500 to-cyan-600 flex items-center justify-center">
               <Store size={60} className="text-white" />
               <button
                 className="absolute top-4 left-4 bg-white p-2 rounded-full text-gray-800 hover:bg-gray-100"
@@ -179,15 +189,15 @@ function MedicineRes() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <div className="space-y-4">
-                <div className="bg-blue-50 p-4 rounded-xl">
+                <div className="bg-sky-50 p-4 rounded-2xl">
                   <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                    <Info size={20} className="mr-2 text-blue-600" />
+                    <Info size={20} className="mr-2 text-sky-600" />
                     Contact Information
                   </h3>
                   <div className="space-y-3">
                     {selectedStockist.phone && (
                       <div className="flex items-center">
-                        <Phone size={18} className="mr-3 text-blue-500" />
+                        <Phone size={18} className="mr-3 text-sky-500" />
                         <div>
                           <div className="text-sm text-gray-500">Phone</div>
                           <div className="font-medium">
@@ -198,7 +208,7 @@ function MedicineRes() {
                     )}
                     {selectedStockist.address && (
                       <div className="flex items-start">
-                        <MapPin size={18} className="mr-3 mt-1 text-blue-500" />
+                        <MapPin size={18} className="mr-3 mt-1 text-sky-500" />
                         <div>
                           <div className="text-sm text-gray-500">Address</div>
                           <div className="font-medium">
@@ -208,7 +218,7 @@ function MedicineRes() {
                       </div>
                     )}
                     <div className="flex items-start">
-                      <Clock size={18} className="mr-3 mt-1 text-blue-500" />
+                      <Clock size={18} className="mr-3 mt-1 text-sky-500" />
                       <div>
                         <div className="text-sm text-gray-500">
                           Business Hours
@@ -224,7 +234,7 @@ function MedicineRes() {
               </div>
 
               <div>
-                <div className="bg-green-50 p-4 rounded-xl">
+                <div className="bg-green-50 p-4 rounded-2xl">
                   <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
                     <Pill size={20} className="mr-2 text-green-600" />
                     Available Medicines
@@ -256,7 +266,7 @@ function MedicineRes() {
                 Last updated: April 28, 2025
               </p>
               <button
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow transition-all hover:shadow-lg"
+                className="bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-xl shadow-card transition-all hover:shadow-card-lg"
                 onClick={() => setSelectedStockist(null)}
               >
                 Close Details

@@ -1,49 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Logo from "../Logo";
+import {
+  Home,
+  User,
+  MapPin,
+  Mail,
+  Phone,
+  Shield,
+  Lock,
+  UploadCloud,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 import { apiUrl } from "../config/api";
 import { setCookie, getCookie } from "../utils/cookies";
-
-const InputField = ({
-  icon: Icon,
-  label,
-  name,
-  type = "text",
-  placeholder,
-  required = false,
-  accept,
-  value,
-  onChange,
-}) => (
-  <div className="mb-4">
-    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-      {Icon && <Icon className="h-4 w-4 text-cyan-600" />}
-      {label}
-    </label>
-    {type === "file" ? (
-      <input
-        name={name}
-        type={type}
-        placeholder={placeholder}
-        onChange={onChange}
-        required={required}
-        accept={accept}
-        className="block w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all duration-200"
-      />
-    ) : (
-      <input
-        name={name}
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        required={required}
-        autoComplete={name === "password" ? "new-password" : "on"}
-        className="block w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all duration-200"
-      />
-    )}
-  </div>
-);
+import Card from "../ui/Card";
+import Input from "../ui/Input";
+import PageHeader from "../ui/PageHeader";
+import Btn from "../stockistComponents/Btn";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -60,6 +34,20 @@ const Signup = () => {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
+
+  // Purely visual: build/revoke an object URL so the drug license image can
+  // be previewed like Nebula's MedicalSignup picker, without touching the
+  // underlying File object that gets appended to FormData on submit.
+  useEffect(() => {
+    if (!form.drugLicenseImage) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(form.drugLicenseImage);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [form.drugLicenseImage]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -127,282 +115,165 @@ const Signup = () => {
     }
   };
 
-  // Icon components
-  const Building2 = (props) => (
-    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m11 0v-4a2 2 0 00-2-2h-2a2 2 0 00-2 2v4m6 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v12"
-      />
-    </svg>
-  );
-
-  const User = (props) => (
-    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-      />
-    </svg>
-  );
-
-  const MapPin = (props) => (
-    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-      />
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-      />
-    </svg>
-  );
-
-  const Mail = (props) => (
-    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-      />
-    </svg>
-  );
-
-  const Phone = (props) => (
-    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-      />
-    </svg>
-  );
-
-  const Shield = (props) => (
-    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-      />
-    </svg>
-  );
-
-  const Lock = (props) => (
-    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-      />
-    </svg>
-  );
-
-  const Upload = (props) => (
-    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-      />
-    </svg>
-  );
-
-  const CheckCircle = (props) => (
-    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-      />
-    </svg>
-  );
-
-  const AlertCircle = (props) => (
-    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-      />
-    </svg>
-  );
-
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
-      <div className="max-w-md w-full mx-auto">
-        {/* Logo and Header */}
-        <div className="text-center mb-6">
-          <div className="flex justify-center mb-3">
-            <Logo className="w-16 h-16" alt="MedTrap Logo" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-800">MedTrap</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Healthcare Management System
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+      <PageHeader
+        title="Create Account"
+        subtitle="Register your medical store"
+        role="medical"
+      />
 
+      <div className="max-w-md w-full mx-auto px-4 py-8">
         {/* Registration Form */}
-        <div className="bg-white rounded-3xl shadow-sm p-6 border border-gray-100">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-1">
-              Create Account
-            </h2>
-            <p className="text-sm text-gray-600">Register your medical store</p>
-          </div>
+        <Card padding="p-6" elevated className="rounded-4xl">
+          <Input
+            icon={Home}
+            label="Medical Store Name"
+            name="medicalName"
+            placeholder="Enter store name"
+            value={form.medicalName}
+            onChange={handleChange}
+            required
+            containerClassName="mb-4"
+          />
+          <Input
+            icon={User}
+            label="Owner Name"
+            name="ownerName"
+            placeholder="Enter owner's name"
+            value={form.ownerName}
+            onChange={handleChange}
+            required
+            containerClassName="mb-4"
+          />
+          <Input
+            icon={MapPin}
+            label="Address"
+            name="address"
+            placeholder="Complete address"
+            value={form.address}
+            onChange={handleChange}
+            required
+            containerClassName="mb-4"
+          />
+          <Input
+            icon={Mail}
+            label="Email Address"
+            name="email"
+            type="email"
+            placeholder="your@email.com"
+            value={form.email}
+            onChange={handleChange}
+            required
+            containerClassName="mb-4"
+          />
+          <Input
+            icon={Phone}
+            label="Contact Number"
+            name="contactNo"
+            type="tel"
+            placeholder="Phone number"
+            value={form.contactNo}
+            onChange={handleChange}
+            required
+            containerClassName="mb-4"
+          />
+          <Input
+            icon={Shield}
+            label="Drug License Number"
+            name="drugLicenseNo"
+            placeholder="License number"
+            value={form.drugLicenseNo}
+            onChange={handleChange}
+            required
+            containerClassName="mb-4"
+          />
 
-          {/* Medical store signup form (only option) */}
-          <>
-            <InputField
-              icon={Building2}
-              label="Medical Store Name"
-              name="medicalName"
-              placeholder="Enter store name"
-              value={form.medicalName}
-              onChange={handleChange}
-              required
-            />
-            <InputField
-              icon={User}
-              label="Owner Name"
-              name="ownerName"
-              placeholder="Enter owner's name"
-              value={form.ownerName}
-              onChange={handleChange}
-              required
-            />
-            <InputField
-              icon={MapPin}
-              label="Address"
-              name="address"
-              placeholder="Complete address"
-              value={form.address}
-              onChange={handleChange}
-              required
-            />
-            <InputField
-              icon={Mail}
-              label="Email Address"
-              name="email"
-              type="email"
-              placeholder="your@email.com"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-            <InputField
-              icon={Phone}
-              label="Contact Number"
-              name="contactNo"
-              type="tel"
-              placeholder="Phone number"
-              value={form.contactNo}
-              onChange={handleChange}
-              required
-            />
-            <InputField
-              icon={Shield}
-              label="Drug License Number"
-              name="drugLicenseNo"
-              placeholder="License number"
-              value={form.drugLicenseNo}
-              onChange={handleChange}
-              required
-            />
-
-            {/* File Upload */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Drug License Image
-              </label>
-              <div
-                className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
-                  dragActive
-                    ? "border-cyan-400 bg-cyan-50"
-                    : "border-gray-200 hover:border-cyan-300"
-                }`}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-              >
-                <input
-                  name="drugLicenseImage"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleChange}
-                  required
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                <Upload className="mx-auto h-10 w-10 text-gray-400 mb-2" />
-                <div>
-                  <p className="text-sm text-gray-600">
-                    {form.drugLicenseImage ? (
-                      <span className="text-cyan-600 font-medium">
-                        ✓ {form.drugLicenseImage.name}
-                      </span>
-                    ) : (
-                      <>
-                        <span className="font-medium text-cyan-600">
-                          Tap to upload
-                        </span>{" "}
-                        or drag and drop
-                      </>
-                    )}
+          {/* Image Picker — mirrors Nebula's preview-with-checkmark-overlay pattern */}
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              Drug License Image
+            </label>
+            <div
+              className={`relative border-2 border-dashed rounded-2xl text-center transition-all overflow-hidden ${
+                previewUrl
+                  ? "border-slate-200"
+                  : dragActive
+                  ? "border-role-medical bg-orange-50"
+                  : "border-slate-200 hover:border-role-medical/60"
+              }`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              <input
+                name="drugLicenseImage"
+                type="file"
+                accept="image/*"
+                onChange={handleChange}
+                required={!form.drugLicenseImage}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              {previewUrl ? (
+                <div className="relative h-36">
+                  <img
+                    src={previewUrl}
+                    alt="Drug license preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center gap-1">
+                    <CheckCircle className="w-6 h-6 text-emerald-500" />
+                    <span className="text-sm font-bold text-emerald-600">
+                      License Selected
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center bg-slate-50 py-8 px-4">
+                  <UploadCloud className="w-9 h-9 text-slate-400 mb-2" />
+                  <p className="text-sm text-slate-500">
+                    <span className="font-medium text-role-medical">
+                      Tap to upload
+                    </span>{" "}
+                    or drag and drop
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-slate-400 mt-1">
                     PNG, JPG, GIF up to 10MB
                   </p>
                 </div>
-              </div>
-            </div>
-
-            <InputField
-              icon={Lock}
-              label="Password"
-              name="password"
-              type="password"
-              placeholder="Create password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
-
-            <button
-              onClick={handleSubmit}
-              disabled={isLoading}
-              className={`w-full py-4 rounded-2xl font-bold text-white shadow-md transition-all ${
-                isLoading
-                  ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-gradient-to-r from-cyan-500 to-cyan-600 hover:shadow-lg active:scale-98"
-              }`}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Creating Account...
-                </div>
-              ) : (
-                "Create Account"
               )}
-            </button>
-          </>
+            </div>
+          </div>
+
+          <Input
+            icon={Lock}
+            label="Password"
+            name="password"
+            type="password"
+            placeholder="Create password"
+            value={form.password}
+            onChange={handleChange}
+            required
+            containerClassName="mb-5"
+          />
+
+          <Btn
+            type="button"
+            variant="medical"
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="w-full py-3.5 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              "Create Account"
+            )}
+          </Btn>
 
           {message && (
             <div
@@ -430,33 +301,33 @@ const Signup = () => {
           )}
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-600">
               Already have an account?{" "}
               <button
                 type="button"
                 onClick={() => navigate("/login")}
-                className="font-semibold text-cyan-600 hover:text-cyan-700 transition-colors"
+                className="font-semibold text-role-medical hover:brightness-90 transition-colors"
               >
                 Sign in
               </button>
             </p>
           </div>
-        </div>
+        </Card>
 
         {/* Footer */}
         <div className="mt-6 text-center">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-slate-500">
             By registering, you agree to our{" "}
             <a
               href="#"
-              className="text-cyan-600 hover:text-cyan-700 font-medium"
+              className="text-role-medical hover:brightness-90 font-medium"
             >
               Terms of Service
             </a>{" "}
             and{" "}
             <Link
               to="/privacy-policy"
-              className="text-cyan-600 hover:text-cyan-700 font-medium"
+              className="text-role-medical hover:brightness-90 font-medium"
             >
               Privacy Policy
             </Link>

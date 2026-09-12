@@ -1,7 +1,11 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { XCircle, Info } from "lucide-react";
 import { apiUrl } from "../config/api";
+import PageHeader from "../ui/PageHeader";
+import Card from "../ui/Card";
+import Btn from "../stockistComponents/Btn";
 
 const MedicalMiddle = () => {
   const navigate = useNavigate();
@@ -87,20 +91,53 @@ const MedicalMiddle = () => {
     };
   }, [navigate]);
 
+  const isFailed = message === "Document verification failed";
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-white p-6 rounded-xl shadow-lg text-center">
-        <h1 className="text-2xl font-bold mb-4">
-          {message === "Document verification failed"
-            ? "Verification Failed"
-            : "Documents under verification"}
-        </h1>
-        <p className="text-gray-600 mb-4">{message}</p>
-        {message !== "Document verification failed" && (
-          <p className="text-sm text-gray-400">
-            You can close this page and wait for an email or login later.
-          </p>
-        )}
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+      <PageHeader title="Account Verification" role="medical" showBack={false} />
+
+      <div className="flex items-center justify-center p-6 py-12">
+        <Card
+          padding="p-8"
+          elevated
+          className="max-w-md w-full rounded-4xl flex flex-col items-center text-center"
+        >
+          {checking ? (
+            <div className="w-20 h-20 rounded-full bg-orange-50 flex items-center justify-center mb-6">
+              <div className="w-10 h-10 border-4 border-role-medical/20 border-t-role-medical rounded-full animate-spin" />
+            </div>
+          ) : isFailed ? (
+            <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-6">
+              <XCircle className="w-12 h-12 text-red-500" />
+            </div>
+          ) : (
+            <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mb-6">
+              <Info className="w-12 h-12 text-emerald-500" />
+            </div>
+          )}
+
+          <h1 className="text-xl font-bold text-slate-800 mb-4">
+            {isFailed ? "Verification Failed" : "Documents under verification"}
+          </h1>
+
+          <p className="text-slate-600 mb-4 leading-relaxed">{message}</p>
+
+          {!isFailed && (
+            <p className="text-sm text-slate-400 mb-8 leading-relaxed">
+              You can safely close this screen. Check back later to see if you
+              have been approved.
+            </p>
+          )}
+
+          <Btn
+            variant="default"
+            onClick={() => navigate("/")}
+            className="w-full justify-center"
+          >
+            Return to Main Screen
+          </Btn>
+        </Card>
       </div>
     </div>
   );

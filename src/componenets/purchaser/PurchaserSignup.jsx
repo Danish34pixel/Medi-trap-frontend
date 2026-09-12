@@ -3,16 +3,22 @@ import { useNavigate } from "react-router-dom";
 import { apiUrl, postForm, postJson } from "../config/api";
 import {
   Camera,
-  Upload,
   User,
   MapPin,
   Phone,
-  Image,
+  Mail,
+  Lock,
+  Image as ImageIcon,
   CheckCircle,
   AlertCircle,
   Search,
   X,
+  ArrowRight,
 } from "lucide-react";
+import Card from "../ui/Card";
+import Input from "../ui/Input";
+import PageHeader from "../ui/PageHeader";
+import Btn from "../stockistComponents/Btn";
 
 export default function PurchaserSignup() {
   const navigate = useNavigate();
@@ -323,222 +329,177 @@ export default function PurchaserSignup() {
     setErrors((prev) => ({ ...prev, stockists: "" }));
   };
 
+  const isDuplicateAccountError =
+    !!errorMessage &&
+    (errorMessage.toLowerCase().includes("already registered") ||
+      errorMessage.toLowerCase().includes("already exist"));
+
   return (
-    <div className="min-h-screen bg-gray-50 py-6 px-4">
-      <div className="max-w-md mx-auto">
+    <div className="min-h-screen bg-slate-50 pb-10">
+      <PageHeader
+        title="Purchaser Registration"
+        subtitle="Complete your profile to get started"
+        role="purchaser"
+        onBack={() => navigate("/purchaserLogin")}
+      />
+
+      <div className="max-w-md mx-auto px-4 pt-6">
         {/* Logo */}
         <div className="flex justify-center mb-6">
           <img
             src="/final-logo.png"
             alt="Medi-Trap Logo"
-            className="h-16 w-auto"
+            className="h-14 w-auto"
           />
-        </div>
-
-        {/* Header */}
-        <div className="bg-white rounded-3xl shadow-sm p-6 mb-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-              <User className="w-5 h-5 text-gray-600" />
-            </div>
-            <h1 className="text-xl font-bold text-gray-800">
-              Purchaser Registration
-            </h1>
-          </div>
-          <p className="text-sm text-gray-500">
-            Complete your profile to get started
-          </p>
         </div>
 
         {/* Status Messages */}
         {submitStatus === "success" && (
-          <div className="bg-white rounded-2xl shadow-sm p-4 mb-4 border-l-4 border-green-500">
+          <Card padding="p-4" className="mb-4 border-l-4 border-green-500">
             <div className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold text-gray-800 text-sm">
+                <h3 className="font-semibold text-slate-800 text-sm">
                   Success!
                 </h3>
-                <p className="text-xs text-gray-600 mt-1">
+                <p className="text-xs text-slate-600 mt-1">
                   Registration completed successfully
                 </p>
               </div>
             </div>
-          </div>
+          </Card>
         )}
 
         {submitStatus === "error" && (
-          <div className="bg-white rounded-2xl shadow-sm p-4 mb-4 border-l-4 border-red-500">
+          <Card padding="p-4" className="mb-4 border-l-4 border-red-500">
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <h3 className="font-semibold text-gray-800 text-sm">Error</h3>
-                <p className="text-xs text-gray-600 mt-1">
+              <div className="flex-1">
+                <h3 className="font-semibold text-slate-800 text-sm">Error</h3>
+                <p className="text-xs text-slate-600 mt-1">
                   {errorMessage || "Something went wrong. Please try again."}
                 </p>
+                {isDuplicateAccountError && (
+                  <button
+                    type="button"
+                    onClick={() => navigate("/purchaserLogin")}
+                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-role-purchaser hover:underline"
+                  >
+                    Login to existing account
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </div>
-          </div>
+          </Card>
         )}
         {submitStatus === "route-missing" && (
-          <div className="bg-white rounded-2xl shadow-sm p-4 mb-4 border-l-4 border-yellow-500">
+          <Card padding="p-4" className="mb-4 border-l-4 border-yellow-500">
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold text-gray-800 text-sm">
+                <h3 className="font-semibold text-slate-800 text-sm">
                   Unavailable
                 </h3>
-                <p className="text-xs text-gray-600 mt-1">{errorMessage}</p>
+                <p className="text-xs text-slate-600 mt-1">{errorMessage}</p>
               </div>
             </div>
-          </div>
+          </Card>
         )}
 
         {/* Form Card */}
-        <div className="bg-white rounded-3xl shadow-sm p-6 space-y-5">
-          {/* Full Name */}
-          <div>
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
-              Full Name
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-3 bg-gray-50 border ${
-                  errors.fullName ? "border-red-300" : "border-transparent"
-                } rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white transition text-sm`}
-                placeholder="Enter your full name"
-              />
-            </div>
-            {errors.fullName && (
-              <p className="text-red-500 text-xs mt-1.5 ml-1">
-                {errors.fullName}
-              </p>
-            )}
-          </div>
+        <Card padding="p-6" className="rounded-4xl space-y-5">
+          <Input
+            label="Full Name"
+            icon={User}
+            name="fullName"
+            value={formData.fullName}
+            onChange={handleInputChange}
+            placeholder="Enter your full name"
+            error={errors.fullName}
+          />
 
           {/* Address */}
           <div>
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
               Address
             </label>
-            <textarea
-              name="address"
-              value={formData.address}
-              onChange={handleInputChange}
-              rows="3"
-              className={`w-full px-4 py-3 bg-gray-50 border ${
-                errors.address ? "border-red-300" : "border-transparent"
-              } rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white transition resize-none text-sm`}
-              placeholder="Enter your complete address"
-            />
+            <div className="relative">
+              <MapPin className="absolute left-3.5 top-3.5 w-5 h-5 text-slate-400" />
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                rows="3"
+                className={`w-full pl-11 pr-4 py-3 rounded-xl border ${
+                  errors.address
+                    ? "border-red-300 focus:ring-red-500"
+                    : "border-slate-200 focus:ring-blue-500"
+                } bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 transition-colors resize-none text-sm`}
+                placeholder="Enter your complete address"
+              />
+            </div>
             {errors.address && (
-              <p className="text-red-500 text-xs mt-1.5 ml-1">
-                {errors.address}
-              </p>
+              <p className="mt-1 text-xs text-red-500">{errors.address}</p>
             )}
           </div>
 
-          {/* Contact Number */}
-          <div>
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
-              Contact Number
-            </label>
-            <input
-              type="tel"
-              name="contactNo"
-              value={formData.contactNo}
-              onChange={handleInputChange}
-              maxLength="10"
-              className={`w-full px-4 py-3 bg-gray-50 border ${
-                errors.contactNo ? "border-red-300" : "border-transparent"
-              } rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white transition text-sm`}
-              placeholder="10-digit mobile number"
-            />
-            {errors.contactNo && (
-              <p className="text-red-500 text-xs mt-1.5 ml-1">
-                {errors.contactNo}
-              </p>
-            )}
-          </div>
+          <Input
+            label="Contact Number"
+            icon={Phone}
+            type="tel"
+            name="contactNo"
+            value={formData.contactNo}
+            onChange={handleInputChange}
+            maxLength="10"
+            placeholder="10-digit mobile number"
+            error={errors.contactNo}
+          />
 
-          {/* Email */}
-          <div>
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
-              Email Address
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              className={`w-full px-4 py-3 bg-gray-50 border ${
-                errors.email ? "border-red-300" : "border-transparent"
-              } rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white transition text-sm`}
-              placeholder="your.email@example.com"
-            />
-            {errors.email && (
-              <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.email}</p>
-            )}
-          </div>
+          <Input
+            label="Email Address"
+            icon={Mail}
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            placeholder="your.email@example.com"
+            error={errors.email}
+          />
 
           {/* Password Fields */}
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
-                Password
-              </label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-3 bg-gray-50 border ${
-                  errors.password ? "border-red-300" : "border-transparent"
-                } rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white transition text-sm`}
-                placeholder="••••••"
-              />
-              {errors.password && (
-                <p className="text-red-500 text-xs mt-1.5">{errors.password}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
-                Confirm
-              </label>
-              <input
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-3 bg-gray-50 border ${
-                  errors.confirmPassword
-                    ? "border-red-300"
-                    : "border-transparent"
-                } rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white transition text-sm`}
-                placeholder="••••••"
-              />
-              {errors.confirmPassword && (
-                <p className="text-red-500 text-xs mt-1.5">
-                  {errors.confirmPassword}
-                </p>
-              )}
-            </div>
+            <Input
+              label="Password"
+              icon={Lock}
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder="••••••"
+              error={errors.password}
+            />
+            <Input
+              label="Confirm"
+              icon={Lock}
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleInputChange}
+              placeholder="••••••"
+              error={errors.confirmPassword}
+            />
           </div>
 
           {/* Image Uploads */}
           <div className="grid grid-cols-2 gap-3">
             {/* Aadhar Card */}
             <div>
-              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                 Aadhar Card
               </label>
               <div
-                className={`relative bg-gradient-to-br from-cyan-400 to-cyan-500 rounded-2xl overflow-hidden ${
+                className={`relative bg-gradient-to-br from-cyan-400 to-cyan-500 rounded-3xl overflow-hidden ${
                   errors.aadharImage ? "ring-2 ring-red-300" : ""
                 }`}
               >
@@ -566,7 +527,7 @@ export default function PurchaserSignup() {
                     className="cursor-pointer block aspect-square"
                   >
                     <div className="flex flex-col items-center justify-center h-full p-4">
-                      <Image className="w-8 h-8 text-white mb-2" />
+                      <ImageIcon className="w-8 h-8 text-white mb-2" />
                       <span className="text-xs text-white font-medium text-center">
                         Upload Aadhar
                       </span>
@@ -582,7 +543,7 @@ export default function PurchaserSignup() {
                 )}
               </div>
               {errors.aadharImage && (
-                <p className="text-red-500 text-xs mt-1.5">
+                <p className="mt-1 text-xs text-red-500">
                   {errors.aadharImage}
                 </p>
               )}
@@ -590,11 +551,11 @@ export default function PurchaserSignup() {
 
             {/* Photo */}
             <div>
-              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                 Your Photo
               </label>
               <div
-                className={`relative bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl overflow-hidden ${
+                className={`relative bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl overflow-hidden ${
                   errors.photo ? "ring-2 ring-red-300" : ""
                 }`}
               >
@@ -638,14 +599,14 @@ export default function PurchaserSignup() {
                 )}
               </div>
               {errors.photo && (
-                <p className="text-red-500 text-xs mt-1.5">{errors.photo}</p>
+                <p className="mt-1 text-xs text-red-500">{errors.photo}</p>
               )}
             </div>
           </div>
 
           {/* Stockists Selection */}
           <div>
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
               Select Stockists (min. 3)
             </label>
 
@@ -658,13 +619,13 @@ export default function PurchaserSignup() {
                   return (
                     <span
                       key={id}
-                      className="inline-flex items-center gap-1.5 bg-cyan-50 text-cyan-700 px-3 py-1.5 rounded-full text-xs font-medium"
+                      className="inline-flex items-center gap-1.5 bg-blue-50 text-role-purchaser px-3 py-1.5 rounded-full text-xs font-medium"
                     >
                       {label}
                       <button
                         type="button"
                         onClick={() => toggleStockist(id)}
-                        className="hover:bg-cyan-200 rounded-full p-0.5 transition"
+                        className="hover:bg-blue-200/60 rounded-full p-0.5 transition"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -677,7 +638,7 @@ export default function PurchaserSignup() {
             {/* Search Box */}
             <div className="relative">
               <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                <Search className="w-4 h-4 text-gray-400" />
+                <Search className="w-4 h-4 text-slate-400" />
               </div>
               <input
                 type="text"
@@ -688,14 +649,18 @@ export default function PurchaserSignup() {
                 }}
                 onFocus={() => setStockistDropdownOpen(true)}
                 placeholder="Search by name, email or phone"
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-white transition text-sm"
+                className={`w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:bg-white transition-colors text-sm ${
+                  errors.stockists
+                    ? "border-red-300 focus:ring-red-500"
+                    : "border-slate-200 focus:ring-blue-500"
+                }`}
               />
 
               {/* Dropdown */}
               {stockistDropdownOpen && (
-                <div className="absolute z-20 left-0 right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg max-h-48 overflow-auto">
+                <div className="absolute z-20 left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-card-lg max-h-48 overflow-auto">
                   {loadingStockists ? (
-                    <div className="p-4 text-sm text-gray-500 text-center">
+                    <div className="p-4 text-sm text-slate-500 text-center">
                       Loading...
                     </div>
                   ) : (
@@ -729,29 +694,27 @@ export default function PurchaserSignup() {
                               setStockistQuery("");
                               setStockistDropdownOpen(false);
                             }}
-                            className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition flex items-center justify-between ${
-                              isSelected ? "opacity-50" : ""
+                            className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-2 ${
+                              isSelected ? "bg-blue-50/60" : ""
                             }`}
                           >
-                            <div>
-                              <div className="text-sm font-medium text-gray-800">
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-slate-800 truncate">
                                 {label}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-slate-500 truncate">
                                 {s.email || s.phone}
                               </div>
                             </div>
                             {isSelected && (
-                              <span className="text-xs text-cyan-500 font-semibold">
-                                Selected
-                              </span>
+                              <CheckCircle className="w-4 h-4 text-role-purchaser flex-shrink-0" />
                             )}
                           </button>
                         );
                       })
                   )}
                   {stockists.length === 0 && !loadingStockists && (
-                    <div className="p-4 text-sm text-gray-500 text-center">
+                    <div className="p-4 text-sm text-slate-500 text-center">
                       No stockists found
                     </div>
                   )}
@@ -760,40 +723,39 @@ export default function PurchaserSignup() {
             </div>
 
             {errors.stockists && (
-              <p className="text-red-500 text-xs mt-1.5 ml-1">
+              <p className="mt-1.5 ml-1 text-xs text-red-500">
                 {errors.stockists}
               </p>
             )}
           </div>
 
           {/* Submit Button */}
-          <button
+          <Btn
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className={`w-full py-4 rounded-2xl font-semibold text-white transition shadow-lg ${
-              isSubmitting
-                ? "bg-gray-300 cursor-not-allowed"
-                : "bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-500 hover:to-cyan-600 active:scale-[0.98]"
+            variant="purchaser"
+            className={`w-full py-3.5 text-base ${
+              isSubmitting ? "opacity-60 pointer-events-none hover:scale-100" : ""
             }`}
           >
             {isSubmitting ? "Submitting..." : "Complete Registration"}
-          </button>
+          </Btn>
 
           {/* Sign In Link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 mb-2">
+          <div className="pt-2 text-center">
+            <p className="text-sm text-slate-600 mb-1">
               Already have an account?
             </p>
             <button
               type="button"
               onClick={() => navigate("/purchaserLogin")}
-              className="text-cyan-600 hover:text-cyan-700 font-semibold text-sm transition"
+              className="text-role-purchaser hover:brightness-90 font-semibold text-sm transition"
             >
               Sign In Here
             </button>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );
