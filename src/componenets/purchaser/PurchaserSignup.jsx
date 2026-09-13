@@ -192,24 +192,14 @@ export default function PurchaserSignup() {
       submitData.append("contactNo", formData.contactNo.trim());
       submitData.append("aadharImage", aFile);
       // Auth route expects 'personalPhoto' for purchaser signup
-      submitData.append("photo", pFile);
+      submitData.append("personalPhoto", pFile);
 
-      // attach token if available so backend authenticate middleware accepts the multipart request
       const token = localStorage.getItem("token");
 
-      // Use auth purchaser-signup so we also get back a token + user
-      const createUrl = apiUrl("/api/auth/purchaser-signup");
-      const tokenPreview = token ? `${String(token).slice(0, 8)}...` : null;
-      console.debug("Purchaser create request ->", {
-        url: createUrl,
-        token: !!token,
-        tokenPreview,
-        pageProtocol:
-          typeof window !== "undefined" ? window.location.protocol : null,
-        online: typeof navigator !== "undefined" ? navigator.onLine : null,
-      });
-      const created = await postForm("/api/purchaser", submitData, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      // Public signup route — no token exists yet for a brand-new purchaser.
+      // (Previously posted to /api/purchaser, which requires `authenticate`
+      // and always 401'd for unauthenticated signups — nothing was ever saved.)
+      const created = await postForm("/api/auth/purchaser-signup", submitData, {
         credentials: "omit",
       });
 

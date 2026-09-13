@@ -29,15 +29,6 @@ export default function SelectRolePage() {
       color: "emerald",
     },
     {
-      id: "Purchaser",
-      name: "Purchaser",
-      icon: "/purchaser-logo.jpg",
-      gradient: "from-blue-400 to-indigo-500",
-      bgGlow: "bg-blue-500/10",
-      description: "Handle procurement",
-      color: "blue",
-    },
-    {
       id: "Medical Owner",
       name: "Medical (Retailer)",
       icon: "/medical-owner.jpg",
@@ -45,6 +36,15 @@ export default function SelectRolePage() {
       bgGlow: "bg-orange-500/10",
       description: "Clinic management",
       color: "orange",
+    },
+    {
+      id: "Purchaser",
+      name: "Purchaser",
+      icon: "/purchaser-logo.jpg",
+      gradient: "from-blue-400 to-indigo-500",
+      bgGlow: "bg-blue-500/10",
+      description: "Handle procurement",
+      color: "blue",
     },
     {
       id: "Staff",

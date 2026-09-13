@@ -8,43 +8,36 @@ import {
   Phone,
 } from "lucide-react";
 import API_BASE, { apiUrl } from "./config/api";
-import {
-  medicineReferencesStockist,
-  medicineDisplayName,
-  nameMatchesStockistItems,
-  tokenOverlapScore,
-} from "./utils/normalizeMatching";
+import { medicineDisplayName } from "./utils/normalizeMatching";
 import PageHeader from "./ui/PageHeader";
 import Card from "./ui/Card";
 
 export default function Demand() {
-  const [lines, setLines] = useState([{ id: Date.now(), name: "", qty: 0 }]);
+  const [lines, setLines] = useState([
+    { id: Date.now(), name: "", qty: 0, medicineId: null },
+  ]);
   const [medicines, setMedicines] = useState([]);
   const [stockists, setStockists] = useState([]);
   const [result, setResult] = useState(null);
-  const [debugInfo, setDebugInfo] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [focusedLineId, setFocusedLineId] = useState(null);
   const SAVE_KEY = "savedDemand";
 
-  // Autosuggest, mirroring Nebula's demand.jsx typeahead — purely additive UI
-  // over the medicines list already fetched below; does not touch the
-  // matching/grouping logic in createDemand().
+  // Autosuggest — returns the actual medicine objects (not just names) so a
+  // click can store the real _id alongside the display text.
   const getSuggestions = (value) => {
     const q = (value || "").toString().trim().toLowerCase();
     if (q.length < 2) return [];
     const seen = new Set();
     const out = [];
     for (const m of medicines || []) {
-      const name = (m?.name || m?.medicineName || m?.title || "")
-        .toString()
-        .trim();
+      const name = medicineDisplayName(m).trim();
       if (!name) continue;
       const key = name.toLowerCase();
       if (!key.includes(q) || seen.has(key)) continue;
       seen.add(key);
-      out.push(name);
+      out.push({ _id: m._id, name });
       if (out.length >= 5) break;
     }
     return out;
@@ -94,163 +87,73 @@ export default function Demand() {
   const addLine = () =>
     setLines((prev) => [
       ...prev,
-      { id: Date.now() + Math.random(), name: "", qty: 0 },
+      { id: Date.now() + Math.random(), name: "", qty: 0, medicineId: null },
     ]);
   const removeLine = (id) =>
     setLines((prev) => prev.filter((l) => l.id !== id));
 
-  // Core grouping logic: For each demand line, find medicines that match and check stockist availability
+  // Sends the demand to the backend, which does the medicine/stockist
+  // matching + auto-distribution server-side (routes/demand.js POST /create)
+  // and persists it. Previously this function only ran a duplicated,
+  // client-side version of that matching logic and never called the
+  // backend at all — nothing was ever saved to MongoDB.
   const createDemand = async () => {
     setLoading(true);
     setError(null);
     try {
-      // Build groups by searching medicines and stockists.
+      const items = lines
+        .map((l) => ({
+          name: (l.name || "").trim(),
+          qty: Math.max(1, Number(l.qty) || 1),
+          medicineId: l.medicineId || undefined,
+        }))
+        .filter((it) => it.name);
+
+      if (items.length === 0) {
+        setError("Add at least one medicine name.");
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+      const res = await fetch(apiUrl("/api/demand/create"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ items }),
+      });
+
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.success) {
+        console.error("Create demand failed:", res.status, body);
+        setError(body.message || `Could not create demand (${res.status}).`);
+        return;
+      }
+
+      // Reshape the server's per-medicine inventory view into per-stockist
+      // groups for display, keeping the existing results UI unchanged.
       const groups = {};
-
-      const normalizeQuery = (s) => (s || "").toString().trim();
-
-      // First, check if stockists have medicines listed in their inventory
-      const checkStockistInventory = (medicine, stockist) => {
-        // Check if medicine exists in stockist's Medicines array
-        if (stockist.Medicines && Array.isArray(stockist.Medicines)) {
-          return stockist.Medicines.some(med => 
-            med.toLowerCase() === medicine.toLowerCase() ||
-            (medicine.name && med.toLowerCase() === medicine.name.toLowerCase())
-          );
-        }
-        return false;
-      };
-
-      for (const line of lines) {
-        const thisDebug = {
-          query: line.name,
-          foundMeds: [],
-          candidateStockists: [],
-          assignedTo: null,
-          availability: []
+      for (const inv of body.data.inventory || []) {
+        const entry = {
+          line: { name: inv.requestedAs, qty: inv.qty },
+          medicine: inv.medicineId
+            ? { _id: inv.medicineId, name: inv.medicineName }
+            : null,
         };
-        const q = normalizeQuery(line.name);
-        if (!q) {
-          groups["unmatched"] = groups["unmatched"] || [];
-          groups["unmatched"].push({ line });
+        if (!inv.stockists || inv.stockists.length === 0) {
+          groups.unmatched = groups.unmatched || [];
+          groups.unmatched.push(entry);
           continue;
         }
-
-        // Try to find matching medicines in DB first (exact -> includes)
-        const qLower = q.toLowerCase();
-        let foundMeds = [];
-        if (Array.isArray(medicines) && medicines.length > 0) {
-          const exact = medicines.filter((m) => {
-            const mn = (m.name || m.medicineName || m.title || "")
-              .toString()
-              .toLowerCase();
-            return mn === qLower;
-          });
-          const includes = medicines.filter((m) => {
-            const mn = (m.name || m.medicineName || m.title || "")
-              .toString()
-              .toLowerCase();
-            return mn.includes(qLower) && mn !== qLower;
-          });
-          foundMeds = exact.length ? exact : includes;
-          thisDebug.foundMeds = foundMeds.map(
-            (m) => medicineDisplayName(m) || String(m._id)
-          );
+        for (const st of inv.stockists) {
+          const label = st.name || String(st.id);
+          groups[label] = groups[label] || [];
+          groups[label].push(entry);
         }
-
-        let assigned = false;
-
-        // If we have matched medicines, check stockist availability
-        for (const med of foundMeds) {
-          // Find stockists that have this medicine in their inventory
-          let availableStockists = [];
-          if (Array.isArray(stockists) && stockists.length > 0) {
-            availableStockists = stockists.filter(s => {
-              // Check if medicine is explicitly listed in stockist's inventory
-              const hasInInventory = checkStockistInventory(med, s);
-              // Or if medicine references this stockist
-              const isReferenced = medicineReferencesStockist(med, s._id);
-              return hasInInventory || isReferenced;
-            });
-            
-            // Add availability info to debug
-            thisDebug.availability = availableStockists.map(s => s.name || s.title);
-
-            // Process each available stockist
-            for (const matchedStockist of availableStockists) {
-
-              const label = matchedStockist.title || matchedStockist.name || matchedStockist._id;
-              thisDebug.candidateStockists.push(label);
-              groups[label] = groups[label] || [];
-              groups[label].push({ 
-                line, 
-                medicine: med,
-                available: true, // Mark as available since we confirmed it's in inventory
-                quantity: line.qty
-              });
-              assigned = true;
-              thisDebug.assignedTo = label;
-            }
-          }
-        }
-
-        if (assigned) {
-          thisDebug.status = "Found with availability";
-          continue;
-        }
-
-        // If not assigned yet, check stockists' medicine lists directly
-        if (!assigned && Array.isArray(stockists) && stockists.length > 0) {
-          // Find stockists that list this medicine in their inventory
-          const stockistsWithMedicine = stockists.filter(s => 
-            checkStockistInventory({ name: q }, s)
-          );
-
-          // If direct inventory match found, use those stockists
-          if (stockistsWithMedicine.length > 0) {
-            for (const matchedStockist of stockistsWithMedicine) {
-              const label = matchedStockist.title || matchedStockist.name || matchedStockist._id;
-              thisDebug.candidateStockists.push(label);
-              groups[label] = groups[label] || [];
-              groups[label].push({ 
-                line, 
-                medicine: { name: q },
-                available: true,
-                quantity: line.qty
-              });
-              assigned = true;
-              thisDebug.assignedTo = label;
-            }
-          }
-
-          if (matchedStockist) {
-            thisDebug.candidateStockists.push(
-              matchedStockist.title ||
-                matchedStockist.name ||
-                matchedStockist._id
-            );
-            const label =
-              matchedStockist.title ||
-              matchedStockist.name ||
-              matchedStockist._id;
-            groups[label] = groups[label] || [];
-            // we may not have a medicine object to attach; attach just the line
-            groups[label].push({ line, medicine: null });
-            assigned = true;
-            thisDebug.assignedTo = label;
-          }
-        }
-
-        if (!assigned) {
-          groups["unmatched"] = groups["unmatched"] || [];
-          groups["unmatched"].push({ line });
-          thisDebug.assignedTo = "unmatched";
-        }
-        setDebugInfo((d) => [...d, thisDebug]);
       }
 
       setResult(groups);
-      // persist to localStorage so the results survive refreshes (no TTL)
       try {
         localStorage.setItem(
           SAVE_KEY,
@@ -260,7 +163,7 @@ export default function Demand() {
         console.warn("Could not save demand to localStorage", e);
       }
     } catch (e) {
-      console.error(e);
+      console.error("Create demand error:", e);
       setError("Could not create demand. See console.");
     } finally {
       setLoading(false);
@@ -305,7 +208,7 @@ export default function Demand() {
                 <input
                   value={line.name}
                   onChange={(e) =>
-                    updateLine(line.id, { name: e.target.value })
+                    updateLine(line.id, { name: e.target.value, medicineId: null })
                   }
                   onFocus={() => setFocusedLineId(line.id)}
                   onBlur={() =>
@@ -354,9 +257,13 @@ export default function Demand() {
                 {suggestions.map((s, idx) => (
                   <button
                     type="button"
-                    key={`${line.id}-${idx}`}
-                    onClick={() => {
-                      updateLine(line.id, { name: s });
+                    key={s._id || `${line.id}-${idx}`}
+                    // onMouseDown (not onClick) fires before the input's
+                    // onBlur, so the selection registers even though the
+                    // blur handler removes this dropdown from the DOM.
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      updateLine(line.id, { name: s.name, medicineId: s._id || null });
                       setFocusedLineId(null);
                     }}
                     className={`block w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-sky-50 hover:text-sky-700 transition-colors ${
@@ -365,7 +272,7 @@ export default function Demand() {
                         : ""
                     }`}
                   >
-                    {s}
+                    {s.name}
                   </button>
                 ))}
               </div>
