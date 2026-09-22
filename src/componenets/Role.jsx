@@ -3,10 +3,14 @@ import { useNavigate } from "react-router-dom";
 
 const Logo = ({ className = "" }) => (
   <div className={`${className} rounded-lg flex items-center justify-center`}>
-    <span className="text-white font-bold text-xl">
-      <img src="/final-logo.png" alt="MedTrap" />
-      <img src="/logo.png" alt="MedTrap small" />
-    </span>
+    <img
+      src="/main-logo.png"
+      alt="Meditrap"
+      className="h-full w-auto object-contain"
+      onError={(event) => {
+        event.currentTarget.src = "/final-logo.png";
+      }}
+    />
   </div>
 );
 
@@ -28,15 +32,7 @@ export default function SelectRolePage() {
       description: "Manage inventory",
       color: "emerald",
     },
-    {
-      id: "Purchaser",
-      name: "Purchaser",
-      icon: "/purchaser-logo.jpg",
-      gradient: "from-blue-400 to-indigo-500",
-      bgGlow: "bg-blue-500/10",
-      description: "Handle procurement",
-      color: "blue",
-    },
+   
     {
       id: "Medical Owner",
       name: "Medical (Retailer)",
@@ -45,6 +41,15 @@ export default function SelectRolePage() {
       bgGlow: "bg-orange-500/10",
       description: "Clinic management",
       color: "orange",
+    },
+     {
+      id: "Purchaser",
+      name: "Purchaser",
+      icon: "/purchaser-logo.jpg",
+      gradient: "from-blue-400 to-indigo-500",
+      bgGlow: "bg-blue-500/10",
+      description: "Handle procurement",
+      color: "blue",
     },
     {
       id: "Staff",
@@ -105,36 +110,40 @@ export default function SelectRolePage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-14">
           {roles.map((role, index) => {
             const IconComponent = role.icon;
-            const isActive = (isHovered === role.id) || (selectedRole === role.id);
+            const isActive = isHovered === role.id || selectedRole === role.id;
             const isHovering = isHovered === role.id;
 
             return (
               <div
-                  key={role.id}
-                  onMouseEnter={() => setIsHovered(role.id)}
-                  onMouseLeave={() => setIsHovered(null)}
-                  onPointerDown={(e) => {
-                    // remember pointer type to differentiate touch vs mouse
-                    setLastPointerType(e.pointerType);
-                    // For touch/pointer (mobile), implement two-tap: first selects, second opens
-                    if (e.pointerType === "touch") {
-                      if (selectedRole === role.id) {
-                        handleRoleSelect(role.id);
-                        setSelectedRole(null);
-                      } else {
-                        setSelectedRole(role.id);
-                        // clear selection after a short timeout to avoid permanent selection
-                        if (clearSelectionTimeout.current) clearTimeout(clearSelectionTimeout.current);
-                        clearSelectionTimeout.current = setTimeout(() => setSelectedRole(null), 3000);
-                      }
-                    }
-                  }}
-                  onClick={(e) => {
-                    // For mouse/keyboard, open immediately
-                    if (lastPointerType !== "touch") {
+                key={role.id}
+                onMouseEnter={() => setIsHovered(role.id)}
+                onMouseLeave={() => setIsHovered(null)}
+                onPointerDown={(e) => {
+                  // remember pointer type to differentiate touch vs mouse
+                  setLastPointerType(e.pointerType);
+                  // For touch/pointer (mobile), implement two-tap: first selects, second opens
+                  if (e.pointerType === "touch") {
+                    if (selectedRole === role.id) {
                       handleRoleSelect(role.id);
+                      setSelectedRole(null);
+                    } else {
+                      setSelectedRole(role.id);
+                      // clear selection after a short timeout to avoid permanent selection
+                      if (clearSelectionTimeout.current)
+                        clearTimeout(clearSelectionTimeout.current);
+                      clearSelectionTimeout.current = setTimeout(
+                        () => setSelectedRole(null),
+                        3000,
+                      );
                     }
-                  }}
+                  }
+                }}
+                onClick={(e) => {
+                  // For mouse/keyboard, open immediately
+                  if (lastPointerType !== "touch") {
+                    handleRoleSelect(role.id);
+                  }
+                }}
                 className={`
                   group relative flex flex-col items-center p-8 rounded-3xl cursor-pointer transition-all duration-500 transform hover:scale-110 hover:-translate-y-2 active:scale-105 active:-translate-y-1
                   ${
