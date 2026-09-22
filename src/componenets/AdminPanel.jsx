@@ -7,6 +7,8 @@ import {
   UserPlus,
   Pill,
   ChevronRight,
+  Megaphone,
+  Bell,
 } from "lucide-react";
 import PageHeader from "./ui/PageHeader";
 import Card from "./ui/Card";
@@ -48,6 +50,20 @@ const MENU_ITEMS = [
     icon: Pill,
     gradient: "from-pink-400 to-pink-600",
     path: "/adminCreateMedicine",
+  },
+  {
+    title: "Ads Management",
+    subtitle: "Create, release, pause, and manage advertisements",
+    icon: Megaphone,
+    gradient: "from-cyan-500 to-cyan-600",
+    path: "/admin/ads",
+  },
+  {
+    title: "Announcements",
+    subtitle: "Create, release, pause, and manage announcements",
+    icon: Bell,
+    gradient: "from-emerald-500 to-emerald-600",
+    path: "/admin/announcements",
   },
 ];
 

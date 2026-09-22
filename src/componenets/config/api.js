@@ -169,24 +169,11 @@ const normalizeBase = (url) =>
 const SELECTED_API = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL
   : IS_DEV
-  ? DEV_FALLBACK
-  : REMOTE_API;
+    ? DEV_FALLBACK
+    : REMOTE_API;
 
-// Final API Base (normalized)
-// In development we prefer a relative base so that calls like `/api/*`
-// are sent to the Vite dev server and picked up by the dev proxy
-// (configured in `vite.config.js`). This avoids accidentally
-// calling an absolute production host when VITE_API_URL was set in
-// the environment used to start the dev server/builder.
-let finalSelectedApi;
-if (IS_DEV) {
-  // Use an empty base so apiUrl returns relative paths (e.g. '/api/user').
-  finalSelectedApi = "";
-} else {
-  finalSelectedApi = SELECTED_API;
-}
-
-export const API_BASE = normalizeBase(finalSelectedApi);
+// Always use the configured backend, including during local Vite development.
+export const API_BASE = normalizeBase(SELECTED_API);
 
 // Helper to safely build complete URLs
 export const apiUrl = (path = "") => {
