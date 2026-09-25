@@ -10,18 +10,18 @@ export default defineConfig(({ command, mode }) => {
     plugins: [react(), tailwindcss()],
     server: isDev
       ? {
-        proxy: {
-          // Proxy API calls during development to the local backend
-          // so calling `/api/*` from the Vite app forwards to
-          // http://localhost:5002 (where the Backend server runs).
-          "/api": {
-            target: "http://localhost:5002",
-            changeOrigin: true,
-            secure: false,
-            rewrite: (path) => path.replace(/^\/api/, "/api"),
+          proxy: {
+            // Proxy API calls during development to the local backend
+            // so calling `/api/*` from the Vite app forwards to
+            // Use the deployed backend during local frontend development.
+            "/api": {
+              target: "https://api.medi-trap.com",
+              changeOrigin: true,
+              secure: false,
+              rewrite: (path) => path.replace(/^\/api/, "/api"),
+            },
           },
-        },
-      }
+        }
       : undefined,
     // Production build optimizations: split large vendor libraries into separate chunks
     build: {
@@ -35,15 +35,15 @@ export default defineConfig(({ command, mode }) => {
           // Only extract very large, independent libs to their own chunks.
           manualChunks(id) {
             if (!id) return null;
-            if (id.includes('node_modules')) {
+            if (id.includes("node_modules")) {
               // keep particularly large independent libs separate
-              if (id.includes('three')) return 'vendor_three';
-              if (id.includes('gsap')) return 'vendor_gsap';
-              if (id.includes('qrcode')) return 'vendor_qrcode';
+              if (id.includes("three")) return "vendor_three";
+              if (id.includes("gsap")) return "vendor_gsap";
+              if (id.includes("qrcode")) return "vendor_qrcode";
 
               // Put everything else into a single 'vendor' chunk to ensure React and
               // its consumers are bundled together and initialized consistently.
-              return 'vendor';
+              return "vendor";
             }
           },
         },

@@ -10,10 +10,15 @@ export function extractAuthPayload(data) {
   if (!data || typeof data !== "object") return {};
   const nested = data.data && typeof data.data === "object" ? data.data : {};
   const accessToken =
-    data.accessToken || data.token || nested.accessToken || nested.token || null;
+    data.accessToken ||
+    data.token ||
+    nested.accessToken ||
+    nested.token ||
+    null;
   const refreshToken =
     data.refreshToken || nested.refreshToken || data.refresh_token || null;
-  const user = data.user || data.purchaser || data.profile || nested.user || null;
+  const user =
+    data.user || data.purchaser || data.profile || nested.user || null;
   return { accessToken, refreshToken, user };
 }
 
@@ -36,7 +41,12 @@ export function persistAuthState({ accessToken, refreshToken, user, role }) {
       setCookie("token", accessToken, 7);
     }
     if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
-    if (user) localStorage.setItem("user", JSON.stringify(user));
+    if (user) {
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ ...user, ...(role ? { role } : {}) }),
+      );
+    }
     if (role) localStorage.setItem("role", role);
   } catch (e) {
     // ignore storage failures (private mode, quota, etc.)
@@ -121,7 +131,11 @@ function roleKey(role) {
 
 export function loadRememberedIdentifier(role) {
   try {
-    return localStorage.getItem(roleKey(role)) || localStorage.getItem("rememberedIdentifier") || "";
+    return (
+      localStorage.getItem(roleKey(role)) ||
+      localStorage.getItem("rememberedIdentifier") ||
+      ""
+    );
   } catch (e) {
     return "";
   }

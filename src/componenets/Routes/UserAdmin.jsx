@@ -45,7 +45,7 @@ const UserAdmin = () => {
         const envUrl = import.meta.env.VITE_API_URL || "";
         const isLocalEnv =
           /^https?:\/\/(localhost|127(?:\.0\.0\.1)?)(:?\d*)?/i.test(envUrl);
-        const fallbackBase = isLocalEnv ? envUrl : "http://localhost:5002";
+        const fallbackBase = isLocalEnv ? envUrl : "https://api.medi-trap.com";
         const fallbackUrl = `${fallbackBase.replace(/\/+$/, "")}/api/user`;
         try {
           res = await fetch(fallbackUrl, { credentials: "include" });
@@ -68,7 +68,7 @@ const UserAdmin = () => {
             fetched = fetched.map((user) =>
               approvedIds.includes(user._id)
                 ? { ...user, approved: true, status: "approved" }
-                : user
+                : user,
             );
           }
         }
@@ -142,8 +142,8 @@ const UserAdmin = () => {
         s.map((user) =>
           user._id === id
             ? { ...user, approved: true, approvedAt: json.data?.approvedAt }
-            : user
-        )
+            : user,
+        ),
       );
 
       // Persist approved id in localStorage so approval survives refresh.
@@ -247,7 +247,11 @@ const UserAdmin = () => {
                 onChange={(e) => setDevToken(e.target.value)}
                 placeholder="Paste admin token here"
               />
-              <Btn variant="success" onClick={saveDevToken} className="shrink-0">
+              <Btn
+                variant="success"
+                onClick={saveDevToken}
+                className="shrink-0"
+              >
                 Save
               </Btn>
             </div>
@@ -276,13 +280,15 @@ const UserAdmin = () => {
                     <img
                       src={imgSrc}
                       alt={user.name || "user"}
-                      className={`w-16 h-16 rounded-xl object-cover shrink-0 ${isApproved ? "opacity-50" : ""
-                        }`}
+                      className={`w-16 h-16 rounded-xl object-cover shrink-0 ${
+                        isApproved ? "opacity-50" : ""
+                      }`}
                     />
                   ) : (
                     <div
-                      className={`w-16 h-16 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 ${isApproved ? "opacity-50" : ""
-                        }`}
+                      className={`w-16 h-16 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 ${
+                        isApproved ? "opacity-50" : ""
+                      }`}
                     >
                       <User className="w-6 h-6 text-slate-400" />
                     </div>
@@ -304,10 +310,11 @@ const UserAdmin = () => {
                   </div>
 
                   <span
-                    className={`shrink-0 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide ${isApproved
+                    className={`shrink-0 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide ${
+                      isApproved
                         ? "bg-emerald-50 text-emerald-600"
                         : "bg-slate-100 text-slate-400"
-                      }`}
+                    }`}
                   >
                     {isApproved ? "Approved" : "Pending"}
                   </span>

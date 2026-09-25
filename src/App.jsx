@@ -34,6 +34,12 @@ import PurchaserLogin from "./componenets/purchaser/PurchaserLogin";
 import PurchserVerfifcation from "./componenets/purchaser/PurchserVerfifcation";
 import PublicRoute from "./componenets/Routes/PublicRoute";
 import PaymentPending from "./componenets/Routes/PaymentPending";
+import AdsManagement from "./componenets/AdsManagement";
+import AdModal from "./componenets/AdModal";
+import AnnouncementModal from "./componenets/AnnouncementModal";
+import AnnouncementsManagement from "./componenets/AnnouncementsManagement";
+import AnnouncementButton from "./componenets/AnnouncementButton";
+import AnnouncementCenter from "./componenets/AnnouncementCenter";
 
 const App = () => {
   return (
@@ -64,6 +70,12 @@ const App = () => {
         <Route path="/MedicineRes" element={<MedicineRes />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/adminpanel" element={<AdminPanel />} />
+        <Route path="/admin/ads" element={<AdsManagement />} />
+        <Route
+          path="/admin/announcements"
+          element={<AnnouncementsManagement />}
+        />
+        <Route path="/announcement" element={<AnnouncementCenter />} />
         <Route path="/adminCreateStockist" element={<AdminCreateStockist />} />
         <Route path="/stockist-login" element={<StockistLogin />} />
         <Route path="/stockist-outcode" element={<Stockistoutcode />} />
@@ -93,6 +105,9 @@ const App = () => {
         <Route path="/privacy-policy/*" element={<PrivacyPolicy />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <AdModal />
+      <AnnouncementModal />
+      <AnnouncementButton />
     </div>
   );
 };
