@@ -22,7 +22,7 @@ export default function Payment() {
     let order;
     try {
       order = JSON.parse(localStorage.getItem("pendingOrder") || "null");
-    } catch (e) {
+    } catch {
       order = null;
     }
 

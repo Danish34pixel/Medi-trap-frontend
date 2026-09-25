@@ -23,7 +23,7 @@ function readUserFromStorage() {
   try {
     const raw = localStorage.getItem("user");
     return raw ? JSON.parse(raw) : null;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -31,7 +31,7 @@ function readUserFromStorage() {
 function readTokenFromStorage() {
   try {
     return localStorage.getItem("token") || getCookie("token") || null;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -79,7 +79,7 @@ export function AuthProvider({ children }) {
                 JSON.stringify({ ...freshUser }),
               );
               if (freshUser.role) localStorage.setItem("role", freshUser.role);
-            } catch (e) {
+            } catch {
               // ignore storage failures
             }
             setState((prev) => ({

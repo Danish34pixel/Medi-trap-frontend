@@ -82,7 +82,7 @@ function readReadIds(storageKey) {
     const raw = localStorage.getItem(storageKey);
     const parsed = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
+  } catch {
     return [];
   }
 }
@@ -153,7 +153,7 @@ export default function DemandNotificationsButton({ userRole, userId }) {
     setReadIds(nextRead);
     try {
       localStorage.setItem(storageKey, JSON.stringify(nextRead));
-    } catch (e) {
+    } catch {
       // ignore storage failures
     }
     setOpen(false);
