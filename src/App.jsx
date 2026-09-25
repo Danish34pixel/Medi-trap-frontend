@@ -34,6 +34,8 @@ import PurchaserLogin from "./componenets/purchaser/PurchaserLogin";
 import PurchserVerfifcation from "./componenets/purchaser/PurchserVerfifcation";
 import PublicRoute from "./componenets/Routes/PublicRoute";
 import PaymentPending from "./componenets/Routes/PaymentPending";
+import SubscriptionPlans from "./componenets/Routes/SubscriptionPlans";
+import Payment from "./componenets/Routes/Payment";
 import AdsManagement from "./componenets/AdsManagement";
 import AdModal from "./componenets/AdModal";
 import AnnouncementModal from "./componenets/AnnouncementModal";
@@ -101,6 +103,8 @@ const App = () => {
         <Route path="/purchaserLogin" element={<PurchaserLogin />} />
         <Route path="/purchasermiddle" element={<PurchserVerfifcation />} />
         <Route path="/payment-pending" element={<PaymentPending />} />
+        <Route path="/SubscriptionPlans" element={<SubscriptionPlans />} />
+        <Route path="/payment" element={<Payment />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/privacy-policy/*" element={<PrivacyPolicy />} />
         <Route path="*" element={<Navigate to="/" replace />} />
