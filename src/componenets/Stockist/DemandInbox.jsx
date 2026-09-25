@@ -87,6 +87,11 @@ export default function DemandInbox() {
   }, [stockistId, loadInbox]);
 
   const act = async (id, path, body) => {
+    // Guards against a rapid double-click firing two requests before the
+    // disabled prop's re-render lands (found via runtime testing: a real
+    // double-accept produces a 409 from the backend, which is correct, but
+    // the UI was left showing stale action buttons instead of resyncing).
+    if (actingId) return;
     setActingId(id);
     try {
       await fetchJson(`/demand/${id}${path}`, {
@@ -95,7 +100,12 @@ export default function DemandInbox() {
       });
       await loadInbox(stockistId);
     } catch (e) {
+      // A 409 means someone/something already actioned this demand (e.g. a
+      // duplicate click, or another tab) — the backend's own message names
+      // the actual current status, so surface it and resync to the real
+      // state rather than leaving stale Accept/Reject buttons on screen.
       setError(e.body?.message || e.message || "Action failed.");
+      await loadInbox(stockistId);
     } finally {
       setActingId(null);
     }

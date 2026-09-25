@@ -20,6 +20,9 @@ export default function Demand() {
   const [medicines, setMedicines] = useState([]);
   const [stockists, setStockists] = useState([]);
   const [result, setResult] = useState(null);
+  const [originalDemandId, setOriginalDemandId] = useState(null);
+  const [sentStockistIds, setSentStockistIds] = useState([]);
+  const [sendingId, setSendingId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [focusedLineId, setFocusedLineId] = useState(null);
@@ -74,7 +77,11 @@ export default function Demand() {
       const raw = localStorage.getItem(SAVE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (parsed && parsed.groups) setResult(parsed.groups);
+        if (parsed && parsed.groups) {
+          setResult(parsed.groups);
+          setOriginalDemandId(parsed.originalDemandId || null);
+          setSentStockistIds(parsed.sentStockistIds || []);
+        }
       }
     } catch {
       // ignore parse errors
@@ -129,7 +136,12 @@ export default function Demand() {
       );
 
       // Reshape the server's per-medicine inventory view into per-stockist
-      // groups for display, keeping the existing results UI unchanged.
+      // groups for display. Each group now also carries the stockist's id
+      // (not just its display name) since actually notifying that stockist
+      // requires POST /demand/:originalDemandId/send {stockistId} — see
+      // sendToStockist() below. Without this extra "Send" step the demand
+      // just sits at SupplierDemand.status "pending" forever and never
+      // reaches GET /demand?stockistId= (which excludes "pending").
       const groups = {};
       for (const item of items) {
         const inv = inventoryByName.get(item.name.toLowerCase());
@@ -143,22 +155,29 @@ export default function Demand() {
         };
         const matchedStockists = inv?.stockists || [];
         if (matchedStockists.length === 0) {
-          groups.unmatched = groups.unmatched || [];
-          groups.unmatched.push(entry);
+          groups.unmatched = groups.unmatched || { items: [] };
+          groups.unmatched.items.push(entry);
           continue;
         }
         for (const st of matchedStockists) {
           const label = st.name || String(st.id);
-          groups[label] = groups[label] || [];
-          groups[label].push(entry);
+          groups[label] = groups[label] || { stockistId: st.id, items: [] };
+          groups[label].items.push(entry);
         }
       }
 
       setResult(groups);
+      setOriginalDemandId(data.originalDemandId || null);
+      setSentStockistIds([]);
       try {
         localStorage.setItem(
           SAVE_KEY,
-          JSON.stringify({ groups, createdAt: Date.now() }),
+          JSON.stringify({
+            groups,
+            originalDemandId: data.originalDemandId || null,
+            sentStockistIds: [],
+            createdAt: Date.now(),
+          }),
         );
       } catch (e) {
         console.warn("Could not save demand to localStorage", e);
@@ -168,6 +187,43 @@ export default function Demand() {
       setError("Could not create demand. See console.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // POST /demand/:originalDemandId/send {stockistId} — flips that
+  // stockist's SupplierDemand from "pending" to "sent", the only thing
+  // that makes it show up in Stockist/DemandInbox.jsx (routes/demand.js).
+  const sendToStockist = async (stockistId) => {
+    if (!originalDemandId || !stockistId) return;
+    setSendingId(stockistId);
+    try {
+      await fetchJson(`/demand/${originalDemandId}/send`, {
+        method: "POST",
+        body: JSON.stringify({ stockistId }),
+      });
+      const next = [...sentStockistIds, stockistId];
+      setSentStockistIds(next);
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        localStorage.setItem(
+          SAVE_KEY,
+          JSON.stringify({ ...parsed, sentStockistIds: next }),
+        );
+      } catch {
+        // ignore storage failures
+      }
+    } catch (e) {
+      // A 409 here means it was already sent (e.g. a stale tab) — treat it
+      // the same as success rather than showing a scary error for a
+      // harmless race.
+      if (e.status === 409) {
+        setSentStockistIds((prev) => [...prev, stockistId]);
+      } else {
+        setError(e.body?.message || e.message || "Could not send to stockist.");
+      }
+    } finally {
+      setSendingId(null);
     }
   };
 
@@ -258,9 +314,16 @@ export default function Demand() {
                       {suggestions.map((s, idx) => (
                         <button
                           type="button"
-                          key={`${line.id}-${idx}`}
-                          onClick={() => {
-                            updateLine(line.id, { name: s });
+                          key={s._id || `${line.id}-${idx}`}
+                          // onMouseDown (not onClick) fires before the
+                          // input's onBlur, so the selection registers even
+                          // though the blur handler removes this dropdown.
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            updateLine(line.id, {
+                              name: s.name,
+                              medicineId: s._id || null,
+                            });
                             setFocusedLineId(null);
                           }}
                           className={`block w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-sky-50 hover:text-sky-700 transition-colors ${
@@ -269,7 +332,7 @@ export default function Demand() {
                               : ""
                           }`}
                         >
-                          {s}
+                          {s.name}
                         </button>
                       ))}
                     </div>
@@ -333,7 +396,11 @@ export default function Demand() {
               </div>
             ) : (
               <div className="space-y-6">
-                {Object.entries(result).map(([group, items]) => (
+                {Object.entries(result).map(([group, data]) => {
+                  const items = data.items || [];
+                  const stockistId = data.stockistId;
+                  const isSent = stockistId && sentStockistIds.includes(stockistId);
+                  return (
                   <div
                     key={group}
                     className="border border-slate-200 rounded-xl overflow-hidden"
@@ -359,24 +426,39 @@ export default function Demand() {
                             {items.length} item{items.length !== 1 ? "s" : ""}
                           </div>
                         </div>
-                        {group !== "unmatched" &&
-                          stockists.find(
-                            (s) => s.name === group || s.title === group,
-                          )?.phone && (
+                        <div className="flex items-center gap-2">
+                          {group !== "unmatched" && stockistId && (
                             <button
-                              onClick={() => {
-                                const stockist = stockists.find(
-                                  (s) => s.name === group || s.title === group,
-                                );
-                                if (stockist?.phone) {
-                                  window.location.href = `tel:${stockist.phone}`;
-                                }
-                              }}
-                              className="flex items-center gap-2 px-3 py-2.5 bg-white text-sky-600 rounded-2xl hover:bg-sky-50 transition-all font-bold shadow-lg hover:scale-105"
+                              onClick={() => sendToStockist(stockistId)}
+                              disabled={isSent || sendingId === stockistId}
+                              className="flex items-center gap-2 px-4 py-2.5 bg-white text-sky-600 rounded-2xl hover:bg-sky-50 transition-all font-bold shadow-lg hover:scale-105 disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed"
                             >
-                              <Phone size={16} />
+                              {isSent
+                                ? "Sent ✓"
+                                : sendingId === stockistId
+                                  ? "Sending..."
+                                  : "Send"}
                             </button>
                           )}
+                          {group !== "unmatched" &&
+                            stockists.find(
+                              (s) => s.name === group || s.title === group,
+                            )?.phone && (
+                              <button
+                                onClick={() => {
+                                  const stockist = stockists.find(
+                                    (s) => s.name === group || s.title === group,
+                                  );
+                                  if (stockist?.phone) {
+                                    window.location.href = `tel:${stockist.phone}`;
+                                  }
+                                }}
+                                className="flex items-center gap-2 px-3 py-2.5 bg-white text-sky-600 rounded-2xl hover:bg-sky-50 transition-all font-bold shadow-lg hover:scale-105"
+                              >
+                                <Phone size={16} />
+                              </button>
+                            )}
+                        </div>
                       </div>
                     </div>
 
@@ -419,7 +501,8 @@ export default function Demand() {
                       ))}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
