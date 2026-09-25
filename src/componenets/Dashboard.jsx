@@ -6,7 +6,7 @@ import PaymentRequiredGate from "./ui/PaymentRequiredGate";
 import TrialBanner from "./ui/TrialBanner";
 import { fetchSubscriptionStatus, daysRemaining } from "./utils/subscriptionStatus";
 import DemandNotificationsButton from "./DemandNotificationsButton";
-import { Siren } from "lucide-react";
+import { Siren, ClipboardList } from "lucide-react";
 
 export default function Dashboard() {
   // Ported from nebula/app/Home/index.jsx: gate the dashboard on
@@ -66,15 +66,22 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-white overflow-y-auto">
       {isTrialActive && <TrialBanner daysLeft={trialDaysLeft} />}
-      {/* Entry point for the urgent-request broadcast feature (item 8) —
-          nebula shows this as a CTA banner on the Home screen. */}
-      <div className="px-4 sm:px-6 pt-4">
+      {/* Entry points for urgent-request broadcast and demand history —
+          both screens would otherwise be unreachable from this dashboard. */}
+      <div className="px-4 sm:px-6 pt-4 flex flex-col sm:flex-row gap-3">
         <button
           onClick={() => navigation.navigate("/MedicalOwner/urgent-request")}
-          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 hover:brightness-105 text-white font-semibold py-3 rounded-xl shadow-sm transition"
+          className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 hover:brightness-105 text-white font-semibold py-3 rounded-xl shadow-sm transition"
         >
           <Siren className="w-4 h-4" />
           Broadcast Urgent Request
+        </button>
+        <button
+          onClick={() => navigation.navigate("/MedicalOwner/demand-history")}
+          className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-slate-700 to-slate-800 hover:brightness-110 text-white font-semibold py-3 rounded-xl shadow-sm transition"
+        >
+          <ClipboardList className="w-4 h-4" />
+          My Orders
         </button>
       </div>
       <DemandNotificationsButton

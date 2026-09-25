@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Plus,
   Trash2,
@@ -421,6 +422,17 @@ export default function Demand() {
                 ))}
               </div>
             )}
+
+            {/* Ported from nebula/app/demand.jsx's post-create success
+                banner link. */}
+            <div className="mt-6 text-center">
+              <Link
+                to="/MedicalOwner/demand-history"
+                className="text-sm font-semibold text-sky-600 hover:text-sky-700 underline"
+              >
+                View in My Orders &rarr;
+              </Link>
+            </div>
           </Card>
         )}
       </div>

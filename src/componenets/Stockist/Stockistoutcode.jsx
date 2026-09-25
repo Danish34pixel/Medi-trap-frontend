@@ -691,6 +691,14 @@ export default function PharmacyStockist() {
 
             {/* Logout on the right side of header */}
             <div className="ml-auto flex items-center gap-3">
+              {/* Entry point for the demand accept/reject/dispatch inbox —
+                  previously unreachable from this dashboard. */}
+              <button
+                onClick={() => navigate("/Stockist/demand-inbox")}
+                className="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-500 text-white rounded-2xl text-sm font-bold hover:shadow-2xl transform hover:scale-105 transition-all"
+              >
+                Demand Inbox
+              </button>
               <button
                 onClick={handleLogout}
                 className="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-2xl text-sm font-bold hover:shadow-2xl transform hover:scale-105 transition-all"

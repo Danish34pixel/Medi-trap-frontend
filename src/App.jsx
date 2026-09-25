@@ -48,6 +48,9 @@ import AnnouncementCenter from "./componenets/AnnouncementCenter";
 import UrgentRequestOwner from "./componenets/urgentRequest/UrgentRequestOwner";
 import UrgentRequestPurchaser from "./componenets/urgentRequest/UrgentRequestPurchaser";
 import UrgentRequestChat from "./componenets/urgentRequest/UrgentRequestChat";
+import DemandInbox from "./componenets/Stockist/DemandInbox";
+import DemandHistory from "./componenets/Routes/DemandHistory";
+import DemandChat from "./componenets/DemandChat";
 
 // Every "medical owner" role alias seen in the backend response across
 // nebula and this app (LOGIC_REFERENCE.md §1.5 / getHomeRouteForRole.js).
@@ -277,6 +280,30 @@ const App = () => {
           element={
             <ProtectedRoute>
               <UrgentRequestChat />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/Stockist/demand-inbox"
+          element={
+            <ProtectedRoute roles={["stockist"]}>
+              <DemandInbox />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/MedicalOwner/demand-history"
+          element={
+            <ProtectedRoute roles={[...MEDICAL_ROLES, "admin"]}>
+              <DemandHistory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/demand-chat/:id"
+          element={
+            <ProtectedRoute>
+              <DemandChat />
             </ProtectedRoute>
           }
         />

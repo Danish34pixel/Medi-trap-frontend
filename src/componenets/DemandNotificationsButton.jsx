@@ -10,12 +10,12 @@ import { fetchJson } from "./config/api";
 
 const STORAGE_KEY_PREFIX = "demandNotificationReadIds";
 
-// Deep-link targets: neither app has a dedicated demand-inbox/demand-history
-// screen yet (verified via grep), so we land on each role's existing
-// dashboard route with ?demandId= for now.
+// Deep-link targets: the actual demand-inbox/demand-history screens
+// (Stockist/DemandInbox.jsx, Routes/DemandHistory.jsx), which read this
+// same ?demandId= to highlight the matching card.
 const TARGET_ROUTE = {
-  stockist: "/stockist-outcode",
-  medical_owner: "/dashboard",
+  stockist: "/Stockist/demand-inbox",
+  medical_owner: "/MedicalOwner/demand-history",
 };
 
 const formatTime = (date) => {
