@@ -35,6 +35,8 @@ import PurchserVerfifcation from "./componenets/purchaser/PurchserVerfifcation";
 import PublicRoute from "./componenets/Routes/PublicRoute";
 import ProtectedRoute from "./componenets/Routes/ProtectedRoute";
 import PaymentPending from "./componenets/Routes/PaymentPending";
+import CompanyManagement from "./componenets/Routes/CompanyManagement";
+import MedicineManagement from "./componenets/Routes/MedicineManagement";
 import SubscriptionPlans from "./componenets/Routes/SubscriptionPlans";
 import Payment from "./componenets/Routes/Payment";
 import AdsManagement from "./componenets/AdsManagement";
@@ -177,6 +179,22 @@ const App = () => {
           element={
             <ProtectedRoute roles={["admin"]}>
               <AdminCreateCompany />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/companies"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <CompanyManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/medicines"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <MedicineManagement />
             </ProtectedRoute>
           }
         />

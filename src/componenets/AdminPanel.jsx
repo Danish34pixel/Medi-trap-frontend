@@ -9,6 +9,8 @@ import {
   ChevronRight,
   Megaphone,
   Bell,
+  Building2,
+  ClipboardList,
 } from "lucide-react";
 import PageHeader from "./ui/PageHeader";
 import Card from "./ui/Card";
@@ -38,6 +40,13 @@ const MENU_ITEMS = [
     path: "/adminCreateCompany",
   },
   {
+    title: "Manage Companies",
+    subtitle: "Edit company details and stockist links",
+    icon: Building2,
+    gradient: "from-orange-400 to-orange-600",
+    path: "/admin/companies",
+  },
+  {
     title: "Create Stockist",
     subtitle: "Add a new supplier/stockist account",
     icon: UserPlus,
@@ -50,6 +59,13 @@ const MENU_ITEMS = [
     icon: Pill,
     gradient: "from-pink-400 to-pink-600",
     path: "/adminCreateMedicine",
+  },
+  {
+    title: "Manage Medicines",
+    subtitle: "View catalog (backend has no edit/delete API yet)",
+    icon: ClipboardList,
+    gradient: "from-rose-400 to-rose-600",
+    path: "/admin/medicines",
   },
   {
     title: "Ads Management",
