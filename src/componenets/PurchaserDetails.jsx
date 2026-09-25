@@ -5,6 +5,7 @@ import { logout } from "./utils/authFlow";
 import {
   User,
   LogOut,
+  Siren,
   CreditCard,
   Activity,
   Shield,
@@ -315,14 +316,26 @@ const PurchaserDetails = () => {
               </p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="p-2 lg:px-4 lg:py-2 rounded-full lg:rounded-xl hover:bg-white/15 transition flex items-center gap-2 flex-shrink-0 cursor-pointer"
-            aria-label="Log out"
-          >
-            <LogOut className="w-[18px] h-[18px] text-blue-100" />
-            <span className="hidden lg:inline text-xs font-semibold text-white">Log Out</span>
-          </button>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {/* Entry point for the urgent-request accept flow (item 8) —
+                nebula's Purchaser home has an "Urgent Requests" CTA. */}
+            <button
+              onClick={() => navigate("/purchaser/urgent-requests")}
+              className="p-2 lg:px-4 lg:py-2 rounded-full lg:rounded-xl hover:bg-white/15 transition flex items-center gap-2 cursor-pointer"
+              aria-label="Urgent requests"
+            >
+              <Siren className="w-[18px] h-[18px] text-blue-100" />
+              <span className="hidden lg:inline text-xs font-semibold text-white">Urgent Requests</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="p-2 lg:px-4 lg:py-2 rounded-full lg:rounded-xl hover:bg-white/15 transition flex items-center gap-2 cursor-pointer"
+              aria-label="Log out"
+            >
+              <LogOut className="w-[18px] h-[18px] text-blue-100" />
+              <span className="hidden lg:inline text-xs font-semibold text-white">Log Out</span>
+            </button>
+          </div>
         </div>
       </div>
 

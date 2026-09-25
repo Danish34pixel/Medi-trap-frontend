@@ -754,15 +754,9 @@ export default function Nav({ navigation: navProp }) {
           <p className="text-sm text-slate-500">{item.address}</p>
         </div>
         <button
-                onClick={() => {
-                try {
-                  navigation.navigate(`/stockist/${item._id}`);
-                } catch (e) {
-                  window.location.href = `/stockist/${item._id}`;
-                }
-              }}
+            onClick={() => handleToggleCard(item._id)}
             className="text-cyan-500 h-8 w-8 flex items-center justify-center rounded-full hover:bg-cyan-50"
-            aria-label="View stockist"
+            aria-label="View stockist details"
         >
           <ArrowRight className="w-4 h-4" />
         </button>

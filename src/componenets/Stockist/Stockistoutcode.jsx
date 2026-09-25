@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import IdentityCard from "../stockistComponents/IdentityCard";
+import DemandNotificationsButton from "../DemandNotificationsButton";
 import StockistApprovals from "./StockistApprovals";
 import { motion } from "framer-motion";
 
@@ -669,6 +670,7 @@ export default function PharmacyStockist() {
       className="min-h-screen p-2 lg:p-8 bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 overflow-x-hidden"
       style={{ touchAction: "pan-y" }}
     >
+      <DemandNotificationsButton userRole="stockist" userId={stockist?._id} />
       <div className="max-w-7xl mx-auto">
         {/* Header Card */}
         <div className="bg-gradient-to-br from-white to-violet-50 rounded-3xl shadow-2xl p-8 border-2 border-violet-100">
