@@ -51,6 +51,13 @@ export function persistAuthState({ accessToken, refreshToken, user, role }) {
   } catch (e) {
     // ignore storage failures (private mode, quota, etc.)
   }
+  // Lets AuthContext (context/AuthContext.jsx) resync without every login
+  // screen having to import/call it directly.
+  try {
+    window.dispatchEvent(new Event("meditrap:auth-changed"));
+  } catch (e) {
+    // ignore (non-browser environment)
+  }
 }
 
 // Stockist approval check — tolerates two backend conventions
@@ -166,6 +173,11 @@ export function logout(navigate) {
     localStorage.removeItem("lastSubscription");
   } catch (e) {
     // ignore
+  }
+  try {
+    window.dispatchEvent(new Event("meditrap:auth-changed"));
+  } catch (e) {
+    // ignore (non-browser environment)
   }
   navigate("/", { replace: true });
 }

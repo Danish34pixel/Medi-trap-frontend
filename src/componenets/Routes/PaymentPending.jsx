@@ -36,14 +36,17 @@ export default function PaymentPending() {
       try {
         const data = await fetchJson("/auth/me");
         const user = data.user || data;
-        if (data.accountStatus === "active") {
+        // /auth/me nests accountStatus under `user` (routes/auth.js
+        // sanitizeUser), not at the response root — ported from
+        // nebula/app/payment-pending.jsx's res.user.accountStatus.
+        if (user.accountStatus === "active") {
           stoppedRef.current = true;
           setStatus("active");
           setTimeout(() => {
             const dest = getHomeRouteForRole(user.role, user._id || user.id);
             navigate(dest, { replace: true });
           }, 1800);
-        } else if (data.accountStatus === "rejected") {
+        } else if (user.accountStatus === "rejected") {
           stoppedRef.current = true;
           setStatus("rejected");
         }

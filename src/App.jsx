@@ -33,6 +33,7 @@ import PrivacyPolicy from "./componenets/Routes/PrivacyPolicy";
 import PurchaserLogin from "./componenets/purchaser/PurchaserLogin";
 import PurchserVerfifcation from "./componenets/purchaser/PurchserVerfifcation";
 import PublicRoute from "./componenets/Routes/PublicRoute";
+import ProtectedRoute from "./componenets/Routes/ProtectedRoute";
 import PaymentPending from "./componenets/Routes/PaymentPending";
 import SubscriptionPlans from "./componenets/Routes/SubscriptionPlans";
 import Payment from "./componenets/Routes/Payment";
@@ -43,12 +44,29 @@ import AnnouncementsManagement from "./componenets/AnnouncementsManagement";
 import AnnouncementButton from "./componenets/AnnouncementButton";
 import AnnouncementCenter from "./componenets/AnnouncementCenter";
 
+// Every "medical owner" role alias seen in the backend response across
+// nebula and this app (LOGIC_REFERENCE.md §1.5 / getHomeRouteForRole.js).
+const MEDICAL_ROLES = [
+  "medicalOwner",
+  "medical",
+  "retailer",
+  "medicalretailer",
+  "user",
+];
+
 const App = () => {
   return (
     <div className="">
       <Routes>
         <Route path="/" element={<RoleSelector />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute roles={[...MEDICAL_ROLES, "admin"]}>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/login"
           element={
@@ -67,44 +85,209 @@ const App = () => {
             </PublicRoute>
           }
         />
-        <Route path="/CompanyResult" element={<CompanyResult />} />
-        <Route path="/company/:id/products" element={<CompanyProducts />} />
-        <Route path="/MedicineRes" element={<MedicineRes />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/adminpanel" element={<AdminPanel />} />
-        <Route path="/admin/ads" element={<AdsManagement />} />
+        <Route
+          path="/CompanyResult"
+          element={
+            <ProtectedRoute>
+              <CompanyResult />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/company/:id/products"
+          element={
+            <ProtectedRoute>
+              <CompanyProducts />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/MedicineRes"
+          element={
+            <ProtectedRoute>
+              <MedicineRes />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/adminpanel"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <AdminPanel />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/ads"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <AdsManagement />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/admin/announcements"
-          element={<AnnouncementsManagement />}
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <AnnouncementsManagement />
+            </ProtectedRoute>
+          }
         />
-        <Route path="/announcement" element={<AnnouncementCenter />} />
-        <Route path="/adminCreateStockist" element={<AdminCreateStockist />} />
+        <Route
+          path="/announcement"
+          element={
+            <ProtectedRoute>
+              <AnnouncementCenter />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/adminCreateStockist"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <AdminCreateStockist />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/stockist-login" element={<StockistLogin />} />
-        <Route path="/stockist-outcode" element={<Stockistoutcode />} />
+        <Route
+          path="/stockist-outcode"
+          element={
+            <ProtectedRoute roles={["stockist"]}>
+              <Stockistoutcode />
+            </ProtectedRoute>
+          }
+        />
+        {/* Public "verify with password" printable/QR card view — no guard by design (nebula: StockistCardView). */}
         <Route path="/stockist-card" element={<StockistCardView />} />
+        {/* No token yet at this point for a just-registered stockist
+            (stockist-signup.jsx stores pendingStockistId, not a token, per
+            LOGIC_REFERENCE.md) — must stay unguarded or signup breaks. */}
         <Route path="/stockist/verification" element={<Verification />} />
-        <Route path="/adminCreateCompany" element={<AdminCreateCompany />} />
-        <Route path="/adminCreateMedicine" element={<AdminCreateMedicine />} />
-        <Route path="/adminCreateStaff" element={<StaffCreate />} />
+        <Route
+          path="/adminCreateCompany"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <AdminCreateCompany />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/adminCreateMedicine"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <AdminCreateMedicine />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/adminCreateStaff"
+          element={
+            <ProtectedRoute roles={["admin", "stockist"]}>
+              <StaffCreate />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/staff-login" element={<StaffLogin />} />
-        <Route path="/staffs" element={<StaffList />} />
-        <Route path="/staff/:id" element={<StaffDetails />} />
+        <Route
+          path="/staffs"
+          element={
+            <ProtectedRoute roles={["staff", "stockist", "admin"]}>
+              <StaffList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/staff/:id"
+          element={
+            <ProtectedRoute roles={["staff", "stockist", "admin"]}>
+              <StaffDetails />
+            </ProtectedRoute>
+          }
+        />
         {/* Redirect legacy or accidental /staff/create to the admin create form */}
         <Route
           path="/staff/create"
           element={<Navigate to="/adminCreateStaff" replace />}
         />
         <Route path="/purchaser-signup" element={<PurchaserSignup />} />
-        <Route path="/purchaser/:id" element={<PurchaserDetails />} />
-        <Route path="/demand" element={<Demand />} />
-        <Route path="/admin/stockists" element={<AdminPage />} />
+        <Route
+          path="/purchaser/:id"
+          element={
+            <ProtectedRoute roles={["purchaser"]}>
+              <PurchaserDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/demand"
+          element={
+            <ProtectedRoute roles={[...MEDICAL_ROLES, "admin"]}>
+              <Demand />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/stockists"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <AdminPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Same as stockist verification above — unconfirmed whether a
+            token exists this early in the medical-owner signup flow, so
+            left unguarded rather than risk breaking signup. */}
         <Route path="/medical-middle" element={<MedicalMiddle />} />
-        <Route path="/user-admin" element={<UserAdmin />} />
+        <Route
+          path="/user-admin"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <UserAdmin />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/purchaserLogin" element={<PurchaserLogin />} />
-        <Route path="/purchasermiddle" element={<PurchserVerfifcation />} />
-        <Route path="/payment-pending" element={<PaymentPending />} />
-        <Route path="/SubscriptionPlans" element={<SubscriptionPlans />} />
-        <Route path="/payment" element={<Payment />} />
+        <Route
+          path="/purchasermiddle"
+          element={
+            <ProtectedRoute>
+              <PurchserVerfifcation />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payment-pending"
+          element={
+            <ProtectedRoute>
+              <PaymentPending />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/SubscriptionPlans"
+          element={
+            <ProtectedRoute>
+              <SubscriptionPlans />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payment"
+          element={
+            <ProtectedRoute>
+              <Payment />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/privacy-policy/*" element={<PrivacyPolicy />} />
         <Route path="*" element={<Navigate to="/" replace />} />

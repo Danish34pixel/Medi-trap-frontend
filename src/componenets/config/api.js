@@ -242,6 +242,11 @@ const clearAuthStorage = () => {
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
   } catch (e) {}
+  // Lets AuthContext (context/AuthContext.jsx) notice a silent
+  // refresh-token-failure logout that happened outside of it.
+  try {
+    window.dispatchEvent(new Event("meditrap:auth-changed"));
+  } catch (e) {}
 };
 
 // Central authenticated request helper (LOGIC_REFERENCE §1.4/§8,
