@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { User, Edit2, Trash2, ChevronLeft } from "lucide-react";
-import { apiUrl } from "../config/api";
+import { apiUrl, fetchJson } from "../config/api";
 import { getCookie } from "../utils/cookies";
 
 export default function StaffIDCard() {
@@ -21,6 +21,7 @@ export default function StaffIDCard() {
   });
 
   const [stockistName, setStockistName] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Resolve stockist/company name: prefer populated staff.stockist object,
   // otherwise try to fetch stockist by id, otherwise fall back to local user.
@@ -124,6 +125,25 @@ export default function StaffIDCard() {
     }
     return staff.address;
   })();
+
+  // DELETE /api/staff/:id (staffController.deleteStaff) — allowed for admin
+  // or the owning stockist; the UI only offers this to admins here, matching
+  // nebula's Staff/[id].jsx (which also gates the button to admin viewers
+  // even though the backend permits the owning stockist too).
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete ${staff.fullName || "this staff member"}? This cannot be undone.`)) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await fetchJson(`/staff/${id}`, { method: "DELETE" });
+      navigate(-1);
+    } catch (e) {
+      alert(e.message || "Failed to delete staff member.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -308,15 +328,12 @@ export default function StaffIDCard() {
                       Edit Details
                     </button>
                     <button
-                      onClick={() =>
-                        alert(
-                          "Feature coming soon: delete functionality will be available in the next update."
-                        )
-                      }
-                      className="w-full sm:flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-semibold transition-all shadow-md hover:shadow-lg cursor-pointer"
+                      onClick={handleDelete}
+                      disabled={deleting}
+                      className="w-full sm:flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-semibold transition-all shadow-md hover:shadow-lg cursor-pointer disabled:opacity-60"
                     >
                       <Trash2 className="w-4 h-4" />
-                      Delete Member
+                      {deleting ? "Deleting..." : "Delete Member"}
                     </button>
                   </div>
                 ) : (
